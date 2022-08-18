@@ -112,7 +112,7 @@ template <typename Integer>
 inline std::size_t mostSignificant1BitIdx(Integer const x) {
 #ifdef __has_builtin
 #if __has_builtin(__builtin_clzll)
-	return 8 * sizeof(unsigned long long) - __builtin_clzll(x);
+	return 8 * sizeof(unsigned long long) - __builtin_clzll(x) - 1;
 #endif
 #endif
 	for (std::size_t bit = 8 * sizeof(Integer) - 1;
@@ -835,33 +835,19 @@ using namespace std;
 
 /* ---------------------------- End of template. ---------------------------- */
 
-using MR = ModRing<LL, 998244353>;
-
 int main(int, char const *[]) {
-	string S, T;
-	cin >> S >> T;
-
-	LL N(S.length()), M(T.length());
-	VR<VR<LL>> s(N, VR<LL>(N, 0));
-	RF(i, 0, N) {
-		if (i >= M) {
-			s[0][i] = 1;
-		} else {
-			s[0][i] = S[0] == T[i];
+	LL T;
+	cin >> T;
+	while (T--) {
+		LL N;
+		cin >> N;
+		VR<LL> A(N);
+		RF(i, 0, N) {
+			cin >> A[i];
 		}
+		sort(A.begin(), A.end());
+		cout << A.back() + A[N - 2] - A[0] - A[1] << '\n';
 	}
 
-	RF(i, 0, N - 1) {
-		RF(j, 0, N) {
-			if (j > 0 && S[i + 1] == T[j - 1]) {
-				s[i + 1][j - 1] += s[i][j];
-			}
-			if (j + i >= M || S[i + 1] == T[j + i]) {
-				s[i + 1][j] += s[i][j];
-			}
-		}
-	}
-	
-	cout << s[N - 1][0];
 	return 0;
 }
