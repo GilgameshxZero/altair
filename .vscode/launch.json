@@ -17,7 +17,6 @@
 				"${workspaceFolder}${pathSeparator}build${pathSeparator}o.default.txt"
 			],
 			"console": "integratedTerminal",
-			"externalConsole": false,
 			"stopAtEntry": false,
 			"MIMode": "gdb",
 
@@ -41,7 +40,6 @@
 			"cwd": "${workspaceFolder}${pathSeparator}bin",
 			"args": [],
 			"console": "integratedTerminal",
-			"externalConsole": false,
 			"stopAtEntry": false,
 			"MIMode": "gdb",
 
@@ -62,7 +60,6 @@
 				"${workspaceFolder}${pathSeparator}build${pathSeparator}o.default.txt"
 			],
 			"console": "internalTerminal",
-			"externalConsole": false,
 			"stopAtEntry": false,
 			"MIMode": "gdb",
 
@@ -78,7 +75,6 @@
 			"cwd": "${workspaceFolder}${pathSeparator}bin",
 			"args": [],
 			"console": "internalTerminal",
-			"externalConsole": false,
 			"stopAtEntry": false,
 			"MIMode": "gdb",
 
