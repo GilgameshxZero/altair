@@ -1,0 +1,106 @@
+Task #1:
+Init: PUSH x TranslateToX
+
+TranslateToX: SPLIT OutX TranslateToX Transition1
+OutX: PUSH x TranslateToX
+
+Transition1: PUSH 1 TranslateTo0
+
+TranslateTo0: SPLIT FUCK EvalS1 Out0
+Out0: PUSH 0 TranslateTo0
+
+EvalS1: SPLIT EvalS2 FUCK Rej
+
+EvalS2: SPLIT EvalS1 FUCK Acc
+
+Rej: REJECT
+Acc: ACCEPT
+
+Task #2:
+#first count digits
+Init: PUSH x EvenD
+
+EvenD: SPLIT TO0 TO1 S02
+OddD: SPLIT TE0 TE1 S01
+
+TO0: PUSH 0 OddD
+TO1: PUSH 1 OddD
+TE0: PUSH 0 EvenD
+TE1: PUSH 1 EvenD
+
+#Sxy: state of mod x and mul y
+S01: SPLIT S02 S12 AC
+S02: SPLIT S01 S21 AC
+S11: SPLIT S12 S22 WA
+S12: SPLIT S11 S01 WA
+S21: SPLIT S22 S02 WA
+S22: SPLIT S21 S11 WA
+
+AC: ACCEPT
+WA: REJECT
+
+Task #3:
+Loop: SPLIT WA Loop AC
+WA: REJECT
+AC: ACCEPT
+
+Task #4:
+PX: PUSH x GetChar
+GetChar: SPLIT Find1 Find0 AC
+
+#we have a 1, find a zero to match up, and disregard others
+Find0: SPLIT Finish PF01 WA
+PF01: PUSH 1 Find0
+
+Find1: SPLIT PF10 Finish WA
+PF10: PUSH 0 Find1
+
+#output all until x then a x
+Finish: SPLIT PF0 PF1 PX
+PF0: PUSH 0 Finish
+PF1: PUSH 1 Finish
+
+AC: ACCEPT
+WA: REJECT
+
+Task #5:
+PX: PUSH x GetChar
+GetChar: SPLIT Find1 WA AC
+
+Find1: SPLIT PF10 Finish WA
+PF10: PUSH 0 Find1
+
+#output all until x then a x
+Finish: SPLIT PF0 PF1 PX
+PF0: PUSH 0 Finish
+PF1: PUSH 1 Finish
+
+AC: ACCEPT
+WA: REJECT
+
+Task #6:
+Init: PUSH x GetChar
+GetChar: SPLIT Trans0 Trans1 AC
+
+Trans0: SPLIT Palin0P0 Palin0P1 Init
+Trans1: SPLIT Palin1P0 Palin1P1 Init
+
+#PalinxPy: looking for last character of x, previous char was y
+P000: PUSH 0 Palin0P0
+P100: PUSH 1 Palin0P0
+P001: PUSH 0 Palin0P1
+P101: PUSH 1 Palin0P1
+P010: PUSH 0 Palin1P0
+P110: PUSH 1 Palin1P0
+P011: PUSH 0 Palin1P1
+P111: PUSH 1 Palin1P1
+
+Palin0P0: SPLIT P000 P001 Init
+Palin0P1: SPLIT P100 P101 WA
+Palin1P0: SPLIT P010 P011 WA
+Palin1P1: SPLIT P110 P111 Init
+
+AC: ACCEPT
+WA: REJECT
+
+Task #7:

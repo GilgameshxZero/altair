@@ -7,11 +7,16 @@ Each folder, outside of `bin`, `build`, and `obj`, is a *project* representing a
 
 Prefix|Platform
 -|-
-`abc`, `arc`, `agc`, `atcoder`|AtCoder
+`abc`, `arc`, `agc`, `ac`|AtCoder
+`cc`|CodeChef
 `cf`|Codeforces
 `coci`|COCI
-`fb`|Facebook
+`fbhc`, `mhc`|Facebook Hacker Cup, Meta Hacker Cup
+`pc`|Programming Challenges
 `usaco`|USACO
+`spoj`|Sphere Online Judge
+`tc`|TopCoder
+`uva`|UVa Online Judge
 
 Select *projects* without an eligible prefix are likely custom problems.
 
