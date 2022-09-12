@@ -8,12 +8,14 @@ Each folder, outside of `bin`, `build`, and `obj`, is a *project* representing a
 Prefix|Platform
 -|-
 `abc`, `arc`, `agc`, `ac`|AtCoder
+`bayan`|Bayan
 `cc`|CodeChef
 `cf`|Codeforces
 `coci`|COCI
 `fbhc`, `mhc`|Facebook Hacker Cup, Meta Hacker Cup
 `pc`|Programming Challenges
 `usaco`|USACO
+`sparc`|SPARC
 `spoj`|Sphere Online Judge
 `tc`|TopCoder
 `uva`|UVa Online Judge
