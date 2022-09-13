@@ -77,7 +77,7 @@ class IO {
 	public:
 	IO() {
 #ifndef ONLINEJUDGE
-#ifdef defined(__APPLE__) || defined(__MACH__)
+#if defined(__APPLE__) || defined(__MACH__)
 		std::freopen("../build/i.default.txt", "r", stdin);
 		std::freopen("../build/o.default.txt", "w", stdout);
 #endif
