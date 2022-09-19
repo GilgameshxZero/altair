@@ -12,6 +12,8 @@
 	},
 
 	"markdown.styles": ["http://gilgamesh.cc/snapshot.css"],
+	
+	"search.useIgnoreFiles": false,
 
 	"C_Cpp.default.cppStandard": "c++17",
 
