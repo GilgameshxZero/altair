@@ -1,5 +1,7 @@
+#if defined(__GNUC__) && !defined(__clang__)
 #pragma GCC target("avx2", "bmi", "bmi2", "popcnt", "lzcnt")
 #pragma GCC optimize("Ofast", "unroll-loops")
+#endif
 
 #ifndef _CRT_SECURE_NO_WARNINGS
 #define _CRT_SECURE_NO_WARNINGS
@@ -57,6 +59,14 @@ using namespace std;
 /* ---------------------------- End of template. ---------------------------- */
 
 int main(int, char const *[]) {
+#if !defined(ONLINEJUDGE) && (defined(__APPLE__) || defined(__MACH__))
+	std::freopen("../build/i.default.txt", "r", stdin);
+	std::freopen("../build/o.default.txt", "w", stdout);
+#endif
+
+	std::ios_base::sync_with_stdio(false);
+	std::cin.tie(nullptr);
+
 	LL T;
 	cin >> T;
 	while (T--) {
@@ -64,20 +74,3 @@ int main(int, char const *[]) {
 
 	return 0;
 }
-
-/* ---------------------------- End of solution. ---------------------------- */
-
-class IO {
-	public:
-	IO() {
-#ifndef ONLINEJUDGE
-#if defined(__APPLE__) || defined(__MACH__)
-		std::freopen("../build/i.default.txt", "r", stdin);
-		std::freopen("../build/o.default.txt", "w", stdout);
-#endif
-#endif
-
-		std::ios_base::sync_with_stdio(false);
-		std::cin.tie(nullptr);
-	}
-} io;
