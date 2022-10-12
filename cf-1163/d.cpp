@@ -1,3 +1,61 @@
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC target("avx2", "bmi", "bmi2", "popcnt", "lzcnt")
+#pragma GCC optimize("Ofast", "unroll-loops")
+#endif
+
+#ifndef _CRT_SECURE_NO_WARNINGS
+#define _CRT_SECURE_NO_WARNINGS
+#endif
+
+#include <algorithm>
+#include <array>
+#include <atomic>
+#include <bitset>
+#include <cassert>
+#include <chrono>
+#include <cinttypes>
+#include <climits>
+#include <cmath>
+#include <condition_variable>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <ctime>
+#include <deque>
+#include <fstream>
+#include <functional>
+#include <iomanip>
+#include <iostream>
+#include <limits>
+#include <list>
+#include <locale>
+#include <map>
+#include <memory>
+#include <mutex>
+#include <numeric>
+#include <queue>
+#include <regex>
+#include <set>
+#include <sstream>
+#include <stack>
+#include <stdexcept>
+#include <streambuf>
+#include <string>
+#include <system_error>
+#include <thread>
+#include <unordered_map>
+#include <unordered_set>
+#include <utility>
+#include <vector>
+
+using LL = long long;
+using LD = long double;
+
+#define RF(x, from, to) \
+	for (long long x = from, rfDir = from < to ? 1 : -1; x != to; x += rfDir)
+
+using namespace std;
+
 // Compute partial match table (also known as the failure function) (used in
 // KMP) for a string.
 //
@@ -111,4 +169,84 @@ inline std::pair<std::size_t, std::size_t> kmpSearch(
 	std::size_t candidate = 0) {
 	return kmpSearch(
 		haystack, needle.c_str(), needle.length(), partialMatch, candidate);
+}
+
+/* ---------------------------- End of template. ---------------------------- */
+
+int main(int, char const *[]) {
+#if !defined(ONLINEJUDGE) && (defined(__APPLE__) || defined(__MACH__))
+	std::freopen("../build/i.default.txt", "r", stdin);
+	std::freopen("../build/o.default.txt", "w", stdout);
+#endif
+
+	std::ios_base::sync_with_stdio(false);
+	std::cin.tie(nullptr);
+
+	string C, S, T;
+	cin >> C >> S >> T;
+
+	auto pmS{computeKmpPartialMatch(S)}, pmT{computeKmpPartialMatch(T)};
+
+	vector<vector<vector<LL>>> s(
+		C.length() + 1,
+		vector<vector<LL>>(
+			S.length(), vector<LL>(T.length(), numeric_limits<int>::min())));
+	s[0][0][0] = 0;
+
+	RF(i, 0, C.length()) {
+		RF(j, 0, S.length()) {
+			RF(k, 0, T.length()) {
+				char lmin, lmax;
+				if (C[i] == '*') {
+					lmin = 'a';
+					lmax = 'z';
+				} else {
+					lmin = lmax = C[i];
+				}
+
+				for (char l{lmin}; l <= lmax; l++) {
+					size_t nj(j), nk(k);
+					LL ds{0};
+					while (nj != SIZE_MAX && l != S[nj]) {
+						nj = pmS[nj];
+					}
+					nj++;
+					if (nj == S.length()) {
+						ds++;
+						nj = pmS[nj];
+					}
+					while (nk != SIZE_MAX && l != T[nk]) {
+						nk = pmT[nk];
+					}
+					nk++;
+					if (nk == T.length()) {
+						ds--;
+						nk = pmT[nk];
+					}
+
+					s[i + 1][nj][nk] = max(s[i + 1][nj][nk], s[i][j][k] + ds);
+				}
+			}
+		}
+	}
+
+	// RF(i, 0, C.length() + 1) {
+	// 	RF(j, 0, S.length()) {
+	// 		RF(k, 0, T.length()) {
+	// 			cout << s[i][j][k] << ' ';
+	// 		}
+	// 		cout << endl;
+	// 	}
+	// 	cout << endl << endl;
+	// }
+
+	LL ans{numeric_limits<int>::min()};
+	RF(j, 0, S.length()) {
+		RF(k, 0, T.length()) {
+			ans = max(ans, s[C.length()][j][k]);
+		}
+	}
+	cout << ans;
+
+	return 0;
 }
