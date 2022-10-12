@@ -6,6 +6,8 @@
 // i    | 0  | 1 | 2  | 3 | 4  | 5 | 6  | 7 | 8 | 9
 // S[i] | A  | B | A  | C | A  | B | A  | B | C |
 // T[i] | -1 | 0 | -1 | 1 | -1 | 0 | -1 | 3 | 2 | 0
+// A candidate of -1 means that the next haystack character certainly won’t
+// match the first character of the needle.
 inline std::vector<std::size_t> computeKmpPartialMatch(
 	char const *const cStr,
 	std::size_t const cStrLen) {
@@ -62,6 +64,7 @@ inline std::pair<char *, std::size_t> kmpSearch(
 			candidate++;
 			if (candidate == needleLen) {
 				searchResult = haystack + a - candidate;
+				break;
 			}
 		} else {
 			// Use the partial match table to resume if a match fails.
@@ -89,6 +92,7 @@ inline std::pair<char *, std::size_t> kmpSearch(
 		partialMatch,
 		candidate);
 }
+// The first element of returned pair will be out of range if not found.
 inline std::pair<std::size_t, std::size_t> kmpSearch(
 	std::string const &haystack,
 	char const *const needle,
