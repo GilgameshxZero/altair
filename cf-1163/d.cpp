@@ -211,6 +211,7 @@ int main(int, char const *[]) {
 						nj = pmS[nj];
 					}
 					nj++;
+					// Now, nj contains the number of matched characters, with l, in S.
 					if (nj == S.length()) {
 						ds++;
 						nj = pmS[nj];
