@@ -1,0 +1,287 @@
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC target("avx2", "bmi", "bmi2", "popcnt", "lzcnt")
+#pragma GCC optimize("Ofast", "unroll-loops")
+#endif
+
+#ifndef _CRT_SECURE_NO_WARNINGS
+#define _CRT_SECURE_NO_WARNINGS
+#endif
+
+#include <algorithm>
+#include <array>
+#include <atomic>
+#include <bitset>
+#include <cassert>
+#include <chrono>
+#include <cinttypes>
+#include <climits>
+#include <cmath>
+#include <condition_variable>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <ctime>
+#include <deque>
+#include <fstream>
+#include <functional>
+#include <iomanip>
+#include <iostream>
+#include <limits>
+#include <list>
+#include <locale>
+#include <map>
+#include <memory>
+#include <mutex>
+#include <numeric>
+#include <queue>
+#include <regex>
+#include <set>
+#include <sstream>
+#include <stack>
+#include <stdexcept>
+#include <streambuf>
+#include <string>
+#include <system_error>
+#include <thread>
+#include <unordered_map>
+#include <unordered_set>
+#include <utility>
+#include <vector>
+
+using LL = long long;
+using LD = long double;
+
+#define RF(x, from, to) \
+	for (long long x = from, rfDir = from < to ? 1 : -1; x != to; x += rfDir)
+
+using namespace std;
+
+// Implementation for a prime modulus ring over the integers, supporting basic
+// operations add, subtract, multiply in O(1) and divide in O(ln N).
+//
+// Integer must be large enough to store (primeModulus - 1)^2.
+//
+// For O(1) division, cache multiplicative inverses and multiply with those.
+template <typename Integer, Integer primeModulus>
+class ModRing {
+	public:
+	Integer value;
+
+	// Add primeModulus first to wrap back around in the case of "negative"
+	// unsigned Integer.
+	ModRing(Integer const value = 0)
+			: value((primeModulus + value) % primeModulus) {}
+
+	// O(ln N) exponentiation.
+	static ModRing<Integer, primeModulus> power(
+		ModRing<Integer, primeModulus> const base,
+		Integer const exponent) {
+		if (exponent == 0) {
+			return {1};
+		}
+		auto half = power(base, exponent / 2);
+		if (exponent % 2 == 0) {
+			return half * half;
+		} else {
+			return half * half * base;
+		}
+	}
+
+	ModRing<Integer, primeModulus> operator+(Integer const other) const {
+		return *this + ModRing<Integer, primeModulus>(other);
+	}
+	ModRing<Integer, primeModulus> operator+(Integer const other) {
+		return *this + ModRing<Integer, primeModulus>(other);
+	}
+	ModRing<Integer, primeModulus> operator+(
+		ModRing<Integer, primeModulus> const other) {
+		return {this->value + other.value};
+	}
+	ModRing<Integer, primeModulus> operator+=(
+		ModRing<Integer, primeModulus> const other) {
+		return *this = *this + other;
+	}
+	ModRing<Integer, primeModulus> operator++() { return *this += 1; }
+	ModRing<Integer, primeModulus> operator++(int) {
+		auto tmp(*this);
+		*this += 1;
+		return tmp;
+	}
+	ModRing<Integer, primeModulus> operator-(Integer const other) const {
+		return *this - ModRing<Integer, primeModulus>(other);
+	}
+	ModRing<Integer, primeModulus> operator-(Integer const other) {
+		return *this - ModRing<Integer, primeModulus>(other);
+	}
+	ModRing<Integer, primeModulus> operator-(
+		ModRing<Integer, primeModulus> const other) {
+		return {this->value - other.value};
+	}
+	ModRing<Integer, primeModulus> operator-=(
+		ModRing<Integer, primeModulus> const other) {
+		return *this = *this - other;
+	}
+	ModRing<Integer, primeModulus> operator--() { return *this -= 1; }
+	ModRing<Integer, primeModulus> operator--(int) {
+		auto tmp(*this);
+		*this -= 1;
+		return tmp;
+	}
+	ModRing<Integer, primeModulus> operator*(Integer const other) const {
+		return *this * ModRing<Integer, primeModulus>(other);
+	}
+	ModRing<Integer, primeModulus> operator*(Integer const other) {
+		return *this * ModRing<Integer, primeModulus>(other);
+	}
+	ModRing<Integer, primeModulus> operator*(
+		ModRing<Integer, primeModulus> const other) {
+		return {this->value * other.value};
+	}
+	ModRing<Integer, primeModulus> operator*=(
+		ModRing<Integer, primeModulus> const other) {
+		return *this = *this * other;
+	}
+	ModRing<Integer, primeModulus> operator/(Integer const other) const {
+		return *this / ModRing<Integer, primeModulus>(other);
+	}
+	ModRing<Integer, primeModulus> operator/(Integer const other) {
+		return *this / ModRing<Integer, primeModulus>(other);
+	}
+	ModRing<Integer, primeModulus> operator/(
+		ModRing<Integer, primeModulus> const other) {
+		return *this * power(other, primeModulus - 2);
+	}
+	ModRing<Integer, primeModulus> operator/=(
+		ModRing<Integer, primeModulus> const other) {
+		return *this = *this / other;
+	}
+
+	bool operator==(Integer const other) {
+		return *this == ModRing<Integer, primeModulus>(other);
+	}
+	bool operator==(ModRing<Integer, primeModulus> const other) {
+		return this->value == other.value;
+	}
+};
+
+template <typename LeftInteger, typename Integer, Integer primeModulus>
+ModRing<Integer, primeModulus> operator+(
+	LeftInteger const left,
+	ModRing<Integer, primeModulus> const right) {
+	return ModRing<Integer, primeModulus>(left) + right;
+}
+
+template <typename LeftInteger, typename Integer, Integer primeModulus>
+ModRing<Integer, primeModulus> operator-(
+	LeftInteger const left,
+	ModRing<Integer, primeModulus> const right) {
+	return ModRing<Integer, primeModulus>(left) - right;
+}
+
+template <typename LeftInteger, typename Integer, Integer primeModulus>
+ModRing<Integer, primeModulus> operator*(
+	LeftInteger const left,
+	ModRing<Integer, primeModulus> const right) {
+	return ModRing<Integer, primeModulus>(left) * right;
+}
+
+template <typename LeftInteger, typename Integer, Integer primeModulus>
+ModRing<Integer, primeModulus> operator/(
+	LeftInteger const left,
+	ModRing<Integer, primeModulus> const right) {
+	return ModRing<Integer, primeModulus>(left) / right;
+}
+
+// Ease-of-use streaming operator.
+template <typename Integer, Integer primeModulus>
+inline std::ostream &operator<<(
+	std::ostream &stream,
+	ModRing<Integer, primeModulus> const right) {
+	return stream << right.value;
+}
+
+/* ---------------------------- End of template. ---------------------------- */
+
+using MR = ModRing<LL, 1000000007>;
+
+int main(int, char const *[]) {
+#if !defined(ONLINEJUDGE) && (defined(__APPLE__) || defined(__MACH__))
+	std::freopen("../build/i.default.txt", "r", stdin);
+	std::freopen("../build/o.default.txt", "w", stdout);
+#endif
+
+	std::ios_base::sync_with_stdio(false);
+	std::cin.tie(nullptr);
+
+	vector<LL> primes;
+	vector<map<LL, LL>> factors;
+	factors.push_back({});
+	factors.push_back({});
+	RF(i, 2, 200001) {
+		factors.push_back({});
+		bool composite{false};
+		for (LL j{0}; j < primes.size() && primes[j] * primes[j] <= i; j++) {
+			if (i % primes[j] == 0) {
+				composite = true;
+				LL cur{i};
+				while (cur != 1) {
+					if (cur % primes[j] == 0) {
+						cur /= primes[j];
+						factors[i][j]++;
+					} else {
+						j++;
+					}
+				}
+				break;
+			}
+		}
+		if (!composite) {
+			factors[i][primes.size()] = 1;
+			primes.push_back(i);
+		}
+	}
+
+	LL N, Q;
+	cin >> N >> Q;
+	vector<map<LL, LL>> A(N);
+	vector<multiset<LL>> powers(primes.size());
+	RF(i, 0, N) {
+		LL X;
+		cin >> X;
+		A[i] = factors[X];
+		for (auto &j : factors[X]) {
+			powers[j.first].insert(j.second);
+		}
+	}
+
+	MR ans{1};
+	RF(i, 0, powers.size()) {
+		if (powers[i].size() == N) {
+			ans *= MR::power(primes[i], *powers[i].begin());
+		}
+	}
+
+	RF(i, 0, Q) {
+		LL I, X;
+		cin >> I >> X;
+		I--;
+		for (auto &j : factors[X]) {
+			if (A[I].find(j.first) != A[I].end()) {
+				if (powers[j.first].size() == N) {
+					ans /= MR::power(primes[j.first], *powers[j.first].begin());
+				}
+				powers[j.first].erase(powers[j.first].find(A[I][j.first]));
+			}
+
+			A[I][j.first] += j.second;
+
+			powers[j.first].insert(A[I][j.first]);
+			if (powers[j.first].size() == N) {
+				ans *= MR::power(primes[j.first], *powers[j.first].begin());
+			}
+		}
+		cout << ans << '\n';
+	}
+
+	return 0;
+}
