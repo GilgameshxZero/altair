@@ -51,8 +51,9 @@
 using LL = long long;
 using LD = long double;
 
-#define RF(x, from, to) \
-	for (long long x = from, rfDir = from < to ? 1 : -1; x != to; x += rfDir)
+#define RF(x, from, to)                                                      \
+	for (long long x = from, _to = to, _delta{x < _to ? 1LL : -1LL}; x != _to; \
+			 x += _delta)
 
 using namespace std;
 
