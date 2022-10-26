@@ -1,61 +1,65 @@
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC target("avx2", "bmi", "bmi2", "popcnt", "lzcnt")
+#pragma GCC optimize("Ofast", "unroll-loops")
+#endif
+
+#ifndef _CRT_SECURE_NO_WARNINGS
 #define _CRT_SECURE_NO_WARNINGS
+#endif
 
 #include <algorithm>
+#include <array>
+#include <atomic>
 #include <bitset>
+#include <cassert>
+#include <chrono>
+#include <cinttypes>
 #include <climits>
 #include <cmath>
+#include <condition_variable>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <ctime>
+#include <deque>
 #include <fstream>
 #include <functional>
 #include <iomanip>
 #include <iostream>
 #include <limits>
+#include <list>
+#include <locale>
 #include <map>
+#include <memory>
+#include <mutex>
+#include <numeric>
 #include <queue>
+#include <regex>
 #include <set>
 #include <sstream>
 #include <stack>
+#include <stdexcept>
+#include <streambuf>
 #include <string>
+#include <system_error>
+#include <thread>
+#include <unordered_map>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
+using LL = long long;
+using LD = long double;
+
+#define RF(x, from, to)                                                      \
+	for (long long x = from, _to = to, _delta{x < _to ? 1LL : -1LL}; x != _to; \
+			 x += _delta)
+
 using namespace std;
 
-int n, s, l, x[100000], rmq[2][100000][18], cut[100000];	// min, max query
+/* ---------------------------- End of template. ---------------------------- */
 
-int Bits(int x) {
-	for (int r = 0;; r++)
-		if ((x >> r) == 0) return r;
-}
-
-int MinQ(int a, int b) {
-	int k = Bits(b - a + 1) - 1;
-	return min(rmq[0][a][k], rmq[0][b - (1 << k) + 1][k]);
-}
-
-int MaxQ(int a, int b) {
-	int k = Bits(b - a + 1) - 1;
-	return max(rmq[1][a][k], rmq[1][b - (1 << k) + 1][k]);
-}
-
-int GetPos(int start) {
-	// bsearch
-	int low = start, high = n, mid;
-	while (low + 1 < high) {
-		mid = (low + high) / 2;
-		if (MaxQ(start, mid) - MinQ(start, mid) > s)
-			high = mid;
-		else
-			low = mid;
-	}
-
-	return low;
-}
-
-int main() {
+int main(int, char const *[]) {
 #if !defined(ONLINEJUDGE) && (defined(__APPLE__) || defined(__MACH__))
 	std::freopen("../build/i.default.txt", "r", stdin);
 	std::freopen("../build/o.default.txt", "w", stdout);
@@ -64,37 +68,37 @@ int main() {
 	std::ios_base::sync_with_stdio(false);
 	std::cin.tie(nullptr);
 
-	cin >> n >> s >> l;
-	for (int a = 0; a < n; a++) cin >> x[a];
-
-	for (int a = 0; a < n; a++) rmq[0][a][0] = rmq[1][a][0] = x[a];
-	for (int a = 1; a < 18; a++)
-		for (int b = 0; b + (1 << a) <= n; b++)
-			rmq[0][b][a] = min(rmq[0][b][a - 1], rmq[0][b + (1 << (a - 1))][a - 1]),
-			rmq[1][b][a] = max(rmq[1][b][a - 1], rmq[1][b + (1 << (a - 1))][a - 1]);
-
-	int ans = 0;
-	for (int a = 0, b, c, d, e; a < n; ans++) {
-		b = GetPos(a);
-		cut[ans] = a;
-
-		c = a, d = b, e = ans;
-		while (e >= 0 && d - c + 1 < l) {
-			// try moving it back to fit l
-			if (d - l + 1 >= 0 && MaxQ(d - l + 1, d) - MinQ(d - l + 1, d) <= s) {
-				d = d - l;
-				e--;
-			} else {
-				cout << "-1\n";
-				return 0;
-			}
-			c = cut[e];
-		}
-
-		a = b + 1;
+	LL N, S, L;
+	cin >> N >> S >> L;
+	vector<LL> A(N);
+	RF(i, 0, N) {
+		cin >> A[i];
+	}
+	if (L > N) {
+		cout << -1;
+		return 0;
 	}
 
-	cout << ans;
-
+	vector<LL> ans(N + 1, 1000000000);
+	multiset<LL> As, as;
+	ans[0] = 0;
+	RF(i, 0, L - 1) {
+		As.insert(A[i]);
+	}
+	LL lagger{0}, l2{0};
+	RF(i, L, N + 1) {
+		As.insert(A[i - 1]);
+		while (!As.empty() && *As.rbegin() - *As.begin() > S) {
+			As.erase(As.find(A[lagger++]));
+		}
+		as.insert(ans[i - L]);
+		while (!as.empty() && l2 < lagger) {
+			as.erase(as.find(ans[l2++]));
+		}
+		if (l2 == lagger && !as.empty() && As.size() >= L) {
+			ans[i] = *as.begin() + 1;
+		}
+	}
+	cout << (ans[N] >= 1000000000 ? -1 : ans[N]);
 	return 0;
 }
