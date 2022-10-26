@@ -1,8 +1,5 @@
 // C++ template for coding competitions designed for C++11 support, primarily
 // targeting MSVC++17.
-//
-// TODO: Investigate PCH support conditioned on ONLINE_JUDGE for faster
-// local compilation.
 
 // Disable security/deprecation warnings on MSVC++.
 #ifndef _CRT_SECURE_NO_WARNINGS

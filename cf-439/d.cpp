@@ -42,7 +42,7 @@ int main ()
 	sort (x, x + n);
 	sort (y, y + m);
 
-	//Find range. TODO: BSearch.
+	//Find range.
 	for (low = m - 1;low >= 0;low--)
 		if (y[low] <= x[0])
 			break;
