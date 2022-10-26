@@ -861,8 +861,9 @@ int main(int, char const *[]) {
 		RF(i, 0, N) {
 			auto j = dsu.find(iv[i].first.second);
 			vp[iv[i].second] = stop[j];
+			LL upd{stop[dsu.find(stop[j] + 1)]};
 			dsu.join(stop[j], stop[j] + 1);
-			stop[dsu.find(j)] = stop[j] + 1;
+			stop[dsu.find(j)] = upd;
 		}
 		RF(i, 0, N) {
 			cout << vp[i] << ' ';
