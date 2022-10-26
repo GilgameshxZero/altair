@@ -57,25 +57,6 @@ using LD = long double;
 
 using namespace std;
 
-// GCD using Euclidean algorithm.
-template <typename Integer>
-inline Integer greatestCommonDivisor(Integer x, Integer y) {
-	if (x > y) {
-		std::swap(x, y);
-	}
-	while (x != 0) {
-		y %= x;
-		std::swap(x, y);
-	}
-	return y;
-}
-
-// LCM. Integer type must be large enough to store product.
-template <typename Integer>
-inline Integer leastCommonMultiple(Integer const x, Integer const y) {
-	return x * y / greatestCommonDivisor(x, y);
-}
-
 /* ---------------------------- End of template. ---------------------------- */
 
 int main(int, char const *[]) {
@@ -87,26 +68,22 @@ int main(int, char const *[]) {
 	std::ios_base::sync_with_stdio(false);
 	std::cin.tie(nullptr);
 
-	LL N;
-	cin >> N;
-	vector<LL> A(N);
-	RF(i, 0, N) {
-		cin >> A[i];
+	LL P, Y;
+	cin >> P >> Y;
+	// 1, 7, 11, 13, 17, 19, 23, 29.
+	RF(i, Y, P) {
+		bool div{false};
+		for (LL j{2}; j * j <= i && j <= P; j++) {
+			if (i % j == 0) {
+				div = true;
+				break;
+			}
+		}
+		if (!div) {
+			cout << i;
+			return 0;
+		}
 	}
-	A.push_back(0);
-	sort(A.begin(), A.end());
-
-	LL num{0}, cur{0};
-	RF(i, 1, N + 1) {
-		cur += A[i];
-	}
-	RF(i, 1, N + 1) {
-		cur += i * (A[i] - A[i - 1]);
-		cur -= (N + 1 - i) * (A[i] - A[i - 1]);
-		num += cur;
-	}
-	LL g{greatestCommonDivisor(num, N)};
-	cout << num / g << ' ' << N / g;
-
+	cout << -1;
 	return 0;
 }
