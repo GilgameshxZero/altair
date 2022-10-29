@@ -1,26 +1,7 @@
 # competitive
 
 Personal archive of coding competition submissions.
-Designed for C++11 in Visual Studio Code.
-
-Each folder, outside of `bin`, `build`, and `obj`, is a *project* representing a competition, whose names are prefixed as follows.
-
-Prefix|Platform
--|-
-`abc`, `arc`, `agc`, `ac`|AtCoder
-`bayan`|Bayan
-`cc`|CodeChef
-`cf`|Codeforces
-`coci`|COCI
-`fbhc`, `mhc`|Facebook Hacker Cup, Meta Hacker Cup
-`pc`|Programming Challenges
-`usaco`|USACO
-`sparc`|SPARC
-`spoj`|Sphere Online Judge
-`tc`|TopCoder
-`uva`|UVa Online Judge
-
-Select *projects* without an eligible prefix are likely custom problems.
+Designed for C++17 in Visual Studio Code. Back-compatible with C++11.
 
 We provide six launch configurations, whose names are composed of tokens with meaning as follows.
 
