@@ -191,8 +191,30 @@ int main(int, char const *[]) {
 	string S;
 	cin >> N >> K >> S;
 
-	auto res{kmpSearch(S.c_str() + 1, S.length() - 1, S)};
-	LL cans(S.length() - res.second);
-	cout << cans;
+	auto pm{computeKmpPartialMatch(S)};
+	LL candidate{0};
+	RF(i, 0, S.length()) {
+		if (i != 0) {
+			while (true) {
+				if (S[i] == S[candidate]) {
+					candidate++;
+					break;
+				} else {
+					candidate = pm[candidate];
+					if (candidate == SIZE_MAX) {
+						candidate = 0;
+						break;
+					}
+				}
+			}
+		}
+
+		LL rep(i + 1 - candidate), cnt{(i + 1) / rep};
+		if ((i + 1) % rep == 0) {
+			cout << (cnt % K <= cnt / K ? 1 : 0);
+		} else {
+			cout << (cnt % K < cnt / K ? 1 : 0);
+		}
+	}
 	return 0;
 }
