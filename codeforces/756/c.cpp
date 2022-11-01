@@ -1,3 +1,63 @@
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC target("avx2", "bmi", "bmi2", "popcnt", "lzcnt")
+#pragma GCC optimize("Ofast", "unroll-loops")
+#endif
+
+#ifndef _CRT_SECURE_NO_WARNINGS
+#define _CRT_SECURE_NO_WARNINGS
+#endif
+
+#include <algorithm>
+#include <array>
+#include <atomic>
+#include <bitset>
+#include <cassert>
+#include <chrono>
+#include <cinttypes>
+#include <climits>
+#include <cmath>
+#include <condition_variable>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <ctime>
+#include <deque>
+#include <fstream>
+#include <functional>
+#include <iomanip>
+#include <iostream>
+#include <limits>
+#include <list>
+#include <locale>
+#include <map>
+#include <memory>
+#include <mutex>
+#include <numeric>
+#include <queue>
+#include <regex>
+#include <set>
+#include <sstream>
+#include <stack>
+#include <stdexcept>
+#include <streambuf>
+#include <string>
+#include <system_error>
+#include <thread>
+#include <unordered_map>
+#include <unordered_set>
+#include <utility>
+#include <vector>
+
+using LL = long long;
+using LD = long double;
+
+#define RF(x, from, to)                                                      \
+	for (long long x = from, _to = to, _delta{x < _to ? 1LL : -1LL}; x != _to; \
+			 x += _delta)
+
+using namespace std;
+
+using namespace std;
 inline constexpr std::size_t operator"" _zu(unsigned long long value) {
 	return static_cast<std::size_t>(value);
 }
@@ -200,3 +260,93 @@ class SegmentTree {
 		}
 	}
 };
+
+/* ---------------------------- End of template. ---------------------------- */
+
+class ST : public SegmentTree<LL, LL> {
+	using SegmentTree<LL, LL>::SegmentTree;
+
+	// Aggregate values from two children while retracing an update. Aggregating
+	// with a default-initialized Value or Update should do nothing.
+	virtual void aggregate(
+		std::size_t const node,
+		typename std::vector<Value>::reference value,
+		Value const &left,
+		Value const &right,
+		std::pair<std::size_t, std::size_t> const &range) {
+		value = max(left, right);
+	}
+
+	// Aggregate two results from queries on children. Aggregating with a
+	// default-initialized Result should do nothing.
+	virtual Result aggregate(
+		std::size_t const node,
+		Result const &left,
+		Result const &right,
+		std::pair<std::size_t, std::size_t> const &range) {
+		return max(left, right);
+	}
+
+	// Propagate an update on a parent to its two children. Lazy bits for the
+	// children are set beforehand, but can be unset in the function.
+	virtual void split(
+		std::size_t const node,
+		Update const &update,
+		typename std::vector<Update>::reference left,
+		typename std::vector<Update>::reference right,
+		std::pair<std::size_t, std::size_t> const &range) {
+		left += update;
+		right += update;
+	}
+
+	// Convert a Value at a leaf node to a Result for base case queries.
+	virtual Result convert(std::size_t const node, Value const &value) {
+		return value;
+	}
+
+	// Apply an update fully to a lazy node.
+	virtual void apply(
+		std::size_t const node,
+		typename std::vector<Value>::reference value,
+		Update const &update,
+		std::pair<std::size_t, std::size_t> const &range) {
+		value += update;
+	}
+};
+
+int main(int, char const *[]) {
+#if !defined(ONLINEJUDGE) && (defined(__APPLE__) || defined(__MACH__))
+	std::freopen("../build/i.default.txt", "r", stdin);
+	std::freopen("../build/o.default.txt", "w", stdout);
+#endif
+
+	std::ios_base::sync_with_stdio(false);
+	std::cin.tie(nullptr);
+
+	LL M;
+	cin >> M;
+	ST tree(M);
+	vector<LL> n(M, -1);
+	RF(i, 0, M) {
+		LL perm, type, op;
+		cin >> perm >> type;
+		perm--;
+		if (type == 1) {
+			cin >> op;
+			n[perm] = op;
+		}
+		tree.update(M - 1 - perm, M - 1, type == 0 ? -1 : 1);
+
+		LL low{0}, high{M}, mid;
+		while (low + 1 < high) {
+			mid = (low + high) / 2;
+			if (tree.query(0, mid - 1) <= 0) {
+				low = mid;
+			} else {
+				high = mid;
+			}
+		}
+		cout << (tree.query(0, low) <= 0 ? -1 : n[M - 1 - low]) << '\n';
+	}
+	return 0;
+}
