@@ -59,43 +59,48 @@ using namespace std;
 
 /* ---------------------------- End of template. ---------------------------- */
 
-LL N, K;
+LL N, K, carry;
 vector<vector<LL>> E;
-vector<bool> cut;
+vector<LL> height;
 
-LL dfs(LL cur, LL par) {
-	vector<pair<LL, LL>> subhs;
+multiset<LL> dfs(LL cur, LL par) {
+	multiset<LL> ret;
+	LL cch{0};
 	RF(i, 0, E[cur].size()) {
 		if (E[cur][i] == par) {
 			continue;
 		}
-		LL subh{dfs(E[cur][i], cur)};
-		if (!cut[E[cur][i]]) {
-			subhs.push_back({subh, E[cur][i]});
+		height[E[cur][i]] = height[cur] + 1;
+		cch++;
+		auto res{dfs(E[cur][i], cur)};
+		for (auto j : res) {
+			ret.insert(j);
 		}
-	}
-	if (subhs.size() == 0) {
-		return 0;
-	} else {
-		sort(subhs.begin(), subhs.end());
-		while (true) {
-			if (subhs.size() == 1) {
-				if (subhs[0].first + 1 > K) {
-					cut[subhs[0].second] = true;
-					return 0;
-				} else {
-					return subhs[0].first + 1;
-				}
+		while (ret.size() >= 2) {
+			auto k{ret.rbegin()}, l{k};
+			k++;
+			if (*k - height[cur] + *l - height[cur] > K) {
+				ret.erase(ret.find(*l));
+				carry++;
 			} else {
-				if (subhs.back().first + subhs[subhs.size() - 2].first + 2 > K) {
-					cut[subhs.back().second] = true;
-					subhs.pop_back();
-				} else {
-					return subhs.back().first + 1;
-				}
+				break;
+			}
+		}
+		while (ret.size() >= 2) {
+			auto k{ret.begin()}, l{k};
+			k++;
+			if (*k - height[cur] + *l - height[cur] <= K) {
+				ret.erase(ret.find(*l));
+			} else {
+				break;
 			}
 		}
 	}
+	if (cch == 0) {
+		ret.insert(height[cur]);
+		return ret;
+	}
+	return ret;
 }
 
 int main(int, char const *[]) {
@@ -108,7 +113,7 @@ int main(int, char const *[]) {
 	std::cin.tie(nullptr);
 
 	cin >> N >> K;
-	cut.resize(N, false);
+	height.resize(N, 0);
 	E.resize(N);
 	RF(i, 0, N - 1) {
 		LL U, V;
@@ -116,12 +121,12 @@ int main(int, char const *[]) {
 		E[U - 1].push_back(V - 1);
 		E[V - 1].push_back(U - 1);
 	}
-	dfs(0, -1);
-	cut[0] = true;
-	LL ans{0};
-	RF(i, 0, N) {
-		ans += cut[i];
+	LL root{0};
+	for (; root < N; root++) {
+		if (E[root].size() > 1) {
+			break;
+		}
 	}
-	cout << ans;
+	cout << dfs(root, -1).size() + carry;
 	return 0;
 }
