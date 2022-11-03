@@ -69,7 +69,7 @@ class FenwickTree {
 
 	public:
 	// Creates a Fenwick tree, which may be resized by operations.
-	FenwickTree(std::size_t const size) : tree(size) {}
+	FenwickTree(std::size_t const size = 100001) : tree(size) {}
 
 	// Computes prefix sum up to and including idx.
 	Value sum(std::size_t const idx) const {
@@ -90,6 +90,8 @@ class FenwickTree {
 
 /* ---------------------------- End of template. ---------------------------- */
 
+array<array<array<FenwickTree<LL>, 10>, 10>, 4> prc;
+
 int main(int, char const *[]) {
 #if !defined(ONLINEJUDGE) && (defined(__APPLE__) || defined(__MACH__))
 	std::freopen("../build/i.default.txt", "r", stdin);
@@ -109,24 +111,11 @@ int main(int, char const *[]) {
 	RF(i, 0, 4) {
 		cmr[cm[i]] = i;
 	}
-	vector<vector<vector<FenwickTree<LL>>>> prc;
-	RF(i, 0, 4) {
-		prc.push_back({});
-		RF(j, 0, 10) {
-			prc[i].push_back({});
-			RF(k, 0, 10) {
-				prc[i][j].push_back({S.length() + 1});
-				RF(l, 0, S.length()) {
-					if (l % (j + 1) == k && S[l] == cm[i]) {
-						prc[i][j][k].modify(l + 1, 1);
-					}
-				}
-			}
-			prc[i][j].shrink_to_fit();
+	RF(j, 0, 10) {
+		RF(l, 0, S.length()) {
+			prc[cmr[S[l]]][j][l % (j + 1)].modify(l + 1, 1);
 		}
-		prc[i].shrink_to_fit();
 	}
-	prc.shrink_to_fit();
 
 	RF(i, 0, Q) {
 		LL T;
