@@ -60,17 +60,17 @@ using namespace std;
 /* ---------------------------- End of template. ---------------------------- */
 
 bool detect(
-	vector<unordered_set<LL>> &E,
-	unordered_set<LL> &vis,
+	vector<vector<LL>> &E,
+	vector<bool> &vis,
 	unordered_set<LL> &s,
 	LL cur) {
 	s.insert(cur);
-	vis.insert(cur);
+	vis[cur] = true;
 	for (auto &i : E[cur]) {
 		if (s.count(i)) {
 			return true;
 		}
-		if (!vis.count(i) && detect(E, vis, s, i)) {
+		if (!vis[i] && detect(E, vis, s, i)) {
 			return true;
 		}
 	}
@@ -89,7 +89,7 @@ int main(int, char const *[]) {
 
 	LL H, W;
 	cin >> H >> W;
-	vector<unordered_set<LL>> RE(W * (H + 1) + H), CE(H * (W + 1) + W);
+	vector<vector<LL>> RE(W * (H + 1) + H), CE(H * (W + 1) + W);
 	vector<vector<LL>> A(H, vector<LL>(W));
 	RF(i, 0, H) {
 		RF(j, 0, W) {
@@ -98,7 +98,7 @@ int main(int, char const *[]) {
 	}
 	RF(i, 0, H) {
 		RF(j, 0, W) {
-			CE[i * (W + 1) + j].insert(i * (W + 1) + j + 1);
+			CE[i * (W + 1) + j].push_back(i * (W + 1) + j + 1);
 		}
 		vector<pair<LL, LL>> t;
 		RF(j, 0, W) {
@@ -113,20 +113,24 @@ int main(int, char const *[]) {
 			if (j != 0 && t[j].first != t[j - 1].first) {
 				lag = j;
 			}
-			CE[i * (W + 1) + lag].insert(H * (W + 1) + t[j].second);
-			CE[H * (W + 1) + t[j].second].insert(i * (W + 1) + lag + 1);
+			CE[i * (W + 1) + lag].push_back(H * (W + 1) + t[j].second);
+			CE[H * (W + 1) + t[j].second].push_back(i * (W + 1) + lag + 1);
 		}
 	}
-	unordered_set<LL> vis, s;
-	if (detect(CE, vis, s, 0)) {
-		cout << "No";
-		return 0;
+	vector<bool> vis(H * W + H + W);
+	unordered_set<LL> s;
+	RF(i, 0, H) {
+		if (detect(CE, vis, s, i * (W + 1))) {
+			cout << "No";
+			return 0;
+		}
 	}
 	vis.clear();
+	vis.resize(H * W + H + W);
 	s.clear();
 	RF(i, 0, W) {
 		RF(j, 0, H) {
-			RE[i * (H + 1) + j].insert(i * (H + 1) + j + 1);
+			RE[i * (H + 1) + j].push_back(i * (H + 1) + j + 1);
 		}
 		vector<pair<LL, LL>> t;
 		RF(j, 0, H) {
@@ -141,13 +145,15 @@ int main(int, char const *[]) {
 			if (j != 0 && t[j].first != t[j - 1].first) {
 				lag = j;
 			}
-			RE[i * (H + 1) + lag].insert(W * (H + 1) + t[j].second);
-			RE[W * (H + 1) + t[j].second].insert(i * (H + 1) + lag + 1);
+			RE[i * (H + 1) + lag].push_back(W * (H + 1) + t[j].second);
+			RE[W * (H + 1) + t[j].second].push_back(i * (H + 1) + lag + 1);
 		}
 	}
-	if (detect(RE, vis, s, 0)) {
-		cout << "No";
-		return 0;
+	RF(i, 0, W) {
+		if (detect(RE, vis, s, i * (H + 1))) {
+			cout << "No";
+			return 0;
+		}
 	}
 	cout << "Yes";
 	return 0;
