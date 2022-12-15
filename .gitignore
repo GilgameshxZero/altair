@@ -1,4 +1,5 @@
-**.syncthing/
+**/*.syncthing*/
+**/*.nebo-files/
 
 **/.vs/
 **/bin/
