@@ -71,19 +71,19 @@ int main(int, char const *[]) {
 	LL T;
 	cin >> T;
 	while (T--) {
-		LL N;
-		string S;
-		cin >> N >> S;
-		bool pos{false};
-		RF(i, 1, N) {
-			if (S[i] == '0') {
-				cout << '-';
-			} else {
-				cout << (pos ? '+' : '-');
-				pos = !pos;
-			}
+		LL N, M, K;
+		cin >> N >> M >> K;
+		LL cL{0};
+		RF(i, 0, M) {
+			LL X;
+			cin >> X;
+			cL = max(cL, X);
 		}
-		cout << '\n';
+		if (K == 1) {
+			cout << "YES\n";
+			continue;
+		}
+		cout << ((K - 1) * (cL - 1) > N - cL ? "NO" : "YES") << '\n';
 	}
 
 	return 0;

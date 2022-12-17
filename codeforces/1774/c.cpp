@@ -74,14 +74,11 @@ int main(int, char const *[]) {
 		LL N;
 		string S;
 		cin >> N >> S;
-		bool pos{false};
-		RF(i, 1, N) {
-			if (S[i] == '0') {
-				cout << '-';
-			} else {
-				cout << (pos ? '+' : '-');
-				pos = !pos;
-			}
+		LL C{1};
+		cout << 1;
+		RF(i, 1, N - 1) {
+			C = S[i] == S[i - 1] ? C + 1 : 1;
+			cout << ' ' << i + 2 - C;
 		}
 		cout << '\n';
 	}
