@@ -71,19 +71,63 @@ int main(int, char const *[]) {
 	LL T;
 	cin >> T;
 	while (T--) {
-		LL N;
-		string S;
-		cin >> N >> S;
-		bool pos{false};
-		RF(i, 1, N) {
-			if (S[i] == '0') {
-				cout << '-';
-			} else {
-				cout << (pos ? '+' : '-');
-				pos = !pos;
+		LL N, M;
+		cin >> N >> M;
+		vector<vector<LL>> A(N);
+		vector<LL> rS(N);
+		LL S{0};
+		RF(i, 0, N) {
+			A[i].resize(M);
+			RF(j, 0, M) {
+				cin >> A[i][j];
+				S += A[i][j];
+				rS[i] += A[i][j];
 			}
 		}
-		cout << '\n';
+		if (S % N != 0) {
+			cout << "-1\n";
+			continue;
+		}
+
+		LL target{S / N}, df;
+		for (df = 0; df < N && rS[df] >= target; df++)
+			;
+
+		vector<pair<LL, pair<LL, LL>>> ans;
+		RF(sp, 0, N) {
+			if (rS[sp] <= target) {
+				continue;
+			}
+
+			while (true) {
+				RF(i, 0, M) {
+					if (A[sp][i] == 1 && A[df][i] == 0) {
+						rS[sp]--;
+						rS[df]++;
+						swap(A[sp][i], A[df][i]);
+						ans.push_back({i, {sp, df}});
+
+						if (rS[df] == target) {
+							for (; df < N && rS[df] >= target; df++)
+								;
+							break;
+						}
+						if (rS[sp] == target) {
+							break;
+						}
+					}
+				}
+				if (rS[sp] == target) {
+					break;
+				}
+			}
+		}
+
+		cout << ans.size() << '\n';
+		RF(i, 0, ans.size()) {
+			cout << ans[i].second.first + 1 << ' ' << ans[i].second.second + 1 << ' '
+					 << ans[i].first + 1 << '\n';
+		}
 	}
 
 	return 0;

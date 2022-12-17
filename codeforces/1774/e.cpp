@@ -71,19 +71,6 @@ int main(int, char const *[]) {
 	LL T;
 	cin >> T;
 	while (T--) {
-		LL N;
-		string S;
-		cin >> N >> S;
-		bool pos{false};
-		RF(i, 1, N) {
-			if (S[i] == '0') {
-				cout << '-';
-			} else {
-				cout << (pos ? '+' : '-');
-				pos = !pos;
-			}
-		}
-		cout << '\n';
 	}
 
 	return 0;
