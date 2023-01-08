@@ -1,0 +1,32 @@
+Aho-Corasick
+Meet-in-the-Middle
+Travelling Salesman
+
+segtrees/interval trees
+range trees
+k-d trees
+nCr % M
+suffix automaton
+DP
+Logarithmic Exponentiation
+efficent prime factorization
+aho-corasick
+suffix tress ukkonnen
+bellman ford
+convex hull trick
+game theory
+manacher's
+rabin-miller
+hungarian algorithm
+stable marriage
+LCP
+gaussian elimination
+pollard rho
+eulerian/hamiltonian paths
+meet in the middle
+johnson's agorithm
+max matchin general
+sqrt decomp
+LCT
+burnside lemma
+A*

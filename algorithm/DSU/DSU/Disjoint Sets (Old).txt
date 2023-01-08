@@ -1,0 +1,99 @@
+#include <vector>
+
+//Class for handling disjoint sets, and its operations: Make-Set, Union, Find-Set.
+template <typename Type>
+class DisjointSets
+{
+	public:
+		//Return false if 'elements' is already initialized.
+		bool InitElements (std::vector<Type> elements);
+
+		//Return false if index is out of range. Return false if index is already in set. Return false when 'elements' is not initialized.
+		bool MakeSet (int index);
+
+		//Return false when 'elements' is not initialized, or when the two elements are not in a set. Return false if the indexes are out of bounds, or if they are in the same set.
+		bool Union (int index1, int index2);
+
+		//Return a vector containing all elements in the set with elements at 'index'. Return empty vector when index is not in set or out of bounds. Return empty vector when 'elements' vector is not initialized.
+		std::vector<Type *> FindSet (int index);
+
+		//Return index of set in 'sets'. Return -1 if index is not in set or is out of bounds. Return -1 if 'elements' is not initialized.
+		int FindSetIndex (int index);
+
+	private:
+		std::vector<Type> elements;
+		std::vector<std::vector<Type *>> sets;
+};
+
+template <typename Type>
+bool DisjointSets<Type>::InitElements (std::vector<Type> elements)
+{
+	if (this->elements.size () != 0 || elements.size () == 0)
+		return false;
+
+	this->elements = elements;
+	return true;
+}
+
+template <typename Type>
+bool DisjointSets<Type>::MakeSet (int index)
+{
+	if (elements.size () == 0 || 
+		index >= elements.size () || FindSetIndex (index) != -1)
+		return false;
+
+	std::vector<Type *> new_set;
+
+	new_set.push_back (&elements[index]);
+	sets.push_back (new_set);
+	return true;
+}
+
+template <typename Type>
+bool DisjointSets<Type>::Union (int index1, int index2)
+{
+	int a = 0, b = FindSetIndex(index1), c = FindSetIndex (index2), d = static_cast<int>(sets[c].size ());
+
+	if (elements.size () == 0 || 
+		index1 >= elements.size () || index2 >= elements.size () || 
+		b == -1 || c == -1 || b == c)
+		return false;
+
+	for (;a < d;a++)
+		sets[b].push_back (sets[c][a]);
+
+	sets.erase (sets.begin () + c);
+	return true;
+}
+
+template <typename Type>
+std::vector<Type *> DisjointSets<Type>::FindSet (int index)
+{
+	int a = FindSetIndex(index);
+
+	if (elements.size () == 0 || 
+		index >= elements.size () || 
+		a == -1)
+		return vector<Type *> ();
+
+	return sets[a];
+}
+
+template <typename Type>
+int DisjointSets<Type>::FindSetIndex (int index)
+{
+	if (elements.size () == 0 || 
+		index >= elements.size ())
+		return -1;
+
+	for (int a = 0;a < sets.size ();a++)
+	{
+		for (int b = 0;b < sets[a].size ();b++)
+		{
+			if (sets[a][b] == &elements[index])
+				return a;
+		}
+	}
+
+	return -1;
+}
