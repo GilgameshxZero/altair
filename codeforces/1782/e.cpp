@@ -196,6 +196,8 @@ int main(int, char const *[]) {
 			cout << ansR[i]->u << ' ' << ansR[i]->l << ' ' << ansR[i]->d << ' '
 					 << ansR[i]->r << '\n';
 		}
+
+		// TODO: Free memory.
 	}
 
 	return 0;
