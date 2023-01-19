@@ -57,33 +57,61 @@ using LD = long double;
 
 using namespace std;
 
-// Finds the maximum bipartite matching in a bipartite graph in O(NM) with
-// Kuhn's algorithm. N: Pair of sizes, for the number of nodes on the left &
-// right side of bipartite graph. M: Pairs of indices `(i, j)` indicating an
-// edge from `i` on the left side (0-indexed) and `j` on the right side
-// (0-indexed). Returns: List of indices of edges in `M` which comprise the max
-// bipartite matching.
-std::vector<std::size_t> maxMatchBipartiteKuhn(
-	std::pair<std::size_t, std::size_t> const &N,
-	std::vector<std::pair<std::size_t, std::size_t>> const &M) {
-	// Iterate over the side of the graph with fewer nodes.
-	bool fromLeft{N.first < N.second};
-	std::size_t const &fromN{fromLeft ? N.first : N.second},
-		toN{fromLeft ? N.second : N.first};
+// Computes the maximum flow on a graph using Edmonds-Karp in O(VE^2). The
+// provided graph must be simple (no self-loops, no multi-edges, connected).
+// Returns the residual graph after the max flow is computed.
+std::
+	pair<std::size_t, std::vector<std::unordered_map<std::size_t, std::size_t>>>
+	maxFlowEdmondsKarp(
+		std::vector<std::unordered_map<std::size_t, std::size_t>> const &edges,
+		std::size_t const source,
+		std::size_t const sink) {
+	std::vector<std::unordered_map<std::size_t, std::size_t>> residual(edges);
+	std::size_t flow{0};
 
-	// Edge arrays store the other node as well as the edge index in M.
-	std::vector<std::vector<std::size_t>> fromM(fromN), toM(toN);
+	while (true) {
+		// BFS for the shortest source-sink path.
+		std::queue<std::size_t> bfsQueue;
+		std::vector<std::size_t> parent(edges.size(), SIZE_MAX);
+		bfsQueue.push(source);
+		while (!bfsQueue.empty()) {
+			std::size_t current{bfsQueue.front()};
+			bfsQueue.pop();
+			for (auto const &edge : residual[current]) {
+				if (
+					parent[edge.first] == SIZE_MAX && residual[current][edge.first] > 0) {
+					parent[edge.first] = current;
+					bfsQueue.push(edge.first);
+				}
+			}
+			if (parent[sink] != SIZE_MAX) {
+				break;
+			}
+		}
 
-	for (auto const &edge : M) {
-		fromM[fromLeft ? edge.first : edge.second].push_back(fromLeft ? edge.second : edge.first);
-		toM[fromLeft ? edge.second : edge.first].push_back(fromLeft ? edge.first : edge.second);
+		// Exit if no path found, otherwise update residuals.
+		if (parent[sink] == SIZE_MAX) {
+			break;
+		}
+
+		std::size_t pathFlow{SIZE_MAX};
+		for (std::size_t current{sink}; current != source;
+				 current = parent[current]) {
+			pathFlow = min(pathFlow, residual[parent[current]][current]);
+		}
+		flow += pathFlow;
+		for (std::size_t current{sink}; current != source;
+				 current = parent[current]) {
+			residual[parent[current]][current] -= pathFlow;
+			residual[current][parent[current]] += pathFlow;
+		}
 	}
 
-	for (std::size_t i{0}; i < fromN; i++) {
-		// Repeatedly find augmenting path from i. An augmenting path is an odd-length path with edges alternating in the matching and not in the matching. The first edge along an augmenting path must not be in the matching.
+	return {flow, residual};
 }
 
-/* ---------------------------- End of template. ---------------------------- */
+/* ---------------------------- End of template. ----------------------------
+ */
 
 int main(int, char const *[]) {
 #if !defined(ONLINEJUDGE) && (defined(__APPLE__) || defined(__MACH__))
@@ -104,80 +132,49 @@ int main(int, char const *[]) {
 		cin >> B[i];
 	}
 
-	vector<unordered_set<LL>> groups;
-	vector<bool> visA(N), visB(N);
-	unordered_map<LL, unordered_set<LL>> rm;
+	vector<LL> g1(N, -1), g2(N, -1);
+	LL cg1{0}, cg2{0};
 	RF(i, 0, N) {
 		if (A[i] == i + 1) {
-			visA[i] = true;
+			g1[i] = 0;
 		}
-		if (visA[i]) {
+		if (g1[i] != -1) {
 			continue;
 		}
-		groups.push_back({i});
-		rm[i].insert(groups.size() - 1);
-		LL j{i};
-		while (A[j] - 1 != i) {
-			j = A[j] - 1;
-			visA[j] = true;
-			groups.back().insert(j);
-			rm[j].insert(groups.size() - 1);
+		g1[i] = ++cg1;
+		for (LL j{A[i] - 1}; j != i; j = A[j] - 1) {
+			g1[j] = cg1;
 		}
 	}
 	RF(i, 0, N) {
 		if (B[i] == i + 1) {
-			visB[i] = true;
+			g2[i] = 0;
 		}
-		if (visB[i]) {
+		if (g2[i] != -1) {
 			continue;
 		}
-		groups.push_back({i});
-		rm[i].insert(groups.size() - 1);
-		LL j{i};
-		while (B[j] - 1 != i) {
-			j = B[j] - 1;
-			visB[j] = true;
-			groups.back().insert(j);
-			rm[j].insert(groups.size() - 1);
+		g2[i] = ++cg2;
+		for (LL j{B[i] - 1}; j != i; j = B[j] - 1) {
+			g2[j] = cg2;
 		}
 	}
 
-	vector<LL> ans;
-	for (auto &i : rm) {
-		if (i.second.size() == 0) {
+	vector<unordered_map<size_t, size_t>> edges(cg1 + cg2 + 2);
+	RF(i, 0, N) {
+		if (g1[i] == 0 || g2[i] == 0) {
 			continue;
 		}
-		if (i.second.size() == 1) {
-			continue;
-		}
-		ans.push_back(i.first + 1);
-		LL first{*i.second.begin()}, second{*next(i.second.begin())};
-		groups[first].erase(i.first);
-		if (groups[first].size() == 1) {
-			rm[*groups[first].begin()].erase(first);
-		}
-		groups[second].erase(i.first);
-		if (groups[second].size() == 1) {
-			rm[*groups[second].begin()].erase(second);
-		}
-		i.second.clear();
+		edges[g1[i]][cg1 + g2[i]] += 1;
+		edges[cg1 + g2[i]][g1[i]] += 1;
 	}
-	for (auto &i : rm) {
-		if (i.second.size() == 0) {
-			continue;
-		}
-		ans.push_back(i.first + 1);
-		LL first{*i.second.begin()};
-		groups[first].erase(i.first);
-		if (groups[first].size() == 1) {
-			rm[*groups[first].begin()].erase(first);
-		}
+	RF(i, 1, cg1 + 1) {
+		edges[0][i] = N;
+	}
+	RF(i, cg1 + 1, cg1 + cg2 + 1) {
+		edges[i][cg1 + cg2 + 1] = N;
 	}
 
-	cout << ans.size() << '\n';
-	RF(i, 0, ans.size()) {
-		cout << ans[i] << ' ';
-	}
-
+	auto [flow, residual]{maxFlowEdmondsKarp(edges, 0, cg1 + cg2 + 1)};
+	cout << N - flow << '\n';
 	return 0;
 }
