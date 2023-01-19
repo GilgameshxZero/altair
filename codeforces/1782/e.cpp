@@ -76,66 +76,67 @@ int main(int, char const *[]) {
 	LL T;
 	cin >> T;
 	while (T--) {
-		map<LL, unordered_map<LL, R>> Rs;
+		map<LL, map<LL, R *>> Rs;
 		LL N;
 		cin >> N;
 		RF(i, 0, N) {
 			LL u, l, d, r;
 			cin >> u >> l >> d >> r;
-			Rs[l].insert({i, {u, l, d, r, i}});
+			Rs[l].insert({i, new R{u, l, d, r, i}});
 		}
 		vector<R *> carry;
 		for (auto i{Rs.begin()}; i != Rs.end(); i++) {
-			decltype(carry) c2;
-			RF(j, 0, carry.size()) {
-				if (carry[j]->r >= i->first) {
-					c2.push_back(carry[j]);
+			{
+				decltype(carry) c2;
+				RF(j, 0, carry.size()) {
+					if (carry[j]->r >= i->first) {
+						c2.push_back(carry[j]);
+					}
 				}
-			}
-			swap(c2, carry);
-			if (carry.size() == 2 && carry[0]->u == 2) {
-				swap(carry[0], carry[1]);
+				swap(c2, carry);
 			}
 
-			for (auto j{i->second.begin()}; j != i->second.end();) {
-				R &s{j->second};
-				if (s.l > s.r) {
-					continue;
+			for (auto j{i->second.cbegin()}; j != i->second.cend();) {
+				if (carry.size() == 2 && carry[0]->u == 2) {
+					swap(carry[0], carry[1]);
 				}
-				if (carry.empty()) {
+				R &s{*j->second};
+				if (s.l > s.r) {
+					j++;
+				} else if (carry.empty()) {
 					carry.push_back(&s);
+					j++;
 				} else if (carry.size() == 1 && carry[0]->u != carry[0]->d) {
 					if (s.r <= carry[0]->r) {
 						s.u = s.d = s.l = s.r = 0;
-						Rs[s.l].insert({s.i, s});
+						Rs[s.l].insert({s.i, &s});
 						j = i->second.erase(j);
-						continue;
 					} else {
 						s.l = carry[0]->r + 1;
-						Rs[s.l].insert({s.i, s});
+						Rs[s.l].insert({s.i, &s});
 						j = i->second.erase(j);
-						continue;
 					}
 				} else if (carry.size() == 1) {
 					if (s.u != s.d && s.r >= carry[0]->r) {
 						carry[0]->r = s.l - 1;
 						carry.pop_back();
 						carry.push_back(&s);
+						j++;
 					} else if (s.u != s.d && s.r < carry[0]->r) {
 						s.u = s.d = 3 - carry[0]->u;
 						carry.push_back(&s);
+						j++;
 					} else if (s.u != carry[0]->u) {
 						carry.push_back(&s);
+						j++;
 					} else if (s.r > carry[0]->r) {
 						s.l = carry[0]->r + 1;
-						Rs[s.l].insert({s.i, s});
+						Rs[s.l].insert({s.i, &s});
 						j = i->second.erase(j);
-						continue;
 					} else {
 						s.u = s.d = s.l = s.r = 0;
-						Rs[s.l].insert({s.i, s});
+						Rs[s.l].insert({s.i, &s});
 						j = i->second.erase(j);
-						continue;
 					}
 				} else if (carry.size() == 2) {
 					if (s.u != s.d && s.r >= carry[0]->r && s.r >= carry[1]->r) {
@@ -143,30 +144,26 @@ int main(int, char const *[]) {
 						carry[1]->r = s.l - 1;
 						carry.clear();
 						carry.push_back(&s);
+						j++;
 					} else if (s.u != s.d && s.r <= carry[0]->r && s.r <= carry[1]->r) {
 						s.u = s.d = s.l = s.r = 0;
-						Rs[s.l].insert({s.i, s});
+						Rs[s.l].insert({s.i, &s});
 						j = i->second.erase(j);
-						continue;
 					} else if (s.u != s.d) {
 						s.l = min(carry[0]->r, carry[1]->r) + 1;
 						s.u = s.d = (carry[0]->r > carry[1]->r ? 2 : 1);
-						Rs[s.l].insert({s.i, s});
+						Rs[s.l].insert({s.i, &s});
 						j = i->second.erase(j);
-						continue;
 					} else if (s.r > carry[s.u - 1]->r) {
 						s.l = carry[s.u - 1]->r + 1;
-						Rs[s.l].insert({s.i, s});
+						Rs[s.l].insert({s.i, &s});
 						j = i->second.erase(j);
-						continue;
 					} else {
 						s.u = s.d = s.l = s.r = 0;
-						Rs[s.l].insert({s.i, s});
+						Rs[s.l].insert({s.i, &s});
 						j = i->second.erase(j);
-						continue;
 					}
 				}
-				j++;
 			}
 		}
 
@@ -176,30 +173,28 @@ int main(int, char const *[]) {
 				continue;
 			}
 			for (auto j{i.second.begin()}; j != i.second.end();) {
-				R &s{j->second};
+				R &s{*j->second};
 				if (s.l > s.r) {
 					s.u = s.d = s.l = s.r = 0;
-					Rs[s.l].insert({s.i, s});
+					Rs[s.l].insert({s.i, &s});
 					j = i.second.erase(j);
-					continue;
 				} else {
 					ans += (s.r - s.l + 1) * (s.d - s.u + 1);
+					j++;
 				}
-				j++;
 			}
 		}
 		cout << ans << '\n';
 
-		vector<R> ansR(N);
+		vector<R *> ansR(N);
 		for (auto &i : Rs) {
 			for (auto j{i.second.begin()}; j != i.second.end(); j++) {
-				R &s{j->second};
-				ansR[s.i] = s;
+				ansR[j->second->i] = j->second;
 			}
 		}
 		RF(i, 0, N) {
-			cout << ansR[i].u << ' ' << ansR[i].l << ' ' << ansR[i].d << ' '
-					 << ansR[i].r << '\n';
+			cout << ansR[i]->u << ' ' << ansR[i]->l << ' ' << ansR[i]->d << ' '
+					 << ansR[i]->r << '\n';
 		}
 	}
 
