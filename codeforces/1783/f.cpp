@@ -135,9 +135,6 @@ int main(int, char const *[]) {
 	vector<LL> g1(N, -1), g2(N, -1);
 	LL cg1{0}, cg2{0};
 	RF(i, 0, N) {
-		if (A[i] == i + 1) {
-			g1[i] = 0;
-		}
 		if (g1[i] != -1) {
 			continue;
 		}
@@ -147,9 +144,6 @@ int main(int, char const *[]) {
 		}
 	}
 	RF(i, 0, N) {
-		if (B[i] == i + 1) {
-			g2[i] = 0;
-		}
 		if (g2[i] != -1) {
 			continue;
 		}
@@ -160,21 +154,38 @@ int main(int, char const *[]) {
 	}
 
 	vector<unordered_map<size_t, size_t>> edges(cg1 + cg2 + 2);
+	vector<unordered_map<LL, LL>> id(cg1 + cg2 + 2);
 	RF(i, 0, N) {
 		if (g1[i] == 0 || g2[i] == 0) {
 			continue;
 		}
-		edges[g1[i]][cg1 + g2[i]] += 1;
-		edges[cg1 + g2[i]][g1[i]] += 1;
+		edges[g1[i]][cg1 + g2[i]] = 1;
+		id[g1[i]][cg1 + g2[i]] = i;
 	}
 	RF(i, 1, cg1 + 1) {
-		edges[0][i] = N;
+		edges[0][i] = 1;
 	}
 	RF(i, cg1 + 1, cg1 + cg2 + 1) {
-		edges[i][cg1 + cg2 + 1] = N;
+		edges[i][cg1 + cg2 + 1] = 1;
 	}
 
 	auto [flow, residual]{maxFlowEdmondsKarp(edges, 0, cg1 + cg2 + 1)};
 	cout << N - flow << '\n';
+	vector<bool> ans(N);
+	RF(i, 1, cg1 + 1) {
+		for (auto const &edge : edges[i]) {
+			if (edge.second == residual[i][edge.first]) {
+				continue;
+			}
+			ans[id[i][edge.first]] = true;
+		}
+	}
+
+	RF(i, 0, N) {
+		if (!ans[i]) {
+			cout << i + 1 << ' ';
+		}
+	}
+
 	return 0;
 }
