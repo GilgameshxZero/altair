@@ -1,4 +1,3 @@
-
 // Finds the maximum bipartite matching in a bipartite graph in O(NM) with
 // Kuhn's algorithm. N: Pair of sizes, for the number of nodes on the left &
 // right side of bipartite graph. M: Pairs of indices `(i, j)` indicating an
