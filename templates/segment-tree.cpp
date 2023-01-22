@@ -2,6 +2,25 @@ inline constexpr std::size_t operator"" _zu(unsigned long long value) {
 	return static_cast<std::size_t>(value);
 }
 
+// Most significant 1-bit for unsigned integral types of at most long long in
+// size. Undefined result if x = 0.
+template <typename Integer>
+inline std::size_t mostSignificant1BitIdx(Integer const x) {
+#ifdef __has_builtin
+#if __has_builtin(__builtin_clzll)
+	return 8 * sizeof(unsigned long long) - __builtin_clzll(x) - 1;
+#endif
+#endif
+	for (std::size_t bit = 8 * sizeof(Integer) - 1;
+			 bit != std::numeric_limits<std::size_t>::max();
+			 bit--) {
+		if (x & (static_cast<Integer>(1) << bit)) {
+			return bit;
+		}
+	}
+	return std::numeric_limits<std::size_t>::max();
+}
+
 // Segment tree with lazy propagation, supporting range queries and range
 // updates in O(ln N) and O(N) memory.
 //
@@ -18,26 +37,6 @@ inline constexpr std::size_t operator"" _zu(unsigned long long value) {
 // optimization.
 template <typename _Value, typename _Update, typename _Result = _Value>
 class SegmentTree {
-	private:
-	// Most significant 1-bit for unsigned integral types of at most long long in
-	// size. Undefined result if x = 0.
-	template <typename Integer>
-	inline std::size_t mostSignificant1BitIdx(Integer const x) {
-#ifdef __has_builtin
-#if __has_builtin(__builtin_clzll)
-		return 8 * sizeof(unsigned long long) - __builtin_clzll(x) - 1;
-#endif
-#endif
-		for (std::size_t bit = 8 * sizeof(Integer) - 1;
-				 bit != std::numeric_limits<std::size_t>::max();
-				 bit--) {
-			if (x & (static_cast<Integer>(1) << bit)) {
-				return bit;
-			}
-		}
-		return std::numeric_limits<std::size_t>::max();
-	}
-
 	protected:
 	using Value = _Value;
 	using Update = _Update;
