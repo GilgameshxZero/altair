@@ -1,3 +1,6 @@
 [submodule "silver"]
 	path = silver
 	url = ../silver.git
+[submodule "rain"]
+	path = rain
+	url = ../rain.git
