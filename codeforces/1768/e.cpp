@@ -176,15 +176,12 @@ int main(int, char const *[]) {
 	}
 
 	LL ones{(2 * fact[2 * N] % M - fact[N] - 1 + 5 * M) % M};
-	LL twos{0}, prev{0};
+	LL twos{0};
 	RF(i, 0, N + 1) {
-		LL tmp{choose(N, i, M) * choose(N, N - i, M) % M * fact[N] % M * fact[N - i] % M};
-		twos = (twos + tmp * prev) % M;
-		prev = (prev - invfact[N - i] * invfact[N - i] % M * invfact[i] % M) % M;
-		RF(j, 0, N - i + 1) {
-			twos = (twos + choose(N, i, M) * choose(N, N - i, M) % M * choose(N - i, j, M) %
-				M * choose(N, N - j, M) % M) % M;
-		}
+		twos =
+			(twos +
+			 choose(N, i, M) * choose(N, N - i, M) % M * choose(2 * N - i, N, M)) %
+			M;
 	}
 	twos = (choose(2 * N, N, M) * fact[N] % M * fact[2 * N] % M * 2 % M -
 					twos * fact[N] % M * fact[N] % M * fact[N] % M - ones - 1 + 5 * M) %
