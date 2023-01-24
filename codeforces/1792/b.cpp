@@ -72,23 +72,19 @@ int main(int, char const *[]) {
 	LL T;
 	cin >> T;
 	while (T--) {
-		LL N;
-		cin >> N;
-		vector<LL> A(N);
-		RF(i, 0, N) {
-			cin >> A[i];
+		LL A[4];
+		cin >> A[0] >> A[1] >> A[2] >> A[3];
+		if (A[0] == 0) {
+			cout << (A[1] + A[2] + A[3] == 0 ? 0 : 1) << '\n';
+			continue;
 		}
-		sort(A.begin(), A.end());
-
-		LL sum{0}, rem{0};
-		RF(i, 0, N) {
-			if (A[i] <= 2) {
-				sum += A[i];
-			} else {
-				rem++;
-			}
+		LL delta{max(A[1], A[2]) - min(A[1], A[2])};
+		if (delta > A[0]) {
+			cout << A[0] + min(A[1], A[2]) * 2 + A[0] + 1 << '\n';
+			continue;
 		}
-		cout << rem + (sum + 1) / 2 << '\n';
+		LL rem{A[0] - delta};
+		cout << A[0] + A[1] + A[2] + min(rem + 1, A[3]) << '\n';
 	}
 
 	return 0;

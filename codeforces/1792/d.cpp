@@ -60,6 +60,14 @@ using namespace std;
 
 /* ---------------------------- End of template. ---------------------------- */
 
+LL hAi(vector<LL> &Ai) {
+	LL h{0};
+	for (auto &i : Ai) {
+		h = h * 11 + i;
+	}
+	return h;
+}
+
 int main(int, char const *[]) {
 #if !defined(ONLINEJUDGE) && (defined(__APPLE__) || defined(__MACH__))
 	std::freopen("../build/i.default.txt", "r", stdin);
@@ -72,23 +80,50 @@ int main(int, char const *[]) {
 	LL T;
 	cin >> T;
 	while (T--) {
-		LL N;
-		cin >> N;
-		vector<LL> A(N);
-		RF(i, 0, N) {
-			cin >> A[i];
-		}
-		sort(A.begin(), A.end());
+		LL N, M;
+		cin >> N >> M;
 
-		LL sum{0}, rem{0};
+		vector<vector<LL>> A(N);
+		unordered_set<LL> S;
 		RF(i, 0, N) {
-			if (A[i] <= 2) {
-				sum += A[i];
-			} else {
-				rem++;
+			A[i].resize(M);
+			RF(j, 0, M) {
+				cin >> A[i][j];
+			}
+			S.insert(hAi(A[i]));
+
+			auto Bi{A[i]};
+			RF(j, M, 0) {
+				RF(k, 0, M) {
+					if (Bi[k] == j) {
+						Bi[k] = 0;
+						break;
+					}
+				}
+				S.insert(hAi(Bi));
 			}
 		}
-		cout << rem + (sum + 1) / 2 << '\n';
+
+		RF(i, 0, N) {
+			vector<LL> Bi(M);
+			RF(k, 0, M) {
+				Bi[A[i][k] - 1] = k + 1;
+			}
+
+			if (S.find(hAi(Bi)) != S.end()) {
+				cout << M << ' ';
+				continue;
+			}
+
+			RF(j, M, 0) {
+				Bi[A[i][j - 1] - 1] = 0;
+				if (S.find(hAi(Bi)) != S.end()) {
+					cout << j - 1 << ' ';
+					break;
+				}
+			}
+		}
+		cout << '\n';
 	}
 
 	return 0;
