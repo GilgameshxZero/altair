@@ -69,26 +69,88 @@ int main(int, char const *[]) {
 	std::ios_base::sync_with_stdio(false);
 	std::cin.tie(nullptr);
 
+	vector<LL> primes, minFac(32000);
+	minFac[1] = 1;
+	RF(i, 2, minFac.size()) {
+		if (minFac[i] == 0) {
+			minFac[i] = i;
+			primes.push_back(i);
+			for (LL j{i * i}; j < minFac.size(); j += i) {
+				minFac[j] = i;
+			}
+		}
+	}
+
 	LL T;
 	cin >> T;
 	while (T--) {
-		LL N;
-		cin >> N;
-		vector<LL> A(N);
-		RF(i, 0, N) {
-			cin >> A[i];
-		}
-		sort(A.begin(), A.end());
+		LL N, M1, M2;
+		cin >> N >> M1 >> M2;
 
-		LL sum{0}, rem{0};
-		RF(i, 0, N) {
-			if (A[i] <= 2) {
-				sum += A[i];
-			} else {
-				rem++;
+		unordered_map<LL, LL> cFac;
+		LL cur{M1};
+		RF(i, 0, primes.size()) {
+			while (cur % primes[i] == 0) {
+				cur /= primes[i];
+				cFac[primes[i]]++;
 			}
 		}
-		cout << rem + (sum + 1) / 2 << '\n';
+		if (cur != 1) {
+			cFac[cur]++;
+		}
+		cur = M2;
+		RF(i, 0, primes.size()) {
+			while (cur % primes[i] == 0) {
+				cur /= primes[i];
+				cFac[primes[i]]++;
+			}
+		}
+		if (cur != 1) {
+			cFac[cur]++;
+		}
+
+		vector<unordered_map<LL, LL>> divisors;
+		divisors.push_back({});
+		for (auto const &p : cFac) {
+			LL p1{p.first}, p2{p.second};
+			LL k = divisors.size();
+			RF(i, 1, p2 + 1) {
+				RF(j, 0, k) {
+					unordered_map<LL, LL> d2(divisors[j]);
+					d2[p1] = i;
+					divisors.push_back(d2);
+				}
+			}
+		}
+
+		LL ans{0}, count{0};
+		for (auto const &divisor : divisors) {
+			vector<LL> dd;
+			dd.push_back(1);
+			LL d{1};
+			for (auto const &p : divisor) {
+				LL p1{p.first}, p2{p.second};
+				LL k = dd.size(), cur{p1};
+				RF(i, 1, p2 + 1) {
+					RF(j, 0, k) {
+						dd.push_back(dd[j] * cur);
+						d = max(d, dd.back());
+					}
+					cur *= p1;
+				}
+			}
+
+			sort(dd.begin(), dd.end());
+			RF(i, 0, dd.size()) {
+				if (dd[i] <= N && d / dd[i] <= N) {
+					count++;
+					ans ^= dd[i];
+					break;
+				}
+			}
+		}
+
+		cout << count << ' ' << ans << '\n';
 	}
 
 	return 0;

@@ -74,21 +74,42 @@ int main(int, char const *[]) {
 	while (T--) {
 		LL N;
 		cin >> N;
-		vector<LL> A(N);
-		RF(i, 0, N) {
+		vector<LL> A(N + 2);
+		A[0] = 0;
+		RF(i, 1, N + 1) {
 			cin >> A[i];
 		}
-		sort(A.begin(), A.end());
-
-		LL sum{0}, rem{0};
-		RF(i, 0, N) {
-			if (A[i] <= 2) {
-				sum += A[i];
-			} else {
-				rem++;
+		A[N + 1] = N + 1;
+		vector<pair<LL, LL>> B(N + 2);
+		LL rev{0};
+		RF(i, 1, N + 1) {
+			B[A[i]] = {A[i - 1], A[i + 1]};
+			if (A[i] > A[i + 1]) {
+				++rev;
 			}
 		}
-		cout << rem + (sum + 1) / 2 << '\n';
+		LL ans{0};
+		while (rev > 0) {
+			LL i{1 + ans};
+			B[B[i].first].second = B[i].second;
+			B[B[i].second].first = B[i].first;
+			rev -= (B[i].first > i);
+			rev -= (i > B[i].second);
+			rev += (B[i].first > B[i].second);
+
+			if (1 + ans != N - ans) {
+				i = N - ans;
+				B[B[i].first].second = B[i].second;
+				B[B[i].second].first = B[i].first;
+				rev -= (B[i].first > i);
+				rev -= (i > B[i].second);
+				rev += (B[i].first > B[i].second);
+			}
+
+			ans++;
+		}
+
+		cout << ans << '\n';
 	}
 
 	return 0;
