@@ -57,40 +57,102 @@ using LD = long double;
 
 using namespace std;
 
-// Union-Find/Disjoint-Set-Union implementation. Near-constant time amortized
-// union and find.
-//
-// Implements path compression and union by rank.
-class DisjointSetUnion {
-	private:
-	// A pair of (is_root, X). If node is root, X stores the size of the
-	// cluster. Otherwise, X stores the index of the node’s parent.
-	mutable std::vector<std::pair<bool, std::size_t>> nodes;
+// namespace Rain::Algorithm {
+// 	// Union-Find/Disjoint-Set-Union implementation. Near-constant time
+// amortized
+// 	// union and find.
+// 	//
+// 	// Implements path compression and union by rank.
+// 	class DisjointSetUnion {
+// 		private:
+// 		// A pair of (is_root, X). If node is root, X stores the size of the
+// 		// cluster. Otherwise, X stores the index of the node’s parent.
+// 		mutable std::vector<std::pair<bool, std::size_t>> nodes;
 
-	public:
-	DisjointSetUnion(std::size_t const size) : nodes(size, {true, 1}) {}
+// 		public:
+// 		DisjointSetUnion(std::size_t const size) : nodes(size, {true, 1}) {}
 
-	std::size_t find(std::size_t const i) const {
-		if (this->nodes[i].first) {
-			return i;
+// 		std::size_t find(std::size_t const i) const {
+// 			if (this->nodes[i].first) {
+// 				return i;
+// 			}
+// 			return this->nodes[i].second = this->find(this->nodes[i].second);
+// 		}
+// 		std::size_t rank(std::size_t const i) const {
+// 			return this->nodes[this->find(i)].second;
+// 		}
+// 		void join(std::size_t const i, std::size_t const j) {
+// 			std::size_t pI{this->find(i)}, pJ{this->find(j)};
+// 			if (pI == pJ) {
+// 				return;
+// 			}
+// 			if (this->nodes[pI].second > this->nodes[pJ].second) {
+// 				std::swap(pI, pJ);
+// 			}
+// 			this->nodes[pJ].second += this->nodes[pI].second;
+// 			this->nodes[pI] = {false, pJ};
+// 		}
+// 	};
+// }
+
+namespace Rain::Algorithm {
+	// Computes strongly connected components (SCCs) for a simple graph G in
+	// O(V+E). The SCCs form an acyclic condensation graph of G. Typically,
+	// Tarjan’s is more efficient than Kosarju’s algorithm for SCCs, though
+	// Kosarju’s algorithm provides the SCCs in topologically sorted order.
+	//
+	// Returns the number of CCs, and the 0-indexed index of the
+	// SCC that each vertex belongs to.
+	std::pair<std::size_t, std::vector<std::size_t>> stronglyConnectedTarjans(
+		std::vector<std::vector<std::size_t>> const &edges) {
+		std::size_t cScc{0}, cPreOrderId{0};
+		std::vector<std::size_t> scc(edges.size()),
+			preOrderId(edges.size(), SIZE_MAX), lowLink(edges.size());
+		std::vector<bool> onStack(edges.size(), false);
+		std::stack<std::size_t> s;
+
+		// Tarjan’s requires a subroutine for its inner DFS, which we implement via
+		// recursive lambda with an explicit return type.
+		auto subroutine{[&](std::size_t _i) {
+			auto subroutineInner{[&](std::size_t i, auto &subroutineRef) -> void {
+				lowLink[i] = preOrderId[i] = cPreOrderId++;
+				onStack[i] = true;
+				s.push(i);
+
+				for (auto const &j : edges[i]) {
+					if (preOrderId[j] == SIZE_MAX) {
+						subroutineRef(j, subroutineRef);
+						lowLink[i] = min(lowLink[i], lowLink[j]);
+					} else if (onStack[j]) {
+						lowLink[i] = min(lowLink[i], preOrderId[j]);
+					}
+				}
+
+				if (lowLink[i] == preOrderId[i]) {
+					std::size_t j;
+					do {
+						j = s.top();
+						s.pop();
+						onStack[j] = false;
+						scc[j] = cScc;
+					} while (j != i);
+					cScc++;
+				}
+			}};
+			subroutineInner(_i, subroutineInner);
+		}};
+
+		for (std::size_t i{0}; i < edges.size(); i++) {
+			if (preOrderId[i] == SIZE_MAX) {
+				subroutine(i);
+			}
 		}
-		return this->nodes[i].second = this->find(this->nodes[i].second);
+
+		return {cScc, scc};
 	}
-	std::size_t rank(std::size_t const i) const {
-		return this->nodes[this->find(i)].second;
-	}
-	void join(std::size_t const i, std::size_t const j) {
-		std::size_t pI = this->find(i), pJ = this->find(j);
-		if (pI == pJ) {
-			return;
-		}
-		if (this->nodes[pI].second > this->nodes[pJ].second) {
-			std::swap(pI, pJ);
-		}
-		this->nodes[pJ].second += this->nodes[pI].second;
-		this->nodes[pI] = {false, pJ};
-	}
-};
+}
+
+using namespace Rain::Algorithm;
 
 /* ---------------------------- End of template. ---------------------------- */
 
@@ -108,105 +170,110 @@ int main(int, char const *[]) {
 	while (T--) {
 		LL N, M;
 		cin >> N >> M;
-		vector<unordered_set<LL>> E(N);
-		vector<pair<LL, pair<LL, LL>>> E2;
+		vector<vector<size_t>> E(N);
+		vector<unordered_map<LL, LL>> W(N);
 		RF(i, 0, M) {
 			LL j, k, w;
 			cin >> j >> k >> w;
-			E2.push_back({w, {k - 1, j - 1}});
-			E[j - 1].insert(k - 1);
-		}
-		sort(E2.begin(), E2.end());
-
-		vector<LL> C(N, -1), S, I(N, -1);
-		LL ccc{0}, i{0};
-		function<void(LL)> dfs = [&](LL u) {
-			I[u] = i;
-			S.push_back(u);
-			i++;
-			LL m{I[u]};
-			for (auto &v : E[u]) {
-				if (I[v] == -1) {
-					dfs(v);
-				}
-				m = min(m, I[v]);
-			}
-			if (m < I[u]) {
-				I[u] = m;
-				return;
-			}
-			LL v;
-			do {
-				v = S.back();
-				S.pop_back();
-				I[v] = N;
-				C[v] = ccc;
-			} while (v != u);
-			ccc++;
-		};
-		RF(u, 0, N) {
-			if (I[u] == -1) {
-				dfs(u);
-			}
+			E[j - 1].push_back(k - 1);
+			W[j - 1][k - 1] = w;
 		}
 
-		// Edges between connected components.
-		vector<unordered_set<LL>> CE(ccc), CEr(ccc);
-		RF(i, 0, N) {
-			for (auto &e : E[i]) {
-				LL u{C[i]}, v{C[e]};
-				if (u != v) {
-					CE[u].insert(v);
-					CEr[v].insert(u);
+		LL low{1000000001}, high{-1}, mid;
+		while (low - 1 != high) {
+			mid = (low + high) / 2;
+			vector<vector<size_t>> EE(E);
+			RF(i, 0, N) {
+				for (auto const &j : E[i]) {
+					if (W[i][j] <= mid) {
+						EE[j].push_back(i);
+					}
 				}
 			}
-		}
 
-		LL cinc{0};
-		RF(i, 0, ccc) {
-			if (CEr[i].size() == 0) {
-				cinc++;
-			}
-		}
-
-		if (cinc == 0) {
-			cout << "0\n";
-			continue;
-		}
-
-		DisjointSetUnion dsu(ccc);
-		bool done{false};
-		RF(i, 0, M) {
-			LL u = dsu.find(C[E2[i].second.first]),
-				 v = dsu.find(C[E2[i].second.second]);
-			if (u != v) {
-				dsu.join(u, v);
-				LL j = dsu.find(u), other(j == u ? v : u);
-				for (auto &k : CE[other]) {
-					CE[j].insert(k);
-				}
-				for (auto &k : CEr[other]) {
-					CEr[j].insert(k);
-				}
-				CE[j].erase(other);
-				CEr[j].erase(other);
-				if (CEr[other].size() == 0) {
-					cinc--;
-				}
-				CE[other].clear();
-				CEr[other].clear();
-
-				if (cinc == 0) {
-					cout << E2[i].first << "\n";
-					done = true;
-					break;
+			auto [cScc, scc]{stronglyConnectedTarjans(EE)};
+			vector<bool> cSccIn(cScc);
+			RF(i, 0, N) {
+				for (auto const &j : E[i]) {
+					if (scc[i] == scc[j]) {
+						continue;
+					}
+					cSccIn[scc[j]] = true;
 				}
 			}
-		}
 
-		if (!done) {
-			cout << "-1\n";
+			LL cSccIn0{0};
+			RF(i, 0, cScc) {
+				cSccIn0 += !cSccIn[i];
+			}
+
+			if (cSccIn0 == 1) {
+				low = mid;
+			} else {
+				high = mid;
+			}
 		}
+		cout << (low == 1000000001 ? -1 : low) << '\n';
+
+		// LL ans{0};
+		// DisjointSetUnion dsu(cScc);
+		// RF(i, 0, E2S.size()) {
+		// 	if (cSccIn0 == 1) {
+		// 		break;
+		// 	}
+		// 	LL iS = dsu.find(E2S[i].second.first),
+		// 		 jS = dsu.find(E2S[i].second.second);
+		// 	if (iS == jS) {
+		// 		continue;
+		// 	}
+
+		// 	ans = E2S[i].first;
+
+		// 	while (true) {
+		// 		cSccIn0 -= E2R[iS].empty() + E2R[jS].empty();
+		// 		dsu.join(iS, jS);
+		// 		LL cur = dsu.find(iS), other{cur == iS ? jS : iS};
+
+		// 		for (auto const &j : E2[other]) {
+		// 			E2[cur][j.first] = j.second;
+		// 			E2R[j.first].erase(other);
+		// 			E2R[j.first][cur] = j.second;
+		// 		}
+		// 		for (auto const &j : E2R[other]) {
+		// 			E2R[cur][j.first] = j.second;
+		// 			E2[j.first].erase(other);
+		// 			E2[j.first][cur] = j.second;
+		// 		}
+		// 		E2[cur].erase(cur);
+		// 		E2[cur].erase(other);
+		// 		E2R[cur].erase(cur);
+		// 		E2R[cur].erase(other);
+
+		// 		cSccIn0 += E2R[cur].empty();
+
+		// 		bool again{false};
+		// 		for (auto const &j : E2[cur]) {
+		// 			if (E2[j.first].count(cur)) {
+		// 				iS = cur;
+		// 				jS = j.first;
+		// 				again = true;
+		// 				break;
+		// 			}
+		// 		}
+		// 		for (auto const &j : E2R[cur]) {
+		// 			if (E2R[j.first].count(cur)) {
+		// 				iS = cur;
+		// 				jS = j.first;
+		// 				again = true;
+		// 				break;
+		// 			}
+		// 		}
+		// 		if (!again) {
+		// 			break;
+		// 		}
+		// 	}
+		// }
+		// cout << (cSccIn0 == 1 ? ans : -1) << '\n';
 	}
 
 	return 0;
