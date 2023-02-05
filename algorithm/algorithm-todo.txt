@@ -2,14 +2,9 @@ Aho-Corasick
 Meet-in-the-Middle
 Travelling Salesman
 
-segtrees/interval trees
 range trees
 k-d trees
-nCr % M
 suffix automaton
-DP
-Logarithmic Exponentiation
-efficent prime factorization
 aho-corasick
 suffix tress ukkonnen
 bellman ford
