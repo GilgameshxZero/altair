@@ -19,6 +19,7 @@
 			"console": "integratedTerminal",
 			"stopAtEntry": false,
 			"MIMode": "gdb",
+			"internalConsoleOptions": "neverOpen",
 
 			"windows": { "type": "cppvsdbg" },
 			"osx": {
@@ -90,6 +91,7 @@
 			"console": "internalTerminal",
 			"stopAtEntry": false,
 			"MIMode": "gdb",
+			"internalConsoleOptions": "neverOpen",
 
 			"windows": { "type": "cppvsdbg" },
 			"osx": { "MIMode": "lldb" },
