@@ -50,7 +50,7 @@
 #include <utility>
 #include <vector>
 
-using LL = long long;
+using LL = int;
 using LD = long double;
 
 #define RF(x, from, to)                                                      \
@@ -59,7 +59,175 @@ using LD = long double;
 
 using namespace std;
 
-/* ---------------------------- End of template. ---------------------------- */
+namespace Rain {
+	// Inline namespaces are implicitly accessible by the parent namespace.
+	inline namespace Literal {
+		// Inject std literals into the Rain namespace.
+		using namespace std::literals;
+
+		// User-defined literals.
+		inline constexpr std::size_t operator"" _zu(unsigned long long value) {
+			return static_cast<std::size_t>(value);
+		}
+		inline std::regex operator"" _re(char const *value, std::size_t) {
+			return std::regex(value);
+		}
+	}
+}
+
+namespace Rain::Algorithm {
+	// Most significant 1-bit for unsigned integral types of at most long long in
+	// size. Undefined result if x = 0.
+	template <typename Integer>
+	inline std::size_t mostSignificant1BitIdx(Integer const x) {
+#ifdef __has_builtin
+#if __has_builtin(__builtin_clzll)
+		return 8 * sizeof(unsigned long long) - __builtin_clzll(x) - 1;
+#endif
+#endif
+		for (std::size_t bit{8 * sizeof(Integer) - 1};
+				 bit != std::numeric_limits<std::size_t>::max();
+				 bit--) {
+			if (x & (static_cast<Integer>(1) << bit)) {
+				return bit;
+			}
+		}
+		return std::numeric_limits<std::size_t>::max();
+	}
+
+	// Least significant 1-bit for unsigned integral types of at most long long in
+	// size. Undefined result if x = 0.
+	template <typename Integer>
+	inline std::size_t leastSignificant1BitIdx(Integer const x) {
+#ifdef __has_builtin
+#if __has_builtin(__builtin_ctzll)
+		return __builtin_ctzll(x);
+#endif
+#endif
+		for (std::size_t bit{0}; bit != 8 * sizeof(Integer); bit++) {
+			if (x & (static_cast<Integer>(1) << bit)) {
+				return bit;
+			}
+		}
+		return std::numeric_limits<std::size_t>::max();
+	}
+
+	// Count of 1-bits in unsigned integral types of at most long long in size.
+	template <typename Integer>
+	inline std::size_t bitPopcount(Integer const x) {
+#ifdef __has_builtin
+#if __has_builtin(__builtin_popcountll)
+		return __builtin_popcountll(x);
+#endif
+#endif
+		std::size_t count{0};
+		for (std::size_t bit{0}; bit != 8 * sizeof(Integer); bit++) {
+			count += !!(x & (static_cast<Integer>(1) << bit));
+		}
+		return count;
+	}
+}
+
+namespace Rain::Algorithm {
+	// Segment tree without lazy propagation nor range updates.
+	template <
+		typename Value,
+		typename Update,
+		typename Result,
+		Value DEFAULT_VALUE,
+		// Aggregate values from two children while retracing an update. Aggregating
+		// with a default Value should do nothing.
+		void (*aggregateValues)(
+			typename std::vector<Value>::reference,
+			Value const &,
+			Value const &),
+		// Aggregate two results from queries on children. Aggregating with a
+		// Result converted from a default Value should do nothing.
+		Result (*aggregateResults)(Result const &, Result const &),
+		// Apply an update fully to a node.
+		void (*apply)(typename std::vector<Value>::reference, Update const &)>
+	class SegmentTree {
+		protected:
+		// Aggregate values at each node.
+		std::vector<Value> values;
+
+		public:
+		// Segment tree for a segment array of size size.
+		SegmentTree(std::size_t const size)
+				: values(
+						1_zu << (mostSignificant1BitIdx(size - 1) + 2),
+						DEFAULT_VALUE) {}
+
+		// Queries an inclusive range.
+		Result query(std::size_t left, std::size_t right) {
+			Value resLeft{DEFAULT_VALUE}, resRight{DEFAULT_VALUE};
+			for (left += this->values.size() / 2,
+					 right += this->values.size() / 2 + 1;
+					 left < right;
+					 left /= 2, right /= 2) {
+				if (left % 2 == 1) {
+					resLeft = aggregateResults(resLeft, this->values[left++]);
+				}
+				if (right % 2 == 1) {
+					resRight = aggregateResults(resRight, this->values[--right]);
+				}
+			}
+			return aggregateResults(resLeft, resRight);
+		}
+
+		// Point update an index.
+		void update(std::size_t idx, Update const &update) {
+			idx += this->values.size() / 2;
+			apply(this->values[idx], update);
+			for (idx /= 2; idx >= 1; idx /= 2) {
+				aggregateValues(
+					this->values[idx], this->values[idx * 2], this->values[idx * 2 + 1]);
+			}
+		}
+	};
+}
+
+void maxAggregateValues(
+	typename std::vector<LL>::reference value,
+	LL const &left,
+	LL const &right) {
+	value = max(left, right);
+}
+LL maxAggregateResults(LL const &left, LL const &right) {
+	return max(left, right);
+}
+void maxApply(typename std::vector<LL>::reference value, LL const &update) {
+	value = max(value, update);
+}
+void minAggregateValues(
+	typename std::vector<LL>::reference value,
+	LL const &left,
+	LL const &right) {
+	value = min(left, right);
+}
+LL minAggregateResults(LL const &left, LL const &right) {
+	return min(left, right);
+}
+void minApply(typename std::vector<LL>::reference value, LL const &update) {
+	value = min(value, update);
+}
+
+using MaxSegTree = Rain::Algorithm::SegmentTree<
+	LL,
+	LL,
+	LL,
+	-1,
+	maxAggregateValues,
+	maxAggregateResults,
+	maxApply>;
+using MinSegTree = Rain::Algorithm::SegmentTree<
+	LL,
+	LL,
+	LL,
+	INT_MAX,
+	minAggregateValues,
+	minAggregateResults,
+	minApply>;
 
 int main(int, char const *[]) {
 #if !defined(ONLINEJUDGE) && (defined(__APPLE__) || defined(__MACH__))
@@ -71,83 +239,48 @@ int main(int, char const *[]) {
 	std::cin.tie(nullptr);
 
 	LL N, Q;
-	cin >> N;
+	cin >> N >> Q;
 	vector<LL> A(N);
 	RF(i, 0, N) {
 		cin >> A[i];
 	}
-	cin >> Q;
-
-	LL sqn(sqrt(N)), cbc{(N + sqn - 1) / sqn};
-	vector<vector<pair<pair<LL, LL>, LL>>> LR(cbc);
+	vector<pair<pair<LL, LL>, LL>> Qs(Q);
+	vector<vector<pair<LL, LL>>> Qi(N);
 	RF(i, 0, Q) {
 		LL L, R;
 		cin >> L >> R;
-		LR[L / sqn].push_back({{L - 1, R - 1}, i});
+		Qi[R - 1].push_back({L - 1, i});
 	}
 
+	MaxSegTree maxst(N + 1);
+	MinSegTree minst(N);
+	LL rstTo{-1};
 	vector<LL> ans(Q);
-	RF(i, 0, cbc) {
-		if (LR[i].empty()) {
-			continue;
+	RF(i, 0, N) {
+		LL limit{N};
+		while (true) {
+			LL j{maxst.query(A[i] + 1, limit)};
+			if (j == -1) {
+				break;
+			}
+			minst.update(j, A[j] - A[i]);
+			limit = (A[i] + A[j] + 1) / 2 - 1;
 		}
-		sort(LR[i].begin(), LR[i].end(), [](auto const &X, auto const &Y) {
-			return X.first.second < Y.first.second;
-		});
 
-		set<LL> s;
-		priority_queue<LL, vector<LL>, greater<LL>> q;
-		unordered_map<LL, LL> diffe;
-		LL low{LR[i][0].first.first}, high{low - 1};
-		RF(j, 0, LR[i].size()) {
-			while (high < LR[i][j].first.second) {
-				high++;
-				auto k{s.insert(A[high]).first};
-				if (k != s.begin()) {
-					q.push(*k - *prev(k));
-				}
-				if (next(k) != s.end()) {
-					q.push(*next(k) - *k);
-				}
-				if (k != s.begin() && next(k) != s.end()) {
-					diffe[*next(k) - *prev(k)]++;
-				}
+		limit = 1;
+		while (true) {
+			LL j{maxst.query(limit, A[i] - 1)};
+			if (j == -1) {
+				break;
 			}
-			while (low > LR[i][j].first.first) {
-				low--;
-				auto k{s.insert(A[low]).first};
-				if (k != s.begin()) {
-					q.push(*k - *prev(k));
-				}
-				if (next(k) != s.end()) {
-					q.push(*next(k) - *k);
-				}
-				if (k != s.begin() && next(k) != s.end()) {
-					diffe[*next(k) - *prev(k)]++;
-				}
-			}
-			while (low < LR[i][j].first.first) {
-				auto k{s.find(A[low])};
-				if (k != s.begin()) {
-					diffe[*k - *prev(k)]++;
-				}
-				if (next(k) != s.end()) {
-					diffe[*next(k) - *k]++;
-				}
-				if (k != s.begin() && next(k) != s.end()) {
-					q.push(*next(k) - *prev(k));
-				}
-				s.erase(k);
-				low++;
-			}
+			minst.update(j, A[i] - A[j]);
+			limit = (A[i] + A[j]) / 2 + 1;
+		}
 
-			LL top{q.top()};
-			while (diffe[top] > 0) {
-				diffe[top]--;
-				q.pop();
-				top = q.top();
-			}
-			ans[LR[i][j].second] = top;
+		maxst.update(A[i], i);
+
+		RF(j, 0, Qi[i].size()) {
+			ans[Qi[i][j].second] = minst.query(Qi[i][j].first, i);
 		}
 	}
 
