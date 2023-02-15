@@ -419,30 +419,40 @@ int main(int, char const *[]) {
 		cin >> X[i];
 	}
 
-	vector<vector<MF>> ss(N);
+	vector<MF> p2p(N);
+	p2p[0] = 1;
 	RF(i, 1, N) {
-		ss[i].resize(i);
-		ss[i][0] = 1;
+		p2p[i] = 2 * p2p[i - 1];
 	}
+
+	vector<vector<MF>> D(N);
+	RF(i, 1, N) {
+		D[i].resize(i);
+		D[i][0] = 1;
+	}
+	decltype(D) E(D);
 	RF(i, 1, N - 1) {
-		MF sum{0};
-		RF(j, 0, ss[i].size()) {
-			sum += ss[i][j];
+		MF sDk{0}, sEp2{0};
+		RF(j, 0, D[i].size()) {
+			sDk += D[i][j];
+			sEp2 += E[i][j];
 		}
 
 		LL p2{i - 1};
 		RF(j, i + 1, N) {
 			while (p2 >= 0 && X[i] - X[p2] <= X[j] - X[i]) {
+				sEp2 -= E[i][p2];
 				p2--;
 			}
-			ss[j][i] = sum + 1 + (p2 < 0 ? MF(0) : MF(2).power(p2 + 1) - p2 - 2);
+			E[j][i] = (p2 < 0 ? MF(1) : p2p[p2 + 1]);
+			D[j][i] = sDk + E[j][i] - sEp2;
 		}
 	}
 
 	MF ans{0};
 	RF(i, 0, N) {
-		RF(j, 0, ss[i].size()) {
-			ans += ss[i][j];
+		RF(j, 0, D[i].size()) {
+			ans += D[i][j];
 		}
 	}
 	cout << ans;
