@@ -60,7 +60,7 @@ using LD = long double;
 
 using namespace std;
 
-/* ---------------------------- End of template. ---------------------------- */
+/* ------------------------ End of primary template. ------------------------ */
 
 int main(int, char const *[]) {
 #if !defined(ONLINEJUDGE) && (defined(__APPLE__) || defined(__MACH__))

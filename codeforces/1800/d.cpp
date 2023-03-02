@@ -391,26 +391,71 @@ inline std::istream &operator>>(
 	return stream;
 }
 
-using namespace Rain::Algorithm;
-
-/* ---------------------------- End of template. ---------------------------- */
-
+// Hash operator for this user-defined type, which hashes the inner value (not
+// the modulus).
 namespace std {
-	template <typename T, size_t N>
-	struct hash<array<T, N>> {
-		typedef array<T, N> argument_type;
-		typedef size_t result_type;
-
-		result_type operator()(const argument_type &a) const {
-			hash<T> hasher;
-			result_type h = 0;
-			for (result_type i = 0; i < N; ++i) {
-				h = h * 31 + hasher(a[i]);
-			}
-			return h;
+	template <typename Integer, std::size_t MODULUS>
+	struct hash<Rain::Algorithm::ModulusField<Integer, MODULUS>> {
+		size_t operator()(
+			Rain::Algorithm::ModulusField<Integer, MODULUS> const &value) const {
+			return hash<Integer>{}(value.value);
 		}
 	};
 }
+
+namespace Rain::Random {
+	using Generator = std::mt19937_64;
+
+	// Default, generally-safe generator when one is not supplied by caller.
+	inline Generator generator(
+		std::chrono::duration_cast<std::chrono::nanoseconds>(
+			std::chrono::high_resolution_clock::now().time_since_epoch())
+			.count());
+}
+
+namespace Rain::Functional {
+	// Simple function to combine two hashes, based on
+	// <https://stackoverflow.com/questions/2590677/how-do-i-combine-hash-values-in-c0x>.
+	template <class T>
+	inline void combineHash(std::size_t &seed, T const &value) {
+		seed ^= std::hash<T>{}(value) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+	}
+
+	// SFINAE for const-iterable types (containers). Assumes sizeof(char) and
+	// sizeof(int) are not equal.
+	template <typename Type>
+	struct isConstIterable {
+		template <typename TypeInner>
+		static char test(typename TypeInner::const_iterator *);
+		template <typename TypeInner>
+		static int test(...);
+
+		public:
+		enum { value = sizeof(test<Type>(0)) == sizeof(char) };
+	};
+
+	// Custom hash function for const-iterable containers. Cannot be placed in std
+	// namespace as it is UB for system types (not UB for user-defined types).
+	template <
+		typename Container,
+		typename std::enable_if<isConstIterable<Container>::value>::type * =
+			nullptr>
+	struct ContainerHash {
+		std::size_t operator()(Container const &value) const {
+			std::size_t result{0};
+			for (auto const &i : value) {
+				combineHash(result, i);
+			}
+			return result;
+		}
+	};
+}
+
+using namespace Rain::Algorithm;
+using namespace Rain::Random;
+using namespace Rain::Functional;
+
+/* ---------------------------- End of template. ---------------------------- */
 
 LL const MOD{1000000009};
 using MF = ModulusField<LL, MOD>;
@@ -424,14 +469,13 @@ int main(int, char const *[]) {
 	std::ios_base::sync_with_stdio(false);
 	std::cin.tie(nullptr);
 
-	mt19937 rng(chrono::duration_cast<chrono::nanoseconds>(
-								chrono::high_resolution_clock::now().time_since_epoch())
-								.count());
-	LL const HASHES{8};
+	// 1e-4 collision chance for length N=1e5. Considering there are 1e5 strings,
+	// we want at least two hashes (1e-8 collision chance).
+	LL const HASHES{2};
 	vector<LL> B(HASHES);
 	vector<vector<MF>> BP(B.size());
 	RF(i, 0, B.size()) {
-		B[i] = uniform_int_distribution<LL>(27, MOD - 1)(rng);
+		B[i] = uniform_int_distribution<LL>(27, MOD - 1)(generator);
 		BP[i].resize(200001);
 		BP[i][0] = 1;
 		RF(j, 1, 200001) {
@@ -446,7 +490,7 @@ int main(int, char const *[]) {
 		string S;
 		cin >> N >> S;
 		vector<MF> prehash(N), posthash(N);
-		vector<array<LL, HASHES>> hashes(N - 1);
+		vector<array<MF, HASHES>> hashes(N - 1);
 		RF(j, 0, B.size()) {
 			prehash[0] = S[0] - 'a' + 1;
 			posthash.back() = S.back() - 'a' + 1;
@@ -462,7 +506,7 @@ int main(int, char const *[]) {
 					prehash[i - 1] * BP[j][N - (i + 2)] + posthash[i + 2];
 			}
 		}
-		unordered_set<array<LL, HASHES>> distinct;
+		unordered_set<array<MF, HASHES>, ContainerHash<array<MF, HASHES>>> distinct;
 		RF(i, 0, N - 1) {
 			distinct.insert(hashes[i]);
 		}
