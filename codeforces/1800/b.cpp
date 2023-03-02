@@ -34,7 +34,6 @@
 #include <mutex>
 #include <numeric>
 #include <queue>
-#include <random>
 #include <regex>
 #include <set>
 #include <sstream>
@@ -74,6 +73,28 @@ int main(int, char const *[]) {
 	LL T;
 	cin >> T;
 	while (T--) {
+		LL N, K;
+		string S;
+		cin >> N >> K >> S;
+		array<LL, 26> cu, cl;
+		cu.fill(0);
+		cl.fill(0);
+		for (char &c : S) {
+			if (c < 'a') {
+				cl[c - 'A']++;
+			} else {
+				cu[c - 'a']++;
+			}
+		}
+		LL ans{0};
+		RF(i, 0, 26) {
+			LL delta{min(cu[i], cl[i])}, upto{max(cu[i], cl[i]) - delta};
+			ans += delta;
+			upto = min(upto / 2, K);
+			K -= upto;
+			ans += upto;
+		}
+		cout << ans << '\n';
 	}
 
 	return 0;

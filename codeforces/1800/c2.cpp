@@ -34,7 +34,6 @@
 #include <mutex>
 #include <numeric>
 #include <queue>
-#include <random>
 #include <regex>
 #include <set>
 #include <sstream>
@@ -74,6 +73,23 @@ int main(int, char const *[]) {
 	LL T;
 	cin >> T;
 	while (T--) {
+		priority_queue<LL> P;
+		LL N;
+		cin >> N;
+		LL ans{0};
+		RF(i, 0, N) {
+			LL X;
+			cin >> X;
+			if (X == 0) {
+				if (!P.empty()) {
+					ans += P.top();
+					P.pop();
+				}
+			} else {
+				P.push(X);
+			}
+		}
+		cout << ans << '\n';
 	}
 
 	return 0;

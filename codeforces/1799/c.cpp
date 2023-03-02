@@ -34,7 +34,6 @@
 #include <mutex>
 #include <numeric>
 #include <queue>
-#include <random>
 #include <regex>
 #include <set>
 #include <sstream>
@@ -74,6 +73,19 @@ int main(int, char const *[]) {
 	LL T;
 	cin >> T;
 	while (T--) {
+		string S;
+		cin >> S;
+		sort(S.begin(), S.end());
+		string T(S.length(), '_');
+		RF(i, 0, S.length()) {
+			if()
+			if (i % 2 == 0) {
+				T[S.length() - 1 - i / 2] = S[i];
+			} else {
+				T[i / 2] = S[i];
+			}
+		}
+		cout << T << '\n';
 	}
 
 	return 0;
