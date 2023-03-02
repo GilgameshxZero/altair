@@ -34,7 +34,6 @@
 #include <mutex>
 #include <numeric>
 #include <queue>
-#include <random>
 #include <regex>
 #include <set>
 #include <sstream>
@@ -74,6 +73,22 @@ int main(int, char const *[]) {
 	LL T;
 	cin >> T;
 	while (T--) {
+		LL N;
+		string S;
+		cin >> N >> S;
+		string T;
+		for (char &c : S) {
+			if (c < 'a') {
+				c += 'a' - 'A';
+			}
+		}
+		T = S[0];
+		RF(i, 1, S.length()) {
+			if (S[i] != T.back()) {
+				T += S[i];
+			}
+		}
+		cout << (T == "meow" ? "YES" : "NO") << '\n';
 	}
 
 	return 0;
