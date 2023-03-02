@@ -75,17 +75,41 @@ int main(int, char const *[]) {
 	while (T--) {
 		string S;
 		cin >> S;
-		sort(S.begin(), S.end());
-		string T(S.length(), '_');
+		map<char, LL> cd;
 		RF(i, 0, S.length()) {
-			if()
-			if (i % 2 == 0) {
-				T[S.length() - 1 - i / 2] = S[i];
-			} else {
-				T[i / 2] = S[i];
+			cd[S[i]]++;
+		}
+		string front, back;
+		for (auto i{cd.begin()}; i != cd.end(); i++) {
+			while (i->second >= 2) {
+				i->second -= 2;
+				front += i->first;
+				back += i->first;
+			}
+			if (i->second == 1) {
+				if (next(i) == cd.end()) {
+					front += i->first;
+					i->second--;
+				} else if (next(next(i)) == cd.end()) {
+					front += string((next(i)->second + 1) / 2, next(i)->first);
+					back += string(next(i)->second / 2, next(i)->first);
+					front += i->first;
+					i->second--;
+					next(i)->second = 0;
+				} else {
+					back += i->first;
+					i->second--;
+					i = next(i);
+					while (i != cd.end()) {
+						front += string(i->second, i->first);
+						i = next(i);
+					}
+					break;
+				}
 			}
 		}
-		cout << T << '\n';
+		reverse(back.begin(), back.end());
+		cout << front << back << '\n';
 	}
 
 	return 0;
