@@ -34,7 +34,6 @@
 #include <mutex>
 #include <numeric>
 #include <queue>
-#include <random>
 #include <regex>
 #include <set>
 #include <sstream>
@@ -74,6 +73,21 @@ int main(int, char const *[]) {
 	LL T;
 	cin >> T;
 	while (T--) {
+		LL L, R;
+		cin >> L >> R;
+		LL ans{0};
+		while (L * (1LL << ans) <= R) {
+			ans++;
+		}
+		cout << ans << ' ';
+		ans--;
+		LL ans2{0};
+		ans2 += R / (1LL << ans) - L + 1;
+		LL rat{(1LL << (ans - 1)) * 3};
+		if (L * rat <= R) {
+			ans2 += ans * (R / rat - L + 1);
+		}
+		cout << ans2 << '\n';
 	}
 
 	return 0;
