@@ -34,6 +34,7 @@
 #include <mutex>
 #include <numeric>
 #include <queue>
+#include <random>
 #include <regex>
 #include <set>
 #include <sstream>
@@ -59,7 +60,7 @@ using LD = long double;
 
 using namespace std;
 
-/* ---------------------------- End of template. ---------------------------- */
+/* ------------------------ End of primary template. ------------------------ */
 
 int main(int, char const *[]) {
 #if !defined(ONLINEJUDGE) && (defined(__APPLE__) || defined(__MACH__))
@@ -73,30 +74,47 @@ int main(int, char const *[]) {
 	LL T;
 	cin >> T;
 	while (T--) {
-		LL N, M;
-		cin >> N >> M;
-		vector<LL> A(N), ls(N + M + 1, -1), cnt(N + M + 1, 0);
+		LL N, K;
+		cin >> N >> K;
+		vector<LL> A(N);
 		RF(i, 0, N) {
 			cin >> A[i];
-			ls[A[i]] = 0;
+			A[i]--;
 		}
-		RF(i, 1, M + 1) {
-			LL P, V;
-			cin >> P >> V;
-			P--;
-			cnt[A[P]] += i - ls[A[P]];
-			ls[A[P]] = -1;
-			ls[V] = i;
-			A[P] = V;
+		vector<LL> cold(K), hot(K);
+		RF(i, 0, K) {
+			cin >> cold[i];
 		}
-		LL ans{0};
-		RF(i, 1, N + M + 1) {
-			if (ls[i] != -1) {
-				cnt[i] += M + 1 - ls[i];
+		RF(i, 0, K) {
+			cin >> hot[i];
+		}
+
+		vector<LL> mcp(K + 1, LLONG_MAX / 10);
+		LL mca{0};
+		mcp[K] = cold[A[0]];
+		LL mcpmin{cold[A[0]]};
+		RF(i, 1, N) {
+			if (A[i] == A[i - 1]) {
+				mcp[A[i]] = min(mcpmin + cold[A[i]], mcp[A[i]] + hot[A[i]]);
+			} else {
+				mcp[A[i - 1]] = min(mcpmin + cold[A[i]], mcp[A[i]] + hot[A[i]]);
+				mcp[A[i]] += cold[A[i]];
 			}
-			ans += (M + 1) * M / 2 - (M - cnt[i]) * (M - cnt[i] + 1) / 2;
+
+			if (A[i] == A[i - 1]) {
+				mca += hot[A[i]];
+				mcp[A[i]] -= hot[A[i]];
+			} else {
+				mca += cold[A[i]];
+				mcp[A[i]] -= cold[A[i]];
+				mcp[A[i - 1]] -= cold[A[i]];
+			}
+
+			mcpmin = min(mcpmin, mcp[A[i]]);
+			mcpmin = min(mcpmin, mcp[A[i - 1]]);
 		}
-		cout << ans << '\n';
+
+		cout << mcpmin + mca << '\n';
 	}
 
 	return 0;
