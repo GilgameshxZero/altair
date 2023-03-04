@@ -34,6 +34,7 @@
 #include <mutex>
 #include <numeric>
 #include <queue>
+#include <random>
 #include <regex>
 #include <set>
 #include <sstream>
@@ -43,6 +44,8 @@
 #include <string>
 #include <system_error>
 #include <thread>
+#include <tuple>
+#include <type_traits>
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
@@ -57,7 +60,7 @@ using LD = long double;
 
 using namespace std;
 
-/* ---------------------------- End of template. ---------------------------- */
+/* ------------------------ End of primary template. ------------------------ */
 
 int main(int, char const *[]) {
 #if !defined(ONLINEJUDGE) && (defined(__APPLE__) || defined(__MACH__))
@@ -71,24 +74,23 @@ int main(int, char const *[]) {
 	LL T;
 	cin >> T;
 	while (T--) {
-		LL N, M, K;
-		cin >> N >> M >> K;
-		LL cL{0}, cM{0};
-		RF(i, 0, M) {
+		LL N;
+		cin >> N;
+		vector<LL> A;
+		LL p{0};
+		A.resize(1);
+		cin >> A[0];
+		cout << 1;
+		RF(i, 1, N) {
 			LL X;
 			cin >> X;
-			cL = max(cL, X);
-			cM += X == (N + K - 1) / K;
+			A.push_back(X);
+			while (A[p] < A.size() - p) {
+				p++;
+			}
+			cout << ' ' << A.size() - p;
 		}
-		if (K == 1) {
-			cout << "YES\n";
-			continue;
-		}
-		if (cL > (N + K - 1) / K) {
-			cout << "NO\n";
-			continue;
-		}
-		cout << ((N % K == 0 && cM <= K) || cM <= N % K ? "YES" : "NO") << '\n';
+		cout << '\n';
 	}
 
 	return 0;
