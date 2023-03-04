@@ -34,6 +34,7 @@
 #include <mutex>
 #include <numeric>
 #include <queue>
+#include <random>
 #include <regex>
 #include <set>
 #include <sstream>
@@ -43,6 +44,8 @@
 #include <string>
 #include <system_error>
 #include <thread>
+#include <tuple>
+#include <type_traits>
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
@@ -57,26 +60,7 @@ using LD = long double;
 
 using namespace std;
 
-// GCD using Euclidean algorithm.
-template <typename Integer>
-inline Integer greatestCommonDivisor(Integer x, Integer y) {
-	if (x > y) {
-		std::swap(x, y);
-	}
-	while (x != 0) {
-		y %= x;
-		std::swap(x, y);
-	}
-	return y;
-}
-
-// LCM. Integer type must be large enough to store product.
-template <typename Integer>
-inline Integer leastCommonMultiple(Integer const x, Integer const y) {
-	return x * y / greatestCommonDivisor(x, y);
-}
-
-/* ---------------------------- End of template. ---------------------------- */
+/* ------------------------ End of primary template. ------------------------ */
 
 namespace Rain::Algorithm {
 	// Computes the the minimum prime factor and a list of primes for all integers
@@ -116,43 +100,24 @@ int main(int, char const *[]) {
 	std::ios_base::sync_with_stdio(false);
 	std::cin.tie(nullptr);
 
-	auto [minFactor, primes]{linearSieve(100)};
-
-	LL T;
-	cin >> T;
-	while (T--) {
-		LL N;
-		cin >> N;
-		vector<LL> A(N);
-		unordered_set<LL> coll;
-		bool possible{true};
-		RF(i, 0, N) {
-			cin >> A[i];
-			if (coll.count(A[i])) {
-				possible = false;
-			} else {
-				coll.insert(A[i]);
+	auto [minFactor, primes]{linearSieve(1000000)};
+	vector<LL> mults{2000, 100, 100, 100, 100, 100};
+	LL N{0};
+	RF(i, 0, mults.size()) {
+		N += mults[i] * (i + 1);
+	}
+	cout << N / 2 << '\n';
+	LL running{0};
+	RF(i, 0, mults.size()) {
+		RF(j, 0, mults[i]) {
+			RF(k, 0, i + 1) {
+				cout << primes[running + j];
+				if (!(i == mults.size() - 1 && j == mults[i] - 1 && k == i)) {
+					cout << ' ';
+				}
 			}
 		}
-		if (!possible) {
-			cout << "NO\n";
-			continue;
-		}
-		RF(i, 0, primes.size()) {
-			vector<LL> mult(primes[i]);
-			RF(j, 0, N) {
-				mult[A[j] % primes[i]]++;
-			}
-			LL mm{primes[i]};
-			RF(j, 0, primes[i]) {
-				mm = min(mm, mult[j]);
-			}
-			if (mm >= 2) {
-				possible = false;
-				break;
-			}
-		}
-		cout << (possible ? "YES" : "NO") << '\n';
+		running += mults[i];
 	}
 
 	return 0;
