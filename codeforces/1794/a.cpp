@@ -34,6 +34,7 @@
 #include <mutex>
 #include <numeric>
 #include <queue>
+#include <random>
 #include <regex>
 #include <set>
 #include <sstream>
@@ -43,6 +44,8 @@
 #include <string>
 #include <system_error>
 #include <thread>
+#include <tuple>
+#include <type_traits>
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
@@ -57,7 +60,7 @@ using LD = long double;
 
 using namespace std;
 
-/* ---------------------------- End of template. ---------------------------- */
+/* ------------------------ End of primary template. ------------------------ */
 
 int main(int, char const *[]) {
 #if !defined(ONLINEJUDGE) && (defined(__APPLE__) || defined(__MACH__))
@@ -71,24 +74,31 @@ int main(int, char const *[]) {
 	LL T;
 	cin >> T;
 	while (T--) {
-		LL N, M, K;
-		cin >> N >> M >> K;
-		LL cL{0}, cM{0};
-		RF(i, 0, M) {
-			LL X;
-			cin >> X;
-			cL = max(cL, X);
-			cM += X == (N + K - 1) / K;
+		LL N;
+		cin >> N;
+		if (N == 2) {
+			string S, T;
+			cin >> S >> T;
+			cout << (S == T ? "YES" : "NO") << '\n';
+		} else {
+			vector<string> S;
+			RF(i, 0, (N - 1) * 2) {
+				string T;
+				cin >> T;
+				if (T.length() == N - 1) {
+					S.push_back(T);
+				}
+			}
+			string Q;
+			if (S[0].substr(1) == S[1].substr(0, N - 2)) {
+				Q = S[0][0] + S[1];
+			} else {
+				Q = S[1][0] + S[0];
+			}
+			string P{Q};
+			reverse(P.begin(), P.end());
+			cout << (P == Q ? "YES" : "NO") << '\n';
 		}
-		if (K == 1) {
-			cout << "YES\n";
-			continue;
-		}
-		if (cL > (N + K - 1) / K) {
-			cout << "NO\n";
-			continue;
-		}
-		cout << ((N % K == 0 && cM <= K) || cM <= N % K ? "YES" : "NO") << '\n';
 	}
 
 	return 0;
