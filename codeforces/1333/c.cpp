@@ -34,6 +34,7 @@
 #include <mutex>
 #include <numeric>
 #include <queue>
+#include <random>
 #include <regex>
 #include <set>
 #include <sstream>
@@ -43,6 +44,8 @@
 #include <string>
 #include <system_error>
 #include <thread>
+#include <tuple>
+#include <type_traits>
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
@@ -57,7 +60,7 @@ using LD = long double;
 
 using namespace std;
 
-/* ---------------------------- End of template. ---------------------------- */
+/* ------------------------ End of primary template. ------------------------ */
 
 int main(int, char const *[]) {
 #if !defined(ONLINEJUDGE) && (defined(__APPLE__) || defined(__MACH__))
@@ -70,36 +73,47 @@ int main(int, char const *[]) {
 
 	LL N;
 	cin >> N;
-
-	vector<LL> primes;
-	vector<unordered_map<LL, LL>> fz(N + 1);
-	RF(i, 2, N) {
-		if (fz[i].empty()) {
-			for (LL j{i * 2}; j <= N; j += i) {
-				fz[j][primes.size()] = 0;
-			}
-			fz[i][primes.size()] = 1;
-			primes.push_back(i);
-		} else {
-			LL k{i};
-			for (auto &j : fz[i]) {
-				while (k % primes[j.first] == 0) {
-					j.second++;
-					k /= primes[j.first];
-				}
-			}
+	vector<LL> A(N);
+	RF(i, 0, N) {
+		cin >> A[i];
+	}
+	LL good{-1};
+	RF(i, 0, N) {
+		if (A[i] != 0) {
+			good = i;
+			break;
 		}
 	}
-
-	unordered_set<LL> in;
-	LL thresh{1};
-	RF(i, 1, N + 1) {
-		in.insert(i);
+	if (good == -1) {
+		cout << "0\n";
 	}
-	while (!in.empty()) {
-		RF(i, 1, N + 1) {
-			fz[i][thresh]
+	LL ans{0};
+	unordered_set<LL> sums;
+	LL shift{0}, msum{0};
+	RF(i, good, N) {
+		while (i < N && A[i] == 0) {
+			i++;
+			good = i;
+			sums.clear();
+			shift = 0;
+			msum = 0;
 		}
+		if (i == N) {
+			break;
+		}
+
+		while (sums.count(-shift - A[i])) {
+			sums.erase(msum - shift);
+			msum -= A[good];
+			good++;
+		}
+
+		sums.insert(-shift);
+		shift += A[i];
+		msum += A[i];
+		ans += i - good + 1;
 	}
+	cout << ans << '\n';
+
 	return 0;
 }
