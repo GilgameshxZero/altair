@@ -41,8 +41,10 @@ BIN = $(PROJECT)
 PROJECT_BIN = $(BIN_DIR)$(PROJECT)\$(BIN).exe
 PROJECT_BIN_DIR = $(BIN_DIR)$(PROJECT)^\
 
+# PCH requires that PDB is shared during compile, but separate during link.
 PCH_SRC = pch.cpp
 PCH_OBJ = $(OBJ_DIR)pch.obj
+PCH_PDB = $(OBJ_DIR)pch.pdb
 PCH_FILE = $(OBJ_DIR)pch.pch
 
 COMPILER = cl /c
@@ -50,7 +52,7 @@ COMPILER_FLAGS_INCLUDES =
 # Does not include the /Fo obj output option, as that is set later depending on
 # whether or not we build the pch.
 COMPILER_FLAGS_COMMON = $(COMPILER_FLAGS_INCLUDES) /std:c++17 /D _CONSOLE\
-	/Fd$(PROJECT_OBJ_DIR)$(BIN).pdb /Fp$(PCH_FILE)\
+	/Fd$(PCH_PDB) /Fp$(PCH_FILE)\
 	/fp:fast /MP /permissive- /Zc:wchar_t /Zc:forScope /Zc:inline /Zf\
 	/GS /W3 /WX- /wd4250 /wd4068 /sdl /diagnostics:column /EHsc /Gm- /nologo
 COMPILER_FLAGS_DEBUG = /D _DEBUG /MDd /Od /RTC1 /JMC /ZI
