@@ -62,21 +62,5 @@ using namespace std;
 
 #pragma hdrstop
 
-/* ------------------------ End of primary template. ------------------------ */
-
-int main(int, char const *[]) {
-#if !defined(ONLINEJUDGE) && (defined(__APPLE__) || defined(__MACH__))
-	std::freopen("../build/i.default.txt", "r", stdin);
-	std::freopen("../build/o.default.txt", "w", stdout);
-#endif
-
-	std::ios_base::sync_with_stdio(false);
-	std::cin.tie(nullptr);
-
-	LL T;
-	cin >> T;
-	while (T--) {
-	}
-
-	return 0;
-}
+// A copy of template.cpp, up until any function definitions, used for
+// generation of precompiled-headers.

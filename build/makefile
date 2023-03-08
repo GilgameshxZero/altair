@@ -41,10 +41,16 @@ BIN = $(PROJECT)
 PROJECT_BIN = $(BIN_DIR)$(PROJECT)\$(BIN).exe
 PROJECT_BIN_DIR = $(BIN_DIR)$(PROJECT)^\
 
+PCH_SRC = pch.cpp
+PCH_OBJ = $(OBJ_DIR)pch.obj
+PCH_FILE = $(OBJ_DIR)pch.pch
+
 COMPILER = cl /c
 COMPILER_FLAGS_INCLUDES =
+# Does not include the /Fo obj output option, as that is set later depending on
+# whether or not we build the pch.
 COMPILER_FLAGS_COMMON = $(COMPILER_FLAGS_INCLUDES) /std:c++17 /D _CONSOLE\
-	/Fd$(PROJECT_OBJ_DIR).pdb /Fo$(PROJECT_OBJ_DIR) /Fp$(PROJECT_OBJ_DIR).pch\
+	/Fd$(PROJECT_OBJ_DIR)$(BIN).pdb /Fp$(PCH_FILE)\
 	/fp:fast /MP /permissive- /Zc:wchar_t /Zc:forScope /Zc:inline /Zf\
 	/GS /W3 /WX- /wd4250 /wd4068 /sdl /diagnostics:column /EHsc /Gm- /nologo
 COMPILER_FLAGS_DEBUG = /D _DEBUG /MDd /Od /RTC1 /JMC /ZI
@@ -54,10 +60,10 @@ COMPILER_FLAGS_INSTRUMENT = $(COMPILER_FLAGS_DEBUG) /Fa$(PROJECT_OBJ_DIR)
 LINKER = link
 LINKER_FLAGS_LIBRARIES =
 LINKER_FLAGS_COMMON = $(LINKER_FLAGS_LIBRARIES) /OUT:$(PROJECT_BIN)\
-	/PDB:$(PROJECT_OBJ_DIR).pdb /ILK:$(PROJECT_OBJ_DIR).ilk /MACHINE:x64\
+	/PDB:$(PROJECT_OBJ_DIR)$(BIN).pdb /ILK:$(PROJECT_OBJ_DIR)$(BIN).ilk /MACHINE:x64\
 	/MANIFESTUAC:"level='asInvoker' uiAccess='false'"\
-	/MANIFESTFILE:$(PROJECT_OBJ_DIR).exe.intermediate.manifest\
-	/LTCGOUT:$(PROJECT_OBJ_DIR).iobj /SUBSYSTEM:CONSOLE /NOLOGO
+	/MANIFESTFILE:$(PROJECT_OBJ_DIR)$(BIN).exe.intermediate.manifest\
+	/LTCGOUT:$(PROJECT_OBJ_DIR)$(BIN).iobj /SUBSYSTEM:CONSOLE /NOLOGO
 LINKER_FLAGS_DEBUG = /DEBUG
 LINKER_FLAGS_RELEASE = /INCREMENTAL:NO /OPT:ICF /OPT:REF /LTCG:incremental
 LINKER_FLAGS_INSTRUMENT = $(LINKER_FLAGS_DEBUG)
@@ -96,12 +102,22 @@ clean:
 # Define special macro to enable double-substitution.
 DBLSUB_DEP_SRC_DIR_TO_OBJ_DIR = $(**:..\=..\obj\)
 # First compile all outdated files (with /MP), then link everything together.
+# Splitting out the intermediate obj step makes /MP difficult to use.
 $(PROJECT_BIN): $(PROJECT_SRC_DIR)$(SOURCES)
+	@$(MAKE) $(PCH_FILE)
 	@IF NOT EXIST $(PROJECT_BIN_DIR) MD $(PROJECT_BIN_DIR)
 	@IF NOT EXIST $(PROJECT_OBJ_DIR) MD $(PROJECT_OBJ_DIR)
-	@$(COMPILER) $(COMPILER_FLAGS) $?
+	@$(COMPILER) $(COMPILER_FLAGS) /Yu /Fo$(PROJECT_OBJ_DIR)$(BIN).obj\
+		$(PROJECT_SRC_DIR)$(SOURCES)
 	@ECHO $(PROJECT_BIN)
-	@$(LINKER) $(LINKER_FLAGS) $(DBLSUB_DEP_SRC_DIR_TO_OBJ_DIR:.cpp=.obj)
+	@$(LINKER) $(LINKER_FLAGS) $(PCH_OBJ)\
+		$(DBLSUB_DEP_SRC_DIR_TO_OBJ_DIR:.cpp=.obj)
+
+# Precompiled headers.
+$(PCH_FILE): $(PCH_SRC)
+	@IF NOT EXIST $(PROJECT_BIN_DIR) MD $(PROJECT_BIN_DIR)
+	@IF NOT EXIST $(PROJECT_OBJ_DIR) MD $(PROJECT_OBJ_DIR)
+	@$(COMPILER) $(COMPILER_FLAGS) /Yc /Fo$(PCH_OBJ) $(PCH_SRC)
 
 # ------------------------------------------------------------------------------
 !else
