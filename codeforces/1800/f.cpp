@@ -60,6 +60,8 @@ using LD = long double;
 
 using namespace std;
 
+#pragma hdrstop
+
 /* ------------------------ End of primary template. ------------------------ */
 
 int main(int, char const *[]) {
