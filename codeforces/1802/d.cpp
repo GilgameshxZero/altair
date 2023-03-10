@@ -51,11 +51,13 @@
 #include <utility>
 #include <vector>
 
+using LL = long long;
+using LD = long double;
+
 #define RF(x, from, to)                                                      \
 	for (long long x = from, _to = to, _delta{x < _to ? 1LL : -1LL}; x != _to; \
 			 x += _delta)
 
-using LL = long long;
 using namespace std;
 
 #pragma hdrstop
@@ -74,6 +76,53 @@ int main(int, char const *[]) {
 	LL T;
 	cin >> T;
 	while (T--) {
+		LL N;
+		cin >> N;
+		vector<pair<LL, LL>> A(N);
+		multiset<LL> p2force, optional;
+		RF(i, 0, N) {
+			cin >> A[i].first >> A[i].second;
+			p2force.insert(A[i].second);
+		}
+		LL ans{INT_MAX};
+		sort(A.begin(), A.end());
+		for (LL i{0}; i < N;) {
+			auto j{i};
+			for (; j < N && A[i].first == A[j].first; j++) {
+				p2force.erase(p2force.find(A[j].second));
+			}
+			if (j != i + 1) {
+				RF(k, i, j) {
+					optional.insert(A[k].second);
+				}
+			}
+			LL after{-1}, before{-1};
+			auto it{optional.lower_bound(A[i].first)};
+			if (it != optional.end()) {
+				after = *it;
+			}
+			if (it != optional.begin()) {
+				before = *prev(it);
+			}
+			LL forcebig{-INT_MAX};
+			if (p2force.size() >= 1) {
+				forcebig = *prev(p2force.end());
+			}
+			ans = min(ans, abs(forcebig - A[i].first));
+			if (after != -1) {
+				ans = min(ans, abs(max(after, forcebig) - A[i].first));
+			}
+			if (before != -1) {
+				ans = min(ans, abs(max(before, forcebig) - A[i].first));
+			}
+			if (j == i + 1) {
+				RF(k, i, j) {
+					optional.insert(A[k].second);
+				}
+			}
+			i = j;
+		}
+		cout << ans << '\n';
 	}
 
 	return 0;
