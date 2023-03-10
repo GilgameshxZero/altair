@@ -73,6 +73,9 @@ int main(int, char const *[]) {
 	LL T;
 	cin >> T;
 	while (T--) {
+		LL N;
+		cin >> N;
+		cout << N << " is " << (N % 2 == 0 ? "even" : "odd") << '\n';
 	}
 
 	return 0;
