@@ -51,14 +51,62 @@
 #include <utility>
 #include <vector>
 
+using LL = long long;
+using LD = long double;
+
 #define RF(x, from, to)                                                      \
 	for (long long x = from, _to = to, _delta{x < _to ? 1LL : -1LL}; x != _to; \
 			 x += _delta)
 
-using LL = long long;
 using namespace std;
 
 #pragma hdrstop
 
-// A copy of template.cpp, up until any function definitions, used for
-// generation of precompiled-headers.
+/* ------------------------ End of primary template. ------------------------ */
+
+int main(int, char const *[]) {
+#if !defined(ONLINEJUDGE) && (defined(__APPLE__) || defined(__MACH__))
+	std::freopen("../build/i.default.txt", "r", stdin);
+	std::freopen("../build/o.default.txt", "w", stdout);
+#endif
+
+	std::ios_base::sync_with_stdio(false);
+	std::cin.tie(nullptr);
+
+	LL T;
+	cin >> T;
+	while (T--) {
+		LL N;
+		cin >> N;
+		unordered_set<LL> sp;
+		LL cpair{0};
+		RF(i, 0, N) {
+			LL A;
+			cin >> A;
+			if (sp.count(-A)) {
+				sp.erase(-A);
+				cpair++;
+			} else {
+				sp.insert(A);
+			}
+		}
+		RF(i, 0, N) {
+			if (i + 1 <= cpair + sp.size()) {
+				cout << i + 1 << ' ';
+			} else {
+				cout << cpair + sp.size() - (i + 1 - (cpair + sp.size())) << ' ';
+			}
+		}
+		cout << '\n';
+		RF(i, 0, N) {
+			if (i + 1 <= cpair * 2) {
+				cout << (i + 1) % 2 << ' ';
+			} else {
+				cout << i + 1 - cpair * 2 << ' ';
+			}
+		}
+		cout << '\n';
+	}
+
+	return 0;
+}
