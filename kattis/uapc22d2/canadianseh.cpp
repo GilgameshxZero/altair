@@ -16,7 +16,6 @@
 #include <cinttypes>
 #include <climits>
 #include <cmath>
-#include <complex>
 #include <condition_variable>
 #include <cstdio>
 #include <cstdlib>
@@ -59,7 +58,9 @@
 using LL = long long;
 using namespace std;
 
-#pragma hdrstop	 // ------------------------------------------------------------
+#pragma hdrstop
+
+/* ------------------------ End of primary template. ------------------------ */
 
 int main(int, char const *[]) {
 #if !defined(ONLINEJUDGE) && (defined(__APPLE__) || defined(__MACH__))
@@ -70,10 +71,9 @@ int main(int, char const *[]) {
 	std::ios_base::sync_with_stdio(false);
 	std::cin.tie(nullptr);
 
-	LL T;
-	cin >> T;
-	while (T--) {
-	}
+	string S;
+	getline(cin, S);
+	cout << (S.substr(S.length() - 3) == "eh?" ? "Canadian!" : "Imposter!");
 
 	return 0;
 }

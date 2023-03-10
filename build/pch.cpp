@@ -16,6 +16,7 @@
 #include <cinttypes>
 #include <climits>
 #include <cmath>
+#include <complex>
 #include <condition_variable>
 #include <cstdio>
 #include <cstdlib>
@@ -58,7 +59,4 @@
 using LL = long long;
 using namespace std;
 
-#pragma hdrstop
-
-// A copy of template.cpp, up until any function definitions, used for
-// generation of precompiled-headers.
+#pragma hdrstop	 // ------------------------------------------------------------
