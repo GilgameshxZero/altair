@@ -51,14 +51,56 @@
 #include <utility>
 #include <vector>
 
+using LL = long long;
+using LD = long double;
+
 #define RF(x, from, to)                                                      \
 	for (long long x = from, _to = to, _delta{x < _to ? 1LL : -1LL}; x != _to; \
 			 x += _delta)
 
-using LL = long long;
 using namespace std;
 
 #pragma hdrstop
 
-// A copy of template.cpp, up until any function definitions, used for
-// generation of precompiled-headers.
+/* ------------------------ End of primary template. ------------------------ */
+
+int main(int, char const *[]) {
+#if !defined(ONLINEJUDGE) && (defined(__APPLE__) || defined(__MACH__))
+	std::freopen("../build/i.default.txt", "r", stdin);
+	std::freopen("../build/o.default.txt", "w", stdout);
+#endif
+
+	std::ios_base::sync_with_stdio(false);
+	std::cin.tie(nullptr);
+
+	// cout << (548 ^ 549 ^ 550 ^ 551) << ' ' << (1064 ^ 1065 ^ 1066 ^ 1067) << '
+	// '
+	// 		 << (556 ^ 557 ^ 558 ^ 559);
+
+	LL T;
+	cin >> T;
+	while (T--) {
+		LL N, M;
+		cin >> N >> M;
+		cout << N * M << '\n';
+		vector<vector<LL>> A(N + (N % 2), vector<LL>(M + (M % 2)));
+		LL delta;
+		RF(i, 0, A.size() / 2) {
+			RF(j, 0, A[0].size() / 2) {
+				delta = j * 4 + i * 512;
+				A[i * 2][j * 2] = delta;
+				A[i * 2][j * 2 + 1] = delta + 1;
+				A[i * 2 + 1][j * 2] = delta + 2;
+				A[i * 2 + 1][j * 2 + 1] = delta + 3;
+			}
+		}
+		RF(i, 0, N) {
+			RF(j, 0, M) {
+				cout << A[i][j] << ' ';
+			}
+			cout << '\n';
+		}
+	}
+
+	return 0;
+}
