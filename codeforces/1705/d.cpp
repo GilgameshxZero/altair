@@ -73,18 +73,58 @@ int main(int, char const *[]) {
 	LL T;
 	cin >> T;
 	while (T--) {
-		LL N, X;
-		cin >> N >> X;
-		vector<LL> H(2 * N);
-		RF(i, 0, N * 2) {
-			cin >> H[i];
+		LL N;
+		cin >> N;
+		string S, T;
+		cin >> S >> T;
+		if (S[0] != T[0] || S.back() != T.back()) {
+			cout << "-1\n";
+			continue;
 		}
-		sort(H.begin(), H.end());
+
+		set<LL> flippable;
+		RF(i, 1, N - 1) {
+			if (S[i - 1] != S[i + 1]) {
+				flippable.insert(i);
+			}
+		}
+
+		vector<LL> rte(N + 1);
+		LL ans{0}, toggles{0};
 		bool possible{true};
-		RF(i, 0, N) {
-			possible &= H[i] + X <= H[i + N];
+
+		auto calc{[&](LL i) { return '0' + ((S[i] - '0' + toggles) % 2); }};
+		auto tflip{[&](LL i) {
+			if (i <= 0 || i >= N - 1) {
+				return;
+			}
+			if (flippable.count(i)) {
+				flippable.erase(i);
+			} else {
+				flippable.insert(i);
+			}
+		}};
+
+		RF(i, 1, N - 1) {
+			toggles -= rte[i];
+			if (calc(i) == T[i]) {
+				continue;
+			}
+			auto it{flippable.lower_bound(i)};
+			if (it == flippable.end()) {
+				possible = false;
+				break;
+			}
+			auto j{*it};
+			ans += j - i + 1;
+			rte[j + 1]++;
+			toggles++;
+			tflip(i - 1);
+			tflip(i);
+			tflip(j);
+			tflip(j + 1);
 		}
-		cout << (possible ? "YES" : "NO") << '\n';
+		cout << (possible ? ans : -1) << '\n';
 	}
 
 	return 0;
