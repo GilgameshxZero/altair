@@ -73,18 +73,27 @@ int main(int, char const *[]) {
 	LL T;
 	cin >> T;
 	while (T--) {
-		LL N, X;
-		cin >> N >> X;
-		vector<LL> H(2 * N);
-		RF(i, 0, N * 2) {
-			cin >> H[i];
+		LL N, C, Q;
+		cin >> N >> C >> Q;
+		string S;
+		cin >> S;
+		map<LL, LL> back;
+		LL n{N};
+		RF(i, 0, C) {
+			LL L, R;
+			cin >> L >> R;
+			back[n] = n - L + 1;
+			n += R - L + 1;
 		}
-		sort(H.begin(), H.end());
-		bool possible{true};
-		RF(i, 0, N) {
-			possible &= H[i] + X <= H[i + N];
+		RF(i, 0, Q) {
+			LL K;
+			cin >> K;
+			K--;
+			while (K >= N) {
+				K -= prev(back.upper_bound(K))->second;
+			}
+			cout << S[K] << '\n';
 		}
-		cout << (possible ? "YES" : "NO") << '\n';
 	}
 
 	return 0;
