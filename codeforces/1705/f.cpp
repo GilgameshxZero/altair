@@ -145,7 +145,61 @@ namespace Rain::Random {
 	};
 }
 
+namespace Rain::Algorithm {
+	// Most significant 1-bit for unsigned integral types of at most long long in
+	// size. Undefined result if x = 0.
+	template <typename Integer>
+	inline std::size_t mostSignificant1BitIdx(Integer const &x) {
+#ifdef __has_builtin
+#if __has_builtin(__builtin_clzll)
+		return 8 * sizeof(unsigned long long) - __builtin_clzll(x) - 1;
+#endif
+#endif
+		for (std::size_t bit{8 * sizeof(Integer) - 1};
+				 bit != std::numeric_limits<std::size_t>::max();
+				 bit--) {
+			if (x & (static_cast<Integer>(1) << bit)) {
+				return bit;
+			}
+		}
+		return std::numeric_limits<std::size_t>::max();
+	}
+
+	// Least significant 1-bit for unsigned integral types of at most long long in
+	// size. Undefined result if x = 0.
+	template <typename Integer>
+	inline std::size_t leastSignificant1BitIdx(Integer const &x) {
+#ifdef __has_builtin
+#if __has_builtin(__builtin_ctzll)
+		return __builtin_ctzll(x);
+#endif
+#endif
+		for (std::size_t bit{0}; bit != 8 * sizeof(Integer); bit++) {
+			if (x & (static_cast<Integer>(1) << bit)) {
+				return bit;
+			}
+		}
+		return std::numeric_limits<std::size_t>::max();
+	}
+
+	// Count of 1-bits in unsigned integral types of at most long long in size.
+	template <typename Integer>
+	inline std::size_t bitPopcount(Integer const &x) {
+#ifdef __has_builtin
+#if __has_builtin(__builtin_popcountll)
+		return __builtin_popcountll(x);
+#endif
+#endif
+		std::size_t count{0};
+		for (std::size_t bit{0}; bit != 8 * sizeof(Integer); bit++) {
+			count += !!(x & (static_cast<Integer>(1) << bit));
+		}
+		return count;
+	}
+}
+
 using namespace Rain::Random;
+using namespace Rain::Algorithm;
 
 int main(int, char const *[]) {
 #if !defined(ONLINEJUDGE) && (defined(__APPLE__) || defined(__MACH__))
@@ -167,7 +221,7 @@ int main(int, char const *[]) {
 
 	vector<pair<LD, LL>> rp(N);
 	RF(i, 0, N) {
-		rp[i].first = uniform_real_distribution<LD>{0, 1}(generator);
+		rp[i].first = i;
 		rp[i].second = i;
 	}
 	sort(rp.begin(), rp.end());
@@ -182,87 +236,98 @@ int main(int, char const *[]) {
 		totaltrue += 'T' == SS[j];
 	}
 	// cin >> totaltrue;
-	auto count1{[&](LL i) {
+	auto count{[&](LL i, LL X) {
 		Q++;
 		string S(N, 'F');
-		S[perm[i]] = 'T';
+		RF(j, i, i + X) {
+			S[perm[j]] = 'T';
+		}
 		// cout << S << endl;
 		LL ans{0};
 		RF(j, 0, SS.length()) {
 			ans += S[j] == SS[j];
 		}
 		// cin >> ans;
-		return (ans + totaltrue - (N - 1)) / 2;
-	}};
-	auto count2{[&](LL i) {
-		Q++;
-		string S(N, 'F');
-		S[perm[i]] = S[perm[i + 1]] = 'T';
-		// cout << S << endl;
-		LL ans{0};
-		RF(j, 0, SS.length()) {
-			ans += S[j] == SS[j];
-		}
-		// cin >> ans;
-		return (ans + totaltrue - (N - 2)) / 2;
+		return (ans + totaltrue - (N - X)) / 2;
 	}};
 
-	LL E2{0}, E1{0};
-	map<LL, LL> cnt;
+	map<LL, LL> qper;
 	vector<bool> ans(N);
 	for (LL i{0}; i < N;) {
+		LL qc{Q};
 		if (i == N - 1) {
-			ans[perm[i]] = count1(i) == 1;
-			i += 1;
-			continue;
-		}
-		LL res{count2(i)};
-		if (res == 0) {
-			E2++;
-			cnt[1]++;
-			ans[perm[i]] = ans[perm[i + 1]] = false;
-			i += 2;
-			continue;
-		} else if (res == 2) {
-			E2++;
-			cnt[1]++;
-			ans[perm[i]] = ans[perm[i + 1]] = true;
-			i += 2;
-			continue;
+			ans[perm[i]] = count(i, 1) == 1;
+			break;
 		}
 
-		E1++;
-		LL j{i + 1};
-		while (res == 1) {
-			if (j == N - 1) {
-				ans[perm[j]] = count1(j) == 1;
+		vector<LL> res;
+		array<bool, 4> ch;
+		array<bool, 8> opt;
+		LL j{i};
+		ch.fill(true);
+		for (;; j++) {
+			if (j == N - 2) {
+				ans[perm[j]] = count(j, 1) == 1;
+				ans[perm[j + 1]] = count(j + 1, 1) == 1;
 				break;
 			}
-			res = count2(j);
-			if (res == 0) {
-				ans[perm[j]] = ans[perm[j + 1]] = false;
-				break;
-			} else if (res == 2) {
-				ans[perm[j]] = ans[perm[j + 1]] = true;
+
+			res.push_back(count(j, 3));
+			opt.fill(false);
+			RF(k, 0, 4) {
+				if (ch[k]) {
+					opt[k * 2] = opt[k * 2 + 1] = true;
+				}
+			}
+			ch.fill(false);
+			RF(k, 0, 8) {
+				if (bitPopcount(k) == res.back()) {
+					ch[k & 3] = true;
+				}
+			}
+
+			LL ncht{0}, nchti;
+			RF(k, 0, 4) {
+				if (ch[k]) {
+					ncht++;
+					nchti = k;
+				}
+			}
+			if (ncht == 1) {
+				ans[perm[j + 2]] = (nchti & 1) != 0;
+				ans[perm[j + 1]] = (nchti & 2) != 0;
+				ans[perm[j]] = res.back() - ans[perm[j + 1]] - ans[perm[j + 2]] == 1;
+				res.pop_back();
 				break;
 			}
-			E1++;
-			j++;
 		}
 
-		RF(k, j - 1, i - 1) {
-			ans[perm[k]] = !ans[perm[k + 1]];
+		RF(k, 0, res.size()) {
+			ans[perm[j - 1 - k]] =
+				res[res.size() - 1 - k] - ans[perm[j - k]] - ans[perm[j - k + 1]] == 1;
 		}
-		cnt[j - i + 1]++;
-		i = j + 2;
+		i = j + 3;
+
+		qper[Q - qc]++;
 	}
 
 	// RF(i, 0, N) {
 	// 	cout << (ans[i] ? 'T' : 'F');
 	// }
-	cout << Q + 1 << ' ' << E2 << ' ' << E1 << '\n';
-	for(auto const &i : cnt) {
+	cout << Q + 1 << '\n';
+	LL qs{0}, qt{0};
+	for (auto const &i : qper) {
 		cout << i.first << ' ' << i.second << '\n';
+		qs += i.first * i.second;
+		qt += i.second;
 	}
+	cout << (LD)qs / qt << '\n';
+	LL bad{0};
+	RF(i, 0, N) {
+		if ((ans[i] && SS[i] == 'F') || (!ans[i] && SS[i] == 'T')) {
+			bad++;
+		}
+	}
+	cout << bad << '\n';
 	return 0;
 }
