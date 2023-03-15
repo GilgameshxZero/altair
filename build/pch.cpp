@@ -57,6 +57,7 @@
 			 x += _delta)
 
 using LL = long long;
+using LD = long double;
 using namespace std;
 
 #pragma hdrstop	 // ------------------------------------------------------------
