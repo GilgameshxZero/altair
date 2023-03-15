@@ -212,16 +212,16 @@ int main(int, char const *[]) {
 
 	LL N;
 
-	N = 1000;
-	string SS;
-	RF(i, 0, N) {
-		SS += uniform_int_distribution<LL>{0, 1}(generator) == 1 ? 'T' : 'F';
-	}
-	// cin >> N;
+	// N = 1000;
+	// string SS;
+	// RF(i, 0, N) {
+	// 	SS += uniform_int_distribution<LL>{0, 1}(generator) == 1 ? 'T' : 'F';
+	// }
+	cin >> N;
 
 	vector<pair<LD, LL>> rp(N);
 	RF(i, 0, N) {
-		rp[i].first = i;
+		rp[i].first = uniform_real_distribution<LD>{0, 1}(generator);
 		rp[i].second = i;
 	}
 	sort(rp.begin(), rp.end());
@@ -230,24 +230,24 @@ int main(int, char const *[]) {
 		perm[i] = rp[i].second;
 	}
 
-	// cout << string(N, 'T') << endl;
+	cout << string(N, 'T') << endl;
 	LL totaltrue{0}, Q{0};
-	RF(j, 0, SS.length()) {
-		totaltrue += 'T' == SS[j];
-	}
-	// cin >> totaltrue;
+	// RF(j, 0, SS.length()) {
+	// 	totaltrue += 'T' == SS[j];
+	// }
+	cin >> totaltrue;
 	auto count{[&](LL i, LL X) {
 		Q++;
 		string S(N, 'F');
 		RF(j, i, i + X) {
 			S[perm[j]] = 'T';
 		}
-		// cout << S << endl;
+		cout << S << endl;
 		LL ans{0};
-		RF(j, 0, SS.length()) {
-			ans += S[j] == SS[j];
-		}
-		// cin >> ans;
+		// RF(j, 0, SS.length()) {
+		// 	ans += S[j] == SS[j];
+		// }
+		cin >> ans;
 		return (ans + totaltrue - (N - X)) / 2;
 	}};
 
@@ -261,10 +261,7 @@ int main(int, char const *[]) {
 		}
 
 		vector<LL> res;
-		array<bool, 4> ch;
-		array<bool, 8> opt;
-		LL j{i};
-		ch.fill(true);
+		LL j{i}, transitioned{-1};
 		for (;; j++) {
 			if (j == N - 2) {
 				ans[perm[j]] = count(j, 1) == 1;
@@ -273,31 +270,48 @@ int main(int, char const *[]) {
 			}
 
 			res.push_back(count(j, 3));
-			opt.fill(false);
-			RF(k, 0, 4) {
-				if (ch[k]) {
-					opt[k * 2] = opt[k * 2 + 1] = true;
-				}
-			}
-			ch.fill(false);
-			RF(k, 0, 8) {
-				if (bitPopcount(k) == res.back()) {
-					ch[k & 3] = true;
-				}
+			if (res.back() == 0) {
+				ans[perm[j]] = ans[perm[j + 1]] = ans[perm[j + 2]] = false;
+				res.pop_back();
+				break;
+			} else if (res.back() == 3) {
+				ans[perm[j]] = ans[perm[j + 1]] = ans[perm[j + 2]] = true;
+				res.pop_back();
+				break;
 			}
 
-			LL ncht{0}, nchti;
-			RF(k, 0, 4) {
-				if (ch[k]) {
-					ncht++;
-					nchti = k;
+			if (res.size() >= 2 && res.front() != res.back()) {
+				ans[perm[j + 2]] = res.back() == 2;
+				swap(perm[j + 1], perm[j + 2]);
+
+				vector<LL> res2;
+				LL k{j + 2};
+				for (;; k++) {
+					if (k == N - 1) {
+						ans[perm[k]] = count(k, 1) == 1;
+						break;
+					}
+
+					res2.push_back(count(k, 2));
+					if (res2.back() == 0) {
+						ans[perm[k]] = ans[perm[k + 1]] = false;
+						res2.pop_back();
+						break;
+					} else if (res2.back() == 2) {
+						ans[perm[k]] = ans[perm[k + 1]] = true;
+						res2.pop_back();
+						break;
+					}
 				}
-			}
-			if (ncht == 1) {
-				ans[perm[j + 2]] = (nchti & 1) != 0;
-				ans[perm[j + 1]] = (nchti & 2) != 0;
+
+				RF(l, 0, res2.size()) {
+					ans[perm[k - 1 - l]] =
+						res2[res2.size() - 1 - l] - ans[perm[k - l]] == 1;
+				}
+				swap(perm[j + 1], perm[j + 2]);
 				ans[perm[j]] = res.back() - ans[perm[j + 1]] - ans[perm[j + 2]] == 1;
 				res.pop_back();
+				transitioned = k + 2;
 				break;
 			}
 		}
@@ -307,27 +321,30 @@ int main(int, char const *[]) {
 				res[res.size() - 1 - k] - ans[perm[j - k]] - ans[perm[j - k + 1]] == 1;
 		}
 		i = j + 3;
+		if (transitioned != -1) {
+			i = transitioned;
+		}
 
 		qper[Q - qc]++;
 	}
 
-	// RF(i, 0, N) {
-	// 	cout << (ans[i] ? 'T' : 'F');
-	// }
-	cout << Q + 1 << '\n';
-	LL qs{0}, qt{0};
-	for (auto const &i : qper) {
-		cout << i.first << ' ' << i.second << '\n';
-		qs += i.first * i.second;
-		qt += i.second;
-	}
-	cout << (LD)qs / qt << '\n';
-	LL bad{0};
 	RF(i, 0, N) {
-		if ((ans[i] && SS[i] == 'F') || (!ans[i] && SS[i] == 'T')) {
-			bad++;
-		}
+		cout << (ans[i] ? 'T' : 'F');
 	}
-	cout << bad << '\n';
+	// cout << Q + 1 << '\n';
+	// LL qs{0}, qt{0};
+	// for (auto const &i : qper) {
+	// 	cout << i.first << ' ' << i.second << '\n';
+	// 	qs += i.first * i.second;
+	// 	qt += i.second;
+	// }
+	// cout << (LD)qs / qt << '\n';
+	// LL bad{0};
+	// RF(i, 0, N) {
+	// 	if ((ans[perm[i]] && SS[i] == 'F') || (!ans[perm[i]] && SS[i] == 'T')) {
+	// 		bad++;
+	// 	}
+	// }
+	// cout << bad << '\n';
 	return 0;
 }
