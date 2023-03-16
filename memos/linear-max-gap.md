@@ -1,10 +1,10 @@
 <!-- emilia-snapshot-properties
-Linear Max Gap
+Linear max gap
 2022/12/01
 altair
 emilia-snapshot-properties -->
 
-# Linear Max Gap
+# Linear max gap
 
 December 1, 2022
 Yang Yan
