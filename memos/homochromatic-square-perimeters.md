@@ -1,10 +1,10 @@
 <!-- emilia-snapshot-properties
-Homochromatic Square Perimeters
+Homochromatic square perimeters
 2021/12/03
 altair
 emilia-snapshot-properties -->
 
-# Homochromatic Square Perimeters
+# Homochromatic square perimeters
 
 December 3, 2021
 
