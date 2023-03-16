@@ -69,7 +69,7 @@ At the same time, we may track in a priority queue the heights of each interval,
 
 ### N: Shopping Bags
 
-With no more than $4$ of the second item fitting into one bag, this is a standard DP to compute the $M_{i,j}$, the minimum number of bags to fit $i$ of the first item and $j$ of the second. For transitions, we have
+With no more than $4$ of the second item fitting into one bag, this is a standard DP to compute the $M_{i,j}$, the minimum number of bags to fit $i$ of the first item and $j$ of the second. For transitions, we put as many items as possible into a new bag. Thus,
 
 $$M_{i,j}=\min_{kS_2\leq T} 1+M_{i-\lfloor T-kS_2/S_1\rfloor,j-k}.$$
 
