@@ -92,7 +92,7 @@ Instead, it seems far more straightforward to compute segment-segment intersecti
 
 Isometric and Scout derived this solution during the contest. In hindsight it seems straightforward.
 
-If the graph is bipartite, we are almost done. What remains is to transition between the two colors. If the [diameter of the tree](https://codeforces.com/blog/entry/101271) is at most $3$, then there is always one node which is adjacent to every other, so it is impossible. Otherwise, a path of length $4$ exists and the endpoints of this path are necessarily not adjacent and of different colors. They may serve as the pair of nodes to transition between colors.
+If the graph is bipartite, we are almost done. All trees are bipartite. What remains is to transition between the two colors. If the [diameter of the tree](https://codeforces.com/blog/entry/101271) is at most $3$, then there is always one node which is adjacent to every other, so it is impossible. Otherwise, a path of length $4$ exists and the endpoints of this path are necessarily not adjacent and of different colors. They may serve as the pair of nodes to transition between colors.
 
 ## 6 K: Central String
 
