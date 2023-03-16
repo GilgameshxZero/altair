@@ -85,6 +85,7 @@ namespace Rain::Random {
 		std::chrono::duration_cast<std::chrono::nanoseconds>(
 			std::chrono::high_resolution_clock::now().time_since_epoch())
 			.count());
+	// inline Generator generator(0);
 
 	// 64-bit hash from <https://codeforces.com/blog/entry/62393>.
 	template <typename Type>
@@ -201,6 +202,74 @@ namespace Rain::Algorithm {
 using namespace Rain::Random;
 using namespace Rain::Algorithm;
 
+vector<LL> perm;
+vector<bool> ans;
+LL tTrue;
+// LL Q;
+// string SS;
+
+LL count(LL pos, LL len) {
+	// Q++;
+	string S(perm.size(), 'F');
+	RF(j, pos, pos + len) {
+		S[perm[j]] = 'T';
+	}
+	LL res{0};
+	// RF(j, 0, SS.length()) {
+	// 	res += S[j] == SS[j];
+	// }
+	cout << S << endl;
+	cin >> res;
+	return (res + tTrue - (perm.size() - len)) / 2;
+}
+
+LL solve(LL pos, LL len, LL exist = -1) {
+	if (len == 1) {
+		ans[perm[pos]] = count(pos, 1) == 1;
+		return pos + 1;
+	}
+
+	vector<LL> res;
+	LL i{pos}, tt{-1};
+	for (;; i++) {
+		if (i + len > perm.size()) {
+			solve(i, len - 1);
+			break;
+		}
+
+		if (i == pos && exist != -1) {
+			res.push_back(exist);
+		} else {
+			res.push_back(count(i, len));
+		}
+		if (res.back() == 0 || res.back() == len) {
+			RF(j, i, i + len) {
+				ans[perm[j]] = res.back() != 0;
+			}
+			res.pop_back();
+			break;
+		}
+		if (res.size() >= 2 && res.back() != res[res.size() - 2]) {
+			ans[perm[i + len - 1]] = res.back() > res[res.size() - 2];
+			swap(perm[i], perm[i + len - 1]);
+			tt = solve(i + 1, len - 1, min(res.back(), res[res.size() - 2]));
+			swap(perm[i], perm[i + len - 1]);
+			res.pop_back();
+			break;
+		}
+	}
+
+	RF(j, i - 1, pos - 1) {
+		LL sum{0};
+		RF(k, j + 1, j + len) {
+			sum += ans[perm[k]];
+		}
+		ans[perm[j]] = res.back() - sum == 1;
+		res.pop_back();
+	}
+	return tt == -1 ? i + len : tt;
+}
+
 int main(int, char const *[]) {
 #if !defined(ONLINEJUDGE) && (defined(__APPLE__) || defined(__MACH__))
 	std::freopen("../build/i.default.txt", "r", stdin);
@@ -211,121 +280,35 @@ int main(int, char const *[]) {
 	// std::cin.tie(nullptr);
 
 	LL N;
-
 	// N = 1000;
-	// string SS;
 	// RF(i, 0, N) {
 	// 	SS += uniform_int_distribution<LL>{0, 1}(generator) == 1 ? 'T' : 'F';
 	// }
 	cin >> N;
+	perm.resize(N);
+	ans.resize(N);
 
 	vector<pair<LD, LL>> rp(N);
 	RF(i, 0, N) {
 		rp[i].first = uniform_real_distribution<LD>{0, 1}(generator);
+		// rp[i].first = i;
 		rp[i].second = i;
 	}
 	sort(rp.begin(), rp.end());
-	vector<LL> perm(N);
 	RF(i, 0, N) {
 		perm[i] = rp[i].second;
 	}
 
-	cout << string(N, 'T') << endl;
-	LL totaltrue{0}, Q{0};
 	// RF(j, 0, SS.length()) {
-	// 	totaltrue += 'T' == SS[j];
+	// 	tTrue += 'T' == SS[j];
 	// }
-	cin >> totaltrue;
-	auto count{[&](LL i, LL X) {
-		Q++;
-		string S(N, 'F');
-		RF(j, i, i + X) {
-			S[perm[j]] = 'T';
-		}
-		cout << S << endl;
-		LL ans{0};
-		// RF(j, 0, SS.length()) {
-		// 	ans += S[j] == SS[j];
-		// }
-		cin >> ans;
-		return (ans + totaltrue - (N - X)) / 2;
-	}};
+	cout << string(N, 'T') << endl;
+	cin >> tTrue;
 
-	map<LL, LL> qper;
-	vector<bool> ans(N);
-	for (LL i{0}; i < N;) {
-		LL qc{Q};
-		if (i == N - 1) {
-			ans[perm[i]] = count(i, 1) == 1;
-			break;
-		}
-
-		vector<LL> res;
-		LL j{i}, transitioned{-1};
-		for (;; j++) {
-			if (j == N - 2) {
-				ans[perm[j]] = count(j, 1) == 1;
-				ans[perm[j + 1]] = count(j + 1, 1) == 1;
-				break;
-			}
-
-			res.push_back(count(j, 3));
-			if (res.back() == 0) {
-				ans[perm[j]] = ans[perm[j + 1]] = ans[perm[j + 2]] = false;
-				res.pop_back();
-				break;
-			} else if (res.back() == 3) {
-				ans[perm[j]] = ans[perm[j + 1]] = ans[perm[j + 2]] = true;
-				res.pop_back();
-				break;
-			}
-
-			if (res.size() >= 2 && res.front() != res.back()) {
-				ans[perm[j + 2]] = res.back() == 2;
-				swap(perm[j + 1], perm[j + 2]);
-
-				vector<LL> res2;
-				LL k{j + 2};
-				for (;; k++) {
-					if (k == N - 1) {
-						ans[perm[k]] = count(k, 1) == 1;
-						break;
-					}
-
-					res2.push_back(count(k, 2));
-					if (res2.back() == 0) {
-						ans[perm[k]] = ans[perm[k + 1]] = false;
-						res2.pop_back();
-						break;
-					} else if (res2.back() == 2) {
-						ans[perm[k]] = ans[perm[k + 1]] = true;
-						res2.pop_back();
-						break;
-					}
-				}
-
-				RF(l, 0, res2.size()) {
-					ans[perm[k - 1 - l]] =
-						res2[res2.size() - 1 - l] - ans[perm[k - l]] == 1;
-				}
-				swap(perm[j + 1], perm[j + 2]);
-				ans[perm[j]] = res.back() - ans[perm[j + 1]] - ans[perm[j + 2]] == 1;
-				res.pop_back();
-				transitioned = k + 2;
-				break;
-			}
-		}
-
-		RF(k, 0, res.size()) {
-			ans[perm[j - 1 - k]] =
-				res[res.size() - 1 - k] - ans[perm[j - k]] - ans[perm[j - k + 1]] == 1;
-		}
-		i = j + 3;
-		if (transitioned != -1) {
-			i = transitioned;
-		}
-
-		qper[Q - qc]++;
+	// map<LL, LL> qper;
+	LL cur{0};
+	for (; cur < N;) {
+		cur = solve(cur, min(N - cur, 3LL));
 	}
 
 	RF(i, 0, N) {
