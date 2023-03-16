@@ -364,35 +364,73 @@ int main(int, char const *[]) {
 	std::ios_base::sync_with_stdio(false);
 	std::cin.tie(nullptr);
 
+	// LL N;
+	// cin >> N;
+	// unordered_set<LL> crits;
+	// vector<pair<LL, LL>> drops(N);
+	// RF(i, 0, N) {
+	// 	cin >> drops[i].first >> drops[i].second;
+	// 	crits.insert(drops[i].first);
+	// 	crits.insert(drops[i].first + drops[i].second - 1);
+	// }
+	// vector<LL> c2;
+	// unordered_map<LL, LL> c3;
+	// for (auto const &i : crits) {
+	// 	c2.push_back(i);
+	// }
+	// sort(c2.begin(), c2.end());
+	// RF(i, 0, c2.size()) {
+	// 	c3[c2[i]] = i;
+	// }
+
+	// ST st(c2.size());
+	// RF(i, 0, N) {
+	// 	LL top{
+	// 		st.query(c3[drops[i].first], c3[drops[i].first + drops[i].second - 1])};
+	// 	st.update(
+	// 		c3[drops[i].first],
+	// 		c3[drops[i].first + drops[i].second - 1],
+	// 		top + drops[i].second);
+	// 	cout << st.query(0, c2.size() - 1) << '\n';
+	// }
+
+	// return 0;
+
 	LL N;
 	cin >> N;
-	unordered_set<LL> crits;
-	vector<pair<LL, LL>> drops(N);
-	RF(i, 0, N) {
-		cin >> drops[i].first >> drops[i].second;
-		crits.insert(drops[i].first);
-		crits.insert(drops[i].first + drops[i].second - 1);
-	}
-	vector<LL> c2;
-	unordered_map<LL, LL> c3;
-	for (auto const &i : crits) {
-		c2.push_back(i);
-	}
-	sort(c2.begin(), c2.end());
-	RF(i, 0, c2.size()) {
-		c3[c2[i]] = i;
-	}
 
-	ST st(c2.size());
+	multiset<LL> ih;
+	ih.insert(0);
+	map<LL, LL> iv;
+	iv[0] = 0;
 	RF(i, 0, N) {
-		LL top{
-			st.query(c3[drops[i].first], c3[drops[i].first + drops[i].second - 1])};
-		st.update(
-			c3[drops[i].first],
-			c3[drops[i].first + drops[i].second - 1],
-			top + drops[i].second);
-		cout << st.query(0, c2.size() - 1) << '\n';
+		LL X, S;
+		cin >> X >> S;
+		LL bot{0}, last{0};
+		auto j{prev(iv.upper_bound(X))};
+		if (j->first == X) {
+			last = j->second;
+			bot = j->second;
+			ih.erase(ih.find(j->second));
+			j = iv.erase(j);
+		} else {
+			last = j->second;
+			bot = j->second;
+			j++;
+		}
+		while (j != iv.end() && j->first < X + S) {
+			last = j->second;
+			bot = max(bot, j->second);
+			ih.erase(ih.find(j->second));
+			j = iv.erase(j);
+		}
+		if (!iv.count(X + S)) {
+			iv[X + S] = last;
+			ih.insert(iv[X + S]);
+		}
+		iv[X] = bot + S;
+		ih.insert(iv[X]);
+		cout << *ih.rbegin() << '\n';
 	}
-
 	return 0;
 }
