@@ -53,7 +53,7 @@ These four problems are all solved with fairly obvious standard techniques.
 
 ### G: Mirror Strings
 
-Strings must be palindromes, and must consist of only one height of letters. Palindromes of length $N$ have $X=\lceil N/2\rceil$ choices of letters. There are $5$ tall letters and $2$ short letters. Hence, we sum $5^X+2^X$ for $L\leq X\leq R$.
+Strings must be palindromes, and must consist of only one height of letters. Palindromes of length $N$ have $X=\lceil N/2\rceil$ choices of letters. There are $5$ tall letters and $2$ short letters. Hence, we sum $5^X+2^X$ for $L\leq N\leq R$.
 
 ### H: Alien Math
 
