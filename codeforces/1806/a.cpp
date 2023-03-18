@@ -57,6 +57,7 @@
 			 x += _delta)
 
 using LL = long long;
+using LD = long double;
 using namespace std;
 
 #pragma hdrstop	 // ------------------------------------------------------------
@@ -70,58 +71,18 @@ int main(int, char const *[]) {
 	std::ios_base::sync_with_stdio(false);
 	std::cin.tie(nullptr);
 
-	LL N, M;
-	cin >> N >> M;
-
-	LL tmin{0}, tmax{0};
-	RF(i, 0, N) {
-		string S;
-		cin >> S;
-
-		vector<LL> runpar(1, 0);
-		char prev{'0'};
-		LL z{0}, o{0};
-		RF(j, 0, M) {
-			z += S[j] == '0';
-			o += S[j] == '1';
-			if (S[j] == prev) {
-				runpar.back()++;
-			} else {
-				prev = S[j];
-				runpar.push_back(1);
-			}
+	LL T;
+	cin >> T;
+	while (T--) {
+		LL A, B, C, D;
+		cin >> A >> B >> C >> D;
+		LL b1{B - A}, b2{D - C};
+		if (b1 > b2 || D < B) {
+			cout << -1 << '\n';
+			continue;
 		}
-
-		tmin += o;
-		LL relief{0};
-		for (LL j{1}; j < runpar.size(); j += 2) {
-			relief += runpar[j] / 2;
-		}
-		tmin -= min(relief, M / 4);
-
-		tmax += o + M / 4;
-		relief = 0;
-		for (LL j{0}; j < runpar.size(); j += 2) {
-			if (j + 2 >= runpar.size()) {
-				if (j + 1 < runpar.size()) {
-					runpar[j]++;
-				}
-				relief += runpar[j] / 2;
-				continue;
-			}
-			if (runpar[j + 1] >= 2) {
-				runpar[j + 2]++;
-				runpar[j]++;
-				relief += runpar[j] / 2;
-			} else if (runpar[j + 1] == 1) {
-				runpar[j + 2] += 1 + runpar[j];
-			} else {
-				runpar[j + 2] += runpar[j];
-			}
-		}
-		tmax -= min(relief, M / 4);
+		cout << (b2 - b1) * 2 + C - A << '\n';
 	}
-	cout << tmin << ' ' << tmax;
 
 	return 0;
 }
