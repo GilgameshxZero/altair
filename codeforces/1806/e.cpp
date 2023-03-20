@@ -382,22 +382,10 @@ namespace Rain::Random {
 using namespace Rain::Random;
 // using namespace Rain::Algorithm;
 
-#ifdef ONLINE_JUDGE
+#if __has_include(<ext/pb_ds/assoc_container.hpp>)
 #include <ext/pb_ds/assoc_container.hpp>
-using namespace __gnu_pbds;
-
 template <typename Key, typename Value, typename Hasher = std::hash<Key>>
-using UnorderedMap = __gnu_pbds::gp_hash_table<
-	Key,
-	Value,
-	Hasher,
-	equal_to<Key>,
-	direct_mask_range_hashing<>,
-	linear_probe_fn<>,
-	hash_standard_resize_policy<
-		hash_exponential_size_policy<>,
-		hash_load_check_resize_trigger<>,
-		true>>;
+using UnorderedMap = __gnu_pbds::gp_hash_table<Key, Value, Hasher>;
 #else
 template <typename Key, typename Value, typename Hasher = std::hash<Key>>
 using UnorderedMap = std::unordered_map<Key, Value, Hasher>;
@@ -448,11 +436,11 @@ int main(int, char const *[]) {
 		CH[H[i]]++;
 	}
 	sort(NH.begin(), NH.begin() + N);
-// #ifdef ONLINE_JUDGE
-// 	Z.resize(30000000);
-// #else
-// 	Z.reserve(30000000);
-// #endif
+	// #ifdef ONLINE_JUDGE
+	// 	Z.resize(30000000);
+	// #else
+	// 	Z.reserve(30000000);
+	// #endif
 
 	RF(i, 0, Q_) {
 		cin >> Q[i].first >> Q[i].second;

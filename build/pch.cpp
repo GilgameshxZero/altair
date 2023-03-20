@@ -52,6 +52,15 @@
 #include <utility>
 #include <vector>
 
+#if __has_include(<ext/pb_ds/assoc_container.hpp>)
+#include <ext/pb_ds/assoc_container.hpp>
+template <typename Key, typename Value, typename Hasher = std::hash<Key>>
+using UnorderedMap = __gnu_pbds::gp_hash_table<Key, Value, Hasher>;
+#else
+template <typename Key, typename Value, typename Hasher = std::hash<Key>>
+using UnorderedMap = std::unordered_map<Key, Value, Hasher>;
+#endif
+
 #define RF(x, from, to)                                                      \
 	for (long long x = from, _to = to, _delta{x < _to ? 1LL : -1LL}; x != _to; \
 			 x += _delta)
