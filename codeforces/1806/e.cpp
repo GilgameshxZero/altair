@@ -75,6 +75,12 @@ namespace Rain::Functional {
 		public:
 		enum { value = sizeof(evaluate<Type>(0)) == sizeof(char) };
 	};
+
+	template <typename>
+	struct isPair : public std::false_type {};
+
+	template <typename TypeFirst, typename TypeSecond>
+	struct isPair<std::pair<TypeFirst, TypeSecond>> : public std::true_type {};
 }
 
 namespace Rain::Random {
@@ -86,73 +92,302 @@ namespace Rain::Random {
 			std::chrono::high_resolution_clock::now().time_since_epoch())
 			.count());
 
-	// 64-bit hash from <https://codeforces.com/blog/entry/62393>.
-	template <typename Type>
+	template <typename Type, typename Hasher = std::hash<Type>>
 	struct SplitMixHash {
+		// 64-bit hash from <https://codeforces.com/blog/entry/62393>.
+		template <
+			std::size_t SIZE_T_SIZE = sizeof(std::size_t),
+			typename std::enable_if<SIZE_T_SIZE == 8>::type * = nullptr>
 		std::size_t operator()(Type const &value) const {
 			static const std::size_t FIXED_RANDOM(
 				std::chrono::duration_cast<std::chrono::nanoseconds>(
 					std::chrono::high_resolution_clock::now().time_since_epoch())
 					.count());
-			std::size_t hash{std::hash<Type>{}(value)};
+			static Hasher const HASHER;
+			std::size_t hash{HASHER(value)};
 			hash += FIXED_RANDOM + 0x9e3779b97f4a7c15;
 			hash = (hash ^ (hash >> 30)) * 0xbf58476d1ce4e5b9;
 			hash = (hash ^ (hash >> 27)) * 0x94d049bb133111eb;
 			return hash ^ (hash >> 31);
+		}
+
+		// 32-bit hash from <https://groups.google.com/g/prng/c/VFjdFmbMgZI>.
+		template <
+			std::size_t SIZE_T_SIZE = sizeof(std::size_t),
+			typename std::enable_if<SIZE_T_SIZE == 4>::type * = nullptr>
+		std::size_t operator()(Type const &value) const {
+			static const std::size_t FIXED_RANDOM(
+				std::chrono::duration_cast<std::chrono::nanoseconds>(
+					std::chrono::high_resolution_clock::now().time_since_epoch())
+					.count());
+			static Hasher const HASHER;
+			std::size_t hash{HASHER(value)};
+			hash += FIXED_RANDOM + 0x9e3779b9;
+			hash = (hash ^ (hash >> 16)) * 0x85ebca6b;
+			hash = (hash ^ (hash >> 13)) * 0xc2b2ae35;
+			return hash ^ (hash >> 16);
 		}
 	};
 
 	// Simple function to combine two 32 or 64-bit hashes, based on
 	// <https://stackoverflow.com/questions/5889238/why-is-xor-the-default-way-to-combine-hashes>
 	// from Boost.
-	template <typename Type, typename HashFunctor = SplitMixHash<Type>>
-	inline void combineHash(
-		std::size_t &seed,
-		Type const &value,
-		HashFunctor hasher = SplitMixHash<Type>{}) {
-		if constexpr (sizeof(size_t) >= 8) {
-			seed ^= hasher(value) + 0x517cc1b727220a95 + (seed << 6) + (seed >> 2);
-		} else {
-			seed ^= hasher(value) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-		}
+	//
+	// SIZE_T_SIZE is a default argument which forces a substitution, and thus
+	// SFINAE.
+	template <
+		typename Type,
+		typename Hasher = SplitMixHash<Type>,
+		std::size_t SIZE_T_SIZE = sizeof(std::size_t),
+		typename std::enable_if<SIZE_T_SIZE == 8>::type * = nullptr>
+	inline void
+	combineHash(std::size_t &seed, Type const &value, Hasher hasher = Hasher{}) {
+		seed ^= hasher(value) + 0x517cc1b727220a95 + (seed << 6) + (seed >> 2);
+	}
+	template <
+		typename Type,
+		typename Hasher = SplitMixHash<Type>,
+		std::size_t SIZE_T_SIZE = sizeof(std::size_t),
+		typename std::enable_if<SIZE_T_SIZE == 4>::type * = nullptr>
+	inline void
+	combineHash(std::size_t &seed, Type const &value, Hasher hasher = Hasher{}) {
+		seed ^= hasher(value) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
 	}
 
 	// Custom hash functor for const-iterable containers. Cannot be placed in std
 	// namespace as it is UB for system types (not UB for user-defined types).
-	template <
-		typename Container,
-		typename std::enable_if<Functional::isConstIterable<Container>::value>::type
-			* = nullptr>
+	//
+	// TODO: Implement tuple hasher.
+	template <typename Container, typename Hasher = SplitMixHash<Container>>
 	struct ContainerHash {
+		template <
+			typename ContainerInner = Container,
+			typename std::enable_if<Functional::isPair<Container>::value>::type * =
+				nullptr>
+		std::size_t operator()(Container const &value) const {
+			std::size_t result{0};
+			combineHash<decltype(value.first), Hasher>(result, value.first);
+			combineHash<decltype(value.second), Hasher>(result, value.second);
+			return result;
+		}
+
+		template <
+			typename ContainerInner = Container,
+			typename std::enable_if<
+				Functional::isConstIterable<Container>::value>::type * = nullptr>
 		std::size_t operator()(Container const &value) const {
 			std::size_t result{0};
 			for (auto const &i : value) {
-				combineHash(result, i);
+				combineHash<decltype(i), Hasher>(result, i);
 			}
-			return result;
-		}
-	};
-
-	// Custom hash functor for std::pair (TODO: implement tuple functor).
-	template <typename TypeFirst, typename TypeSecond>
-	struct PairHash {
-		std::size_t operator()(
-			std::pair<TypeFirst, TypeSecond> const &value) const {
-			std::size_t result{std::hash<TypeFirst>{}(value.first)};
-			combineHash(result, value.second);
 			return result;
 		}
 	};
 }
 
-using namespace Rain::Random;
+namespace Rain::Algorithm {
+	// From <https://arxiv.org/pdf/2107.01250.pdf>. Value must be
+	// default-constructable. The load of the table is ideally 1 - 1 / IDEAL_LOAD.
+	template <
+		typename Key,
+		typename Value,
+		std::size_t IDEAL_LOAD = 4,
+		std::size_t INITIAL_SIZE = 4 * IDEAL_LOAD,
+		typename Hasher = Random::SplitMixHash<Key>,
+		typename Equator = std::equal_to<Key>>
+	class GraveyardHashMap {
+		public:
+		Hasher HASHER{};
+		Equator EQUATOR{};
 
-vector<LL> A, P, H;
-vector<pair<LL, LL>> Q;
-vector<vector<LL>> E;
-unordered_map<pair<LL, LL>, LL, PairHash<LL, LL>> Z;
-unordered_map<pair<LL, LL>, pair<LL, LL>, PairHash<LL, LL>> QD;
-vector<vector<LL>> QH;
+		Key EMPTY, TOMBSTONE;
+		std::vector<std::pair<Key, Value>> table;
+		std::size_t untilRebuild{1}, residents{0};
+
+		// Insert into a specified table.
+		std::pair<bool, Value &> insertInto(
+			std::vector<std::pair<Key, Value>> &table,
+			Key const &key,
+			Value const &value) {
+			std::size_t initial{HASHER(key) % table.size()};
+			for (std::size_t i{initial}; i < table.size(); i++) {
+				if (
+					EQUATOR(table[i].first, this->EMPTY) ||
+					EQUATOR(table[i].first, this->TOMBSTONE)) {
+					table[i] = {key, value};
+					return {true, table[i].second};
+				} else if (EQUATOR(table[i].first, key)) {
+					return {false, table[i].second};
+				}
+			}
+			for (std::size_t i{0}; i < initial; i++) {
+				if (
+					EQUATOR(table[i].first, this->EMPTY) ||
+					EQUATOR(table[i].first, this->TOMBSTONE)) {
+					table[i] = {key, value};
+					this->residents++;
+					return {true, table[i].second};
+				} else if (EQUATOR(table[i].first, key)) {
+					return {false, table[i].second};
+				}
+			}
+
+			// If the table is full, throw.
+			throw std::length_error("");
+		}
+
+		// Increment rebuild counter and maybe rebuild.
+		void decrementRebuild() {
+			this->untilRebuild--;
+			if (this->untilRebuild == 0) {
+				// Rebuild.
+				std::vector<std::pair<Key, Value>> newTable(
+					max(
+						this->table.size(),
+						this->residents * IDEAL_LOAD / (IDEAL_LOAD - 1)),
+					{this->EMPTY, Value{}});
+				for (std::size_t i{0}; i < this->table.size(); i++) {
+					if (
+						!EQUATOR(this->table[i].first, this->EMPTY) &&
+						!EQUATOR(this->table[i].first, this->TOMBSTONE)) {
+						this->insertInto(
+							newTable, this->table[i].first, this->table[i].second);
+					}
+				}
+
+				swap(this->table, newTable);
+				this->untilRebuild = this->table.size() / (4 * IDEAL_LOAD);
+			}
+		}
+
+		public:
+		GraveyardHashMap(Key const &empty, Key const &tombstone)
+				: EMPTY(empty), TOMBSTONE(tombstone) {
+			this->table.resize(INITIAL_SIZE, {EMPTY, Value{}});
+			for (std::size_t i{0}; i < this->table.size() / (2 * IDEAL_LOAD); i++) {
+				this->table[i * 2 * IDEAL_LOAD].first = TOMBSTONE;
+			}
+		}
+		// GraveyardHashMap(GraveyardHashMap const &) = delete;
+		// GraveyardHashMap &operator=(GraveyardHashMap const &) = delete;
+
+		// Returns a reference to either an existing element or newly inserted one.
+		// More efficient than running count, then insert.
+		Value &operator[](Key const &key) {
+			this->decrementRebuild();
+
+			std::size_t initial{HASHER(key) % this->table.size()},
+				firstInsertable{SIZE_MAX};
+			bool notFound{false};
+			for (std::size_t i{initial}; i < this->table.size(); i++) {
+				if (EQUATOR(this->table[i].first, this->EMPTY)) {
+					if (firstInsertable == SIZE_MAX) {
+						firstInsertable = i;
+					}
+					notFound = true;
+					break;
+				} else if (
+					firstInsertable == SIZE_MAX &&
+					EQUATOR(this->table[i].first, this->TOMBSTONE)) {
+					firstInsertable = i;
+				} else if (EQUATOR(this->table[i].first, key)) {
+					return this->table[i].second;
+				}
+			}
+			if (!notFound) {
+				for (std::size_t i{0}; i < initial; i++) {
+					if (EQUATOR(this->table[i].first, this->EMPTY)) {
+						if (firstInsertable == SIZE_MAX) {
+							firstInsertable = i;
+						}
+						notFound = true;
+						break;
+					} else if (
+						firstInsertable == SIZE_MAX &&
+						EQUATOR(this->table[i].first, this->TOMBSTONE)) {
+						firstInsertable = i;
+					} else if (EQUATOR(this->table[i].first, key)) {
+						return this->table[i].second;
+					}
+				}
+			}
+
+			// We should insert if not found and insertable.
+			if (notFound && firstInsertable != SIZE_MAX) {
+				this->residents++;
+				this->table[firstInsertable].first = key;
+				return this->table[firstInsertable].second;
+			}
+
+			throw std::length_error("");
+		}
+
+		// Returns (true, R) if insertion of a new key happened, and (false, R) if
+		// an old element R prevented insertion.
+		std::pair<bool, Value &> insert(Key const &key, Value const &value) {
+			this->decrementRebuild();
+			auto result{this->insertInto(this->table, key, value)};
+			if (result.first) {
+				this->residents++;
+			}
+			return result;
+		}
+
+		// Erases a key-value pair if it exists. Does nothing otherwise.
+		void erase(Key const &key) {
+			this->decrementRebuild();
+
+			std::size_t initial{HASHER(key) % this->table.size()};
+			for (std::size_t i{initial}; i < this->table.size(); i++) {
+				if (EQUATOR(this->table[i].first, this->EMPTY)) {
+					return;
+				} else if (EQUATOR(this->table[i].first, key)) {
+					this->table[i].first = this->TOMBSTONE;
+					this->residents--;
+					return;
+				}
+			}
+			for (std::size_t i{0}; i < initial; i++) {
+				if (EQUATOR(this->table[i].first, this->EMPTY)) {
+					return;
+				} else if (EQUATOR(this->table[i].first, key)) {
+					this->table[i].first = this->TOMBSTONE;
+					this->residents--;
+					return;
+				}
+			}
+		}
+
+		// Returns 0 if the key does not exist, otherwise returns 1.
+		std::size_t count(Key const &key) {
+			std::size_t initial{HASHER(key) % this->table.size()};
+			for (std::size_t i{initial}; i < this->table.size(); i++) {
+				if (EQUATOR(this->table[i].first, this->EMPTY)) {
+					return 0;
+				} else if (EQUATOR(this->table[i].first, key)) {
+					return 1;
+				}
+			}
+			for (std::size_t i{0}; i < initial; i++) {
+				if (EQUATOR(this->table[i].first, this->EMPTY)) {
+					return 0;
+				} else if (EQUATOR(this->table[i].first, key)) {
+					return 1;
+				}
+			}
+			return 0;
+		}
+	};
+}
+
+using namespace Rain::Random;
+using namespace Rain::Algorithm;
+
+array<int, 100000> P, H, CH;
+array<LL, 100000> A;
+array<vector<int>, 100000> E;
+vector<GraveyardHashMap<int, LL>> Z;
+array<pair<int, int>, 100000> Q, NH;
 
 void dfsH(LL cur) {
 	if (P[cur] != -1) {
@@ -172,12 +407,14 @@ int main(int, char const *[]) {
 	std::ios_base::sync_with_stdio(false);
 	std::cin.tie(nullptr);
 
+	Z.resize(100000, GraveyardHashMap<int, LL>(INT_MAX, INT_MAX - 1));
+	// RF(i, 0, 100) {
+	// 	Z[0][i] = i * i;
+	// }
+	// return 0;
+
 	LL N, Q_;
 	cin >> N >> Q_;
-	A.resize(N);
-	P.resize(N);
-	H.resize(N);
-	E.resize(N);
 	P[0] = -1;
 	RF(i, 0, N) {
 		cin >> A[i];
@@ -190,44 +427,48 @@ int main(int, char const *[]) {
 	H[0] = 0;
 	dfsH(0);
 
-	Z.resize(Q_);
-	QD.resize(Q_, -1);
-	Q.resize(Q_);
-	QH.resize(N);
-	RF(i, 0, Q.size()) {
+	RF(i, 0, N) {
+		NH[i] = {H[i], i};
+		CH[H[i]]++;
+	}
+	sort(NH.begin(), NH.end());
+
+	RF(i, 0, Q_) {
 		cin >> Q[i].first >> Q[i].second;
 		Q[i].first--;
 		Q[i].second--;
-		auto j{QM.find(Q[i])};
-		if (j != QM.end()) {
-			QD[i] = j->second;
-		} else {
-			QM[Q[i]] = i;
-			QH[H[Q[i].first]].push_back(i);
+		if (Q[i].first > Q[i].second) {
+			swap(Q[i].first, Q[i].second);
+		}
+		auto X{Q[i]};
+		while (X.first != -1 && !Z[X.first].count(X.second)) {
+			Z[X.first][X.second] = -1;
+			X = {P[X.first], P[X.second]};
+			if (X.first > X.second) {
+				swap(X.first, X.second);
+			}
 		}
 	}
 
-	while (!QH.empty()) {
-		while (!QH.back().empty()) {
-			LL q = QH.back().back();
-			QH.back().pop_back();
-			QM.erase(Q[q]);
-			Z[q] += A[Q[q].first] * A[Q[q].second];
-			Q[q].first = P[Q[q].first];
-			Q[q].second = P[Q[q].second];
-			if (Q[q].first == -1) {
+	Z[0][0] = A[0] * A[0];
+	RF(i, 1, N) {
+		RF(j, 0, Z[i].table.size()) {
+			if (
+				Z[i].table[j].first == Z[i].EMPTY ||
+				Z[i].table[j].first == Z[i].TOMBSTONE) {
 				continue;
 			}
-			auto i{QM.find(Q[q])};
-			if (i != QM.end()) {
-				QD[q] = i->second;
-			} else {
-				QM[Q[q]] = q;
-				QH[H[Q[q].first]].push_back(q);
+			pair<LL, LL> X{P[i], P[Z[i].table[j].first]};
+			if (X.first > X.second) {
+				swap(X.first, X.second);
 			}
+			Z[i].table[j].second =
+				Z[X.first][X.second] + A[i] * A[Z[i].table[j].first];
 		}
-		QH.pop_back();
 	}
 
+	RF(i, 0, Q_) {
+		cout << Z[Q[i].first][Q[i].second] << '\n';
+	}
 	return 0;
 }
