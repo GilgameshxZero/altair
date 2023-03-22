@@ -99,7 +99,7 @@ int main(int, char const *[]) {
 		}
 		tmin -= min(relief, M / 4);
 
-		tmax += o + M / 4;
+		tmax += o - M / 4;
 		relief = 0;
 		for (LL j{0}; j < runpar.size(); j += 2) {
 			if (j + 2 >= runpar.size()) {
@@ -119,7 +119,7 @@ int main(int, char const *[]) {
 				runpar[j + 2] += runpar[j];
 			}
 		}
-		tmax -= min(relief, M / 4);
+		tmax += min(relief, M / 4);
 	}
 	cout << tmin << ' ' << tmax;
 
