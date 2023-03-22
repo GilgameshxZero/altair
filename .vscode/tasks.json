@@ -19,7 +19,16 @@
 			"presentation": { "clear": true, "reveal": "silent" },
 
 			"command": "cp",
-			"args": ["template.cpp", "${fileDirname}/${input:new-name}.cpp", "&&", "code", "-r", "${fileDirname}/${input:new-name}.cpp"]
+			"args": [
+				"template.cpp",
+				"${fileDirname}/${input:new-name}.cpp",
+				"&&",
+				"code",
+				"-r",
+				"${fileDirname}/${input:new-name}.cpp"
+			],
+			// Seems to make it unlimited.
+			"runOptions": { "instanceLimit": 0 }
 		},
 		{
 			/* Build the open file in debug mode. */
