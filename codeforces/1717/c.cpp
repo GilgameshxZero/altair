@@ -21,6 +21,21 @@ int main(int, char const *[]) {
 	LL T;
 	cin >> T;
 	while (T--) {
+		LL N;
+		cin >> N;
+		vector<LL> A(N), B(N);
+		RF(i, 0, N) {
+			cin >> A[i];
+		}
+		RF(i, 0, N) {
+			cin >> B[i];
+		}
+		B.push_back(B[0]);
+		bool possible{true};
+		RF(i, 0, N) {
+			possible &= A[i] == B[i] || A[i] < B[i] && B[i] <= B[i + 1] + 1;
+		}
+		cout << (possible ? "YES" : "NO") << '\n';
 	}
 
 	return 0;
