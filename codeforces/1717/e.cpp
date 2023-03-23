@@ -362,7 +362,9 @@ inline std::istream &operator>>(
 namespace Rain::Algorithm {
 	// Computes the the minimum prime factor and a list of primes for all integers
 	// up to and including N. The minFactor array is 1-indexed; that is,
-	// minFactor[1] refers to the minimum prime factor of 1, which we define as 1.
+	// minFactor[3] refers to the minimum prime factor of 3, which would be 1,
+	// since primes[1] = 3. By definition, minFactor[0] = minfactor[1] = -1 (in
+	// the integer representation used, which may be unsigned).
 	template <typename Integer>
 	inline std::pair<std::vector<Integer>, std::vector<Integer>> linearSieve(
 		Integer const &N) {
@@ -476,30 +478,18 @@ using MF = ModulusField<LL, 1000000007>;
 
 LL const MOD{1000000007};
 LL N, C, ans{0};
+unordered_map<LL, LL> pp, pc;
 
-void fad(
-	unordered_map<LL, LL> &pp,
-	unordered_map<LL, LL> &pc,
-	unordered_map<LL, LL>::iterator cur,
-	LL divisor) {
+void fad(unordered_map<LL, LL>::iterator cur, LL divisor) {
 	if (cur == pp.end()) {
-		vector<LL> illegal;
+		LL cnt{(N - C) / divisor};
 		for (auto &i : pc) {
 			if (i.second != pp[i.first]) {
-				illegal.push_back(i.first);
+				cnt = cnt * (i.first - 1) / i.first;
 			}
 		}
-
-		LL cnt{0}, pref, powers;
-		RF(i, 0, 1LL << illegal.size()) {
-			pref = powers = 1;
-			RF(j, 0, illegal.size()) {
-				if ((i & (1LL << j)) != 0) {
-					pref *= -1;
-					powers *= illegal[j];
-				}
-			}
-			cnt += pref * ((N - C - 1) / (divisor * powers));
+		if (cnt == (N - C) / divisor) {
+			cnt--;
 		}
 
 		// cout << (N - C) << ": " << divisor << ": " << cnt << ": "
@@ -509,7 +499,7 @@ void fad(
 	}
 	RF(i, 0, cur->second + 1) {
 		pc[cur->first] = i;
-		fad(pp, pc, next(cur), divisor);
+		fad(next(cur), divisor);
 		divisor *= cur->first;
 	}
 }
@@ -522,14 +512,15 @@ int main(int, char const *[]) {
 	auto [minFactor, primes]{linearSieve(N)};
 	RF(i, 1, N - 1) {
 		C = i;
-		unordered_map<LL, LL> pp, pc;
+		pp.clear();
+		pc.clear();
 		for (LL i{N - C}; i > 1;) {
 			pp[primes[minFactor[i]]]++;
 			i /= primes[minFactor[i]];
 		}
 
 		// cout << '\t' << N - C << '\n';
-		fad(pp, pc, pp.begin(), 1);
+		fad(pp.begin(), 1);
 	}
 	cout << ans << '\n';
 
