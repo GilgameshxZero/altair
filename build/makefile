@@ -48,12 +48,13 @@ PCH_PDB = $(OBJ_DIR)pch.pdb
 PCH_FILE = $(OBJ_DIR)pch.pch
 
 COMPILER = cl /c
-COMPILER_FLAGS_INCLUDES =
+COMPILER_FLAGS_INCLUDES = /I $(ROOT_DIR)include^\
 # Does not include the /Fo obj output option, as that is set later depending on
 # whether or not we build the pch.
-COMPILER_FLAGS_COMMON = $(COMPILER_FLAGS_INCLUDES) /std:c++17 /D _CONSOLE\
-	/Fd$(PCH_PDB) /Fp$(PCH_FILE)\
-	/fp:fast /MP /permissive- /Zc:wchar_t /Zc:forScope /Zc:inline /Zf\
+COMPILER_FLAGS_COMMON = $(COMPILER_FLAGS_INCLUDES) /std:c++17\
+	/D _CONSOLE /D _CRT_SECURE_NO_WARNINGS /D _SILENCE_ALL_CXX17_DEPRECATION_WARNINGS\
+	/Fd$(PCH_PDB) /Fp$(PCH_FILE) /fp:fast /MP /permissive- \
+	/Zc:__cplusplus /Zc:wchar_t /Zc:forScope /Zc:inline /Zf\
 	/GS /W3 /WX- /wd4250 /wd4068 /sdl /diagnostics:column /EHsc /Gm- /nologo
 COMPILER_FLAGS_DEBUG = /D _DEBUG /MDd /Od /RTC1 /JMC /ZI
 COMPILER_FLAGS_RELEASE = /D NDEBUG /MT /O2 /Oi /GL /Gy /Zi
@@ -140,9 +141,9 @@ PROJECT_BIN := $(BIN_DIR)$(PROJECT)/$(BIN)
 PROJECT_BIN_DIR := $(BIN_DIR)$(PROJECT)/
 
 COMPILER ?= clang++
-COMPILER_FLAGS_INCLUDES :=
+COMPILER_FLAGS_INCLUDES := -I $(ROOT_DIR)include/
 COMPILER_FLAGS_COMMON := $(COMPILER_FLAGS_INCLUDES) -std=c++17 -m64 -pthread\
-	-Wall -Wextra -D_CONSOLE
+	-Wall -Wextra -D _CONSOLE -D _CRT_SECURE_NO_WARNINGS -D _SILENCE_ALL_CXX17_DEPRECATION_WARNINGS
 COMPILER_FLAGS_DEBUG := -D _DEBUG -g -O0
 COMPILER_FLAGS_RELEASE := -D NDEBUG -Ofast
 COMPILER_FLAGS_INSTRUMENT := $(COMPILER_FLAGS_DEBUG) /Fa$(PROJECT_OBJ_DIR)
