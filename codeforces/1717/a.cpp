@@ -21,6 +21,9 @@ int main(int, char const *[]) {
 	LL T;
 	cin >> T;
 	while (T--) {
+		LL N;
+		cin >> N;
+		cout << N + (N / 2) * 2 + (N / 3) * 2 << '\n';
 	}
 
 	return 0;

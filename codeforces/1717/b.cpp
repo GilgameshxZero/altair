@@ -21,6 +21,17 @@ int main(int, char const *[]) {
 	LL T;
 	cin >> T;
 	while (T--) {
+		LL N, K, R, C;
+		cin >> N >> K >> R >> C;
+		vector<string> G(N, string(N, '.'));
+		RF(i, 0, N) {
+			for (LL j{((C - 1 - (R - 1) + i) % K + K) % K}; j < N; j += K) {
+				G[i][j] = 'X';
+			}
+		}
+		RF(i, 0, N) {
+			cout << G[i] << '\n';
+		}
 	}
 
 	return 0;
