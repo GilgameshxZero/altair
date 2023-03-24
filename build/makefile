@@ -13,7 +13,7 @@
 # Targets:
 # build (default): compile & link.
 # run: compile, link, and run.
-# clean: remove intermediates directory.
+# clean: remove intermediates and output directory.
 
 # Default target defined before any "fake" targets.
 __default: _default
@@ -35,7 +35,8 @@ PROJECT_SRC_DIR = $(ROOT_DIR)$(PROJECT)^\
 SOURCES = *.cpp
 !ENDIF
 !IFNDEF BIN
-# For the repository, executable filename is not the project name.
+# For the repository, executable filename is not the project name. This is
+# always set by the caller in altair.
 BIN = $(PROJECT)
 !ENDIF
 PROJECT_BIN = $(BIN_DIR)$(PROJECT)\$(BIN).exe
@@ -52,7 +53,8 @@ COMPILER_FLAGS_INCLUDES = /I $(ROOT_DIR)include^\
 # Does not include the /Fo obj output option, as that is set later depending on
 # whether or not we build the pch.
 COMPILER_FLAGS_COMMON = $(COMPILER_FLAGS_INCLUDES) /std:c++17\
-	/D _CONSOLE /D _CRT_SECURE_NO_WARNINGS /D _SILENCE_ALL_CXX17_DEPRECATION_WARNINGS\
+	/D _CONSOLE /D _CRT_SECURE_NO_WARNINGS\
+	/D _SILENCE_ALL_CXX17_DEPRECATION_WARNINGS\
 	/Fd$(PCH_PDB) /Fp$(PCH_FILE) /fp:fast /MP /permissive- \
 	/Zc:__cplusplus /Zc:wchar_t /Zc:forScope /Zc:inline /Zf\
 	/GS /W3 /WX- /wd4250 /wd4068 /sdl /diagnostics:column /EHsc /Gm- /nologo
@@ -63,8 +65,8 @@ COMPILER_FLAGS_INSTRUMENT = $(COMPILER_FLAGS_DEBUG) /Fa$(PROJECT_OBJ_DIR)
 LINKER = link
 LINKER_FLAGS_LIBRARIES =
 LINKER_FLAGS_COMMON = $(LINKER_FLAGS_LIBRARIES) /OUT:$(PROJECT_BIN)\
-	/PDB:$(PROJECT_OBJ_DIR)$(BIN).pdb /ILK:$(PROJECT_OBJ_DIR)$(BIN).ilk /MACHINE:x64\
-	/MANIFESTUAC:"level='asInvoker' uiAccess='false'"\
+	/PDB:$(PROJECT_OBJ_DIR)$(BIN).pdb /ILK:$(PROJECT_OBJ_DIR)$(BIN).ilk\
+	/MACHINE:x64 /MANIFESTUAC:"level='asInvoker' uiAccess='false'"\
 	/MANIFESTFILE:$(PROJECT_OBJ_DIR)$(BIN).exe.intermediate.manifest\
 	/LTCGOUT:$(PROJECT_OBJ_DIR)$(BIN).iobj /SUBSYSTEM:CONSOLE /NOLOGO
 LINKER_FLAGS_DEBUG = /DEBUG
@@ -113,13 +115,14 @@ $(PROJECT_BIN): $(PROJECT_SRC_DIR)$(SOURCES)
 	@$(COMPILER) $(COMPILER_FLAGS) /Yu /Fo$(PROJECT_OBJ_DIR)$(BIN).obj\
 		$(PROJECT_SRC_DIR)$(SOURCES)
 	@ECHO $(PROJECT_BIN)
+# Consider directly using $(PROJECT_OBJ_DIR)$(BIN) here since projects are
+# necessarily single-source anyway.
 	@$(LINKER) $(LINKER_FLAGS) $(PCH_OBJ)\
 		$(DBLSUB_DEP_SRC_DIR_TO_OBJ_DIR:.cpp=.obj)
 
 # Precompiled headers.
 $(PCH_FILE): $(PCH_SRC)
-	@IF NOT EXIST $(PROJECT_BIN_DIR) MD $(PROJECT_BIN_DIR)
-	@IF NOT EXIST $(PROJECT_OBJ_DIR) MD $(PROJECT_OBJ_DIR)
+	@IF NOT EXIST $(OBJ_DIR) MD $(OBJ_DIR)
 	@$(COMPILER) $(COMPILER_FLAGS) /Yc /Fo$(PCH_OBJ) $(PCH_SRC)
 
 # ------------------------------------------------------------------------------
@@ -143,7 +146,9 @@ PROJECT_BIN_DIR := $(BIN_DIR)$(PROJECT)/
 COMPILER ?= clang++
 COMPILER_FLAGS_INCLUDES := -I $(ROOT_DIR)include/
 COMPILER_FLAGS_COMMON := $(COMPILER_FLAGS_INCLUDES) -std=c++17 -m64 -pthread\
-	-Wall -Wextra -D _CONSOLE -D _CRT_SECURE_NO_WARNINGS -D _SILENCE_ALL_CXX17_DEPRECATION_WARNINGS
+	-Wall -Wextra\
+	-D _CONSOLE -D _CRT_SECURE_NO_WARNINGS\
+	-D _SILENCE_ALL_CXX17_DEPRECATION_WARNINGS
 COMPILER_FLAGS_DEBUG := -D _DEBUG -g -O0
 COMPILER_FLAGS_RELEASE := -D NDEBUG -Ofast
 COMPILER_FLAGS_INSTRUMENT := $(COMPILER_FLAGS_DEBUG) /Fa$(PROJECT_OBJ_DIR)
