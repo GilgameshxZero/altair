@@ -16,6 +16,7 @@
 	"search.useIgnoreFiles": false,
 
 	"C_Cpp.default.cppStandard": "c++17",
+	"C_Cpp.default.includePath": ["include"],
 
 	"[cpp]": {
 		"editor.defaultFormatter": "ms-vscode.cpptools",

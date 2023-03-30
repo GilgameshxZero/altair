@@ -112,7 +112,7 @@ $(PROJECT_BIN): $(PROJECT_SRC_DIR)$(SOURCES)
 	@$(MAKE) $(PCH_FILE)
 	@IF NOT EXIST $(PROJECT_BIN_DIR) MD $(PROJECT_BIN_DIR)
 	@IF NOT EXIST $(PROJECT_OBJ_DIR) MD $(PROJECT_OBJ_DIR)
-	@$(COMPILER) $(COMPILER_FLAGS) /Yu /Fo$(PROJECT_OBJ_DIR)$(BIN).obj\
+	@$(COMPILER) $(COMPILER_FLAGS) /Yu"bits/stdc++.h" /Fo$(PROJECT_OBJ_DIR)$(BIN).obj\
 		$(PROJECT_SRC_DIR)$(SOURCES)
 	@ECHO $(PROJECT_BIN)
 # Consider directly using $(PROJECT_OBJ_DIR)$(BIN) here since projects are
@@ -123,7 +123,7 @@ $(PROJECT_BIN): $(PROJECT_SRC_DIR)$(SOURCES)
 # Precompiled headers.
 $(PCH_FILE): $(PCH_SRC)
 	@IF NOT EXIST $(OBJ_DIR) MD $(OBJ_DIR)
-	@$(COMPILER) $(COMPILER_FLAGS) /Yc /Fo$(PCH_OBJ) $(PCH_SRC)
+	@$(COMPILER) $(COMPILER_FLAGS) /Yc"bits/stdc++.h" /Fo$(PCH_OBJ) $(PCH_SRC)
 
 # ------------------------------------------------------------------------------
 !else

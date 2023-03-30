@@ -11,5 +11,3 @@ using namespace std;
 
 #define RF(x, from, to) \
 	for (LL x(from), _to(to), _delta{x < _to ? 1LL : -1LL}; x != _to; x += _delta)
-
-#pragma hdrstop	 // ------------------------------------------------------------
