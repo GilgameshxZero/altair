@@ -13,4 +13,4 @@ Token|Meaning
 `piped`|Standard I/O are piped from/to `build/i.default.txt` and `build/o.default.txt`. On MacOS, due to limitations with VSCode and LLDB, these pipes are implemented in-code with `freopen`.
 `interactive`|Does not pipe standard I/O from/to any files.
 
-Notably, no external console should be launched in any configuration. Currently, this is broken for the piped Windows configurations.
+Notably, no external console should be launched in any configuration.
