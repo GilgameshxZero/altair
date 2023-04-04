@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <title>CF1805 notes</title>
+        <style>
+/* From extension vscode.github */
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+.vscode-dark img[src$=\#gh-light-mode-only],
+.vscode-light img[src$=\#gh-dark-mode-only] {
+	display: none;
+}
+
+</style>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css">
+<link href="https://cdn.jsdelivr.net/npm/katex-copytex@latest/dist/katex-copytex.min.css" rel="stylesheet" type="text/css">
+        
+        <style>
+.task-list-item {
+    list-style-type: none;
+}
+
+.task-list-item-checkbox {
+    margin-left: -20px;
+    vertical-align: middle;
+    pointer-events: none;
+}
+</style>
+        <style>
+@import "../silver/silver.css";
+@import "../silver/selective/subtitled-h1.css";
+
+</style>
+    </head>
+    <body class="vscode-body vscode-light">
+        <!-- emilia-snapshot-properties
+CF1805 notes
+2023/04/04
+altair
+emilia-snapshot-properties -->
+<h1 id="cf1805-notes">CF1805 notes</h1>
+<p>April 4, 2023<br>
+Yang Yan</p>
+<h2 id="cf1805c"><a href="https://codeforces.com/contest/1805/problem/C">CF1805C</a></h2>
+<p>Spent too long thinking about tangents on conic sections. Should have immediately tried to intersect the line and parabola, then BS.</p>
+<h2 id="cf1805d"><a href="https://codeforces.com/contest/1805/problem/D">CF1805D</a></h2>
+<p>Tree diameter problem. “Combing” outward on diameter halves works, but more simply, taking heights from ends of diameter is easier. This appears nontrivial to prove.</p>
+<h2 id="cf1805e"><a href="https://codeforces.com/contest/1805/problem/E">CF1805E</a></h2>
+<p>Easy problem after exploring MAD properties.</p>
+<h2 id="cf1805f1"><a href="https://codeforces.com/contest/1805/problem/F1">CF1805F1</a></h2>
+<p>Both binary-search and set/PQ approach for computing <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>F</mi></mrow><annotation encoding="application/x-tex">F</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.13889em;">F</span></span></span></span> work. Key observation is that the lowest element of <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>F</mi></mrow><annotation encoding="application/x-tex">F</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.13889em;">F</span></span></span></span> may be used to shift the entire array, while preserving order. This technique generalizes to order-based computations on modded answers.</p>
+
+        <script async src="https://cdn.jsdelivr.net/npm/katex-copytex@latest/dist/katex-copytex.min.js"></script>
+        
+    </body>
+    </html>
