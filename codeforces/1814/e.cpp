@@ -1,6 +1,6 @@
 #if defined(__GNUC__) && !defined(__clang__)
 #pragma GCC target("avx2", "bmi", "bmi2", "popcnt", "lzcnt")
-#pragma GCC optimize("Ofast", "unroll-loops")
+#pragma GCC optimize("O0", "unroll-loops", "rename-registers")
 #endif
 
 #include <bits/stdc++.h>
@@ -83,132 +83,152 @@ namespace Rain::Algorithm {
 
 namespace Rain::Algorithm {
 	// Segment tree without lazy propagation nor range updates.
-	template <
-		typename Value,
-		typename Update,
-		typename Result,
-		// Aggregate values from two children while retracing an update. Aggregating
-		// with a default Value should do nothing.
-		void (*retrace)(
-			typename std::vector<Value>::reference,
-			Value const &,
-			Value const &),
-		// Aggregate two results from queries on children. Aggregating with a
-		// Result converted from a default Value should do nothing.
-		Result (*aggregate)(Result const &, Result const &),
-		// Apply an update fully to a node.
-		void (*apply)(typename std::vector<Value>::reference, Update const &)>
+	//
+	// Implements the policy pattern. Value must implement the following interface
+	// (omitted from being an implemented as an actual interface, which is fairly
+	// difficult and provides little):
+	//
+	// Value &retrace(Value const &, Value const &): Aggregate values from two
+	// children while retracing an update. Aggregating with a default Value should
+	// do nothing.
+	// Result &aggregate(Result const &, Result const &): Aggregate two results
+	// from queries on children. Aggregating with a Result converted from a
+	// default Value should do nothing.
+	// void apply(Update const &): Fully apply an update to a leaf node.
+	template <typename Policy>
 	class SegmentTree {
 		public:
+		using Value = typename Policy::Value;
+		using Update = typename Policy::Update;
+		using Result = typename Policy::Result;
+
+		protected:
 		// Aggregate values at each node.
 		std::vector<Value> values;
+		LL N;
 
+		public:
 		// Segment tree for a segment array of size size.
-		SegmentTree(std::size_t const size)
-				: values(1LL << (mostSignificant1BitIdx(size - 1) + 2)) {
-			RF(i, 0, values.size()) {
-				values[i].fill(-LLONG_MAX / 2);
-			}
-		}
+		SegmentTree(LL const size)
+				: values(2 * size, Policy::initialize), N(size) {}
 
 		// Queries an inclusive range.
-		Result query(std::size_t left, std::size_t right) {
-			Value resLeft, resRight;
-			resLeft.fill(-LLONG_MAX / 2);
-			resRight.fill(-LLONG_MAX / 2);
-			for (left += this->values.size() / 2,
-					 right += this->values.size() / 2 + 1;
-					 left < right;
-					 left /= 2, right /= 2) {
+		Result query(LL left, LL right) {
+			Value resLeft{Policy::initialize}, resRight{Policy::initialize};
+			for (left += N, right += N + 1; left < right; left /= 2, right /= 2) {
+				// Order of aggregation may matter.
 				if (left % 2 == 1) {
-					resLeft = aggregate(this->values[left++], resLeft);
+					resLeft = Policy::aggregate(resLeft, this->values[left++]);
 				}
 				if (right % 2 == 1) {
-					resRight = aggregate(this->values[--right], resRight);
+					resRight = Policy::aggregate(this->values[--right], resRight);
 				}
 			}
-			return aggregate(resLeft, resRight);
+			return Policy::aggregate(resLeft, resRight);
 		}
 
 		// Point update an index.
-		void update(std::size_t idx, Update const &update) {
-			idx += this->values.size() / 2;
-			apply(this->values[idx], update);
+		void update(LL idx, LL const &update) {
+			idx += N;
+			Policy::apply(this->values[idx], update);
 			for (idx /= 2; idx >= 1; idx /= 2) {
-				retrace(
+				Policy::retrace(
 					this->values[idx], this->values[idx * 2], this->values[idx * 2 + 1]);
 			}
 		}
 	};
 }
 
+class Policy {
+	public:
+	using Value = array<LL, 4>;
+	using Update = LL;
+	using Result = array<LL, 4>;
+
+	static constexpr Value initialize{
+		-LLONG_MAX / 2,
+		-LLONG_MAX / 2,
+		-LLONG_MAX / 2,
+		-LLONG_MAX / 2};
+
+	inline static void apply(Value &value, Update const &update) {
+		value[0] = 0;
+		value[1] = value[2] = -LLONG_MAX / 2;
+		value[3] = update;
+	}
+	inline static Result aggregate(Result const &left, Result const &right) {
+		if (left[0] < 0) {
+			return right;
+		} else if (right[0] < 0) {
+			return left;
+		} else {
+			return {
+				max({left[0] + right[0], left[0] + right[2], left[1] + right[0]}),
+				max({left[0] + right[1], left[0] + right[3], left[1] + right[1]}),
+				max({left[2] + right[0], left[2] + right[2], left[3] + right[0]}),
+				max({left[2] + right[1], left[2] + right[3], left[3] + right[1]})};
+		}
+	}
+	inline static void
+	retrace(Value &value, Value const &left, Value const &right) {
+		value = aggregate(left, right);
+	}
+};
+
 using namespace Rain::Algorithm;
 
-namespace namespaceST {
-	using Value = array<LL, 4>;
-	using Result = array<LL, 4>;
-	using Update = LL;
+template <class P>
+struct segtree {
+	typedef typename P::T T;
 
-	// Aggregate values from two children while retracing an update. Aggregating
-	// with a default Value should do nothing.
-	void retrace(
-		typename std::vector<Value>::reference node,
-		Value const &left,
-		Value const &right) {
-		static Value const DEFAULT{
-			-LLONG_MAX / 2, -LLONG_MAX / 2, -LLONG_MAX / 2, -LLONG_MAX / 2};
-		if (left == DEFAULT) {
-			node = right;
-		} else if (right == DEFAULT) {
-			node = left;
-		} else {
-			node[0] =
-				max({left[0] + right[0], left[0] + right[2], left[1] + right[0]});
-			node[1] =
-				max({left[0] + right[1], left[0] + right[3], left[1] + right[1]});
-			node[2] =
-				max({left[2] + right[0], left[2] + right[2], left[3] + right[0]});
-			node[3] =
-				max({left[2] + right[1], left[2] + right[3], left[3] + right[1]});
+	vector<T> s;
+	int n;
+
+	segtree(int N = 0) : s(2 * N, P::unit), n(N) {}
+
+	void update(int i, const T &val) {
+		for (s[i += n] = val; i /= 2;) s[i] = P::f(s[i * 2], s[i * 2 + 1]);
+	}
+
+	T query(int b, int e) {
+		T ra = P::unit, rb = P::unit;
+		for (b += n, e += n; b < e; b /= 2, e /= 2) {
+			if (b % 2) ra = P::f(ra, s[b++]);
+			if (e % 2) rb = P::f(s[--e], rb);
 		}
+		return P::f(ra, rb);
 	}
+};
 
-	// Aggregate two results from queries on children. Aggregating with a
-	// Result converted from a default Value should do nothing.
-	Result aggregate(Result const &left, Result const &right) {
-		static Value const DEFAULT{
-			-LLONG_MAX / 2, -LLONG_MAX / 2, -LLONG_MAX / 2, -LLONG_MAX / 2};
-		if (left == DEFAULT) {
-			return right;
-		} else if (right == DEFAULT) {
-			return left;
-		}
+struct pol {
+	typedef array<LL, 4> T;
 
-		Result node;
-		node[0] = max({left[0] + right[0], left[0] + right[2], left[1] + right[0]});
-		node[1] = max({left[0] + right[1], left[0] + right[3], left[1] + right[1]});
-		node[2] = max({left[2] + right[0], left[2] + right[2], left[3] + right[0]});
-		node[3] = max({left[2] + right[1], left[2] + right[3], left[3] + right[1]});
-		return node;
+	constexpr static T unit{-1, -1, -1, -1};
+
+	static T f(const T &l, const T &r) {
+		if (l[0] < 0) return r;
+		if (r[0] < 0) return l;
+		return {
+			min({l[0] + r[1], l[2] + r[0], l[2] + r[1]}),
+			min({l[1] + r[1], l[3] + r[0], l[3] + r[1]}),
+			min({l[0] + r[3], l[2] + r[2], l[2] + r[3]}),
+			min({l[1] + r[3], l[3] + r[2], l[3] + r[3]})};
+
+		// if (l[0] < 0) {
+		// 	return r;
+		// } else if (r[0] < 0) {
+		// 	return l;
+		// } else {
+		// 	return {
+		// 		max({l[0] + r[0], l[0] + r[2], l[1] + r[0]}),
+		// 		max({l[0] + r[1], l[0] + r[3], l[1] + r[1]}),
+		// 		max({l[2] + r[0], l[2] + r[2], l[3] + r[0]}),
+		// 		max({l[2] + r[1], l[2] + r[3], l[3] + r[1]})};
+		// }
 	}
+};
 
-	// Apply an update fully to a node.
-	void apply(
-		typename std::vector<Value>::reference node,
-		Update const &update) {
-		node[0] = 0;
-		node[1] = node[2] = -LLONG_MAX / 3;
-		node[3] = update;
-	}
-}
-
-using ST = SegmentTree<
-	array<LL, 4>,
-	LL,
-	array<LL, 4>,
-	namespaceST::retrace,
-	namespaceST::aggregate,
-	namespaceST::apply>;
+// array<LL, 199999> A;
 
 int main(int, char const *[]) {
 	ios_base::sync_with_stdio(false);
@@ -217,27 +237,28 @@ int main(int, char const *[]) {
 	LL N, Q;
 	cin >> N;
 
-	vector<LL> A(N - 1);
-	LL S{0};
+	// SegmentTree<Policy> st(N - 1);
+	segtree<pol> st(N - 1);
+	// LL S{0};
 	RF(i, 0, N - 1) {
-		cin >> A[i];
-		S += A[i];
-	}
-
-	ST st(N - 1);
-	RF(i, 0, N - 1) {
-		st.update(i, A[i]);
+		LL X;
+		// cin >> A[i];
+		cin >> X;
+		// S += A[i];
+		// st.update(i, A[i]);
+		st.update(i, {0, X, X, X});
 	}
 
 	cin >> Q;
 	RF(i, 0, Q) {
 		LL K, X;
 		cin >> K >> X;
-		S -= A[K - 1];
-		S += X;
-		A[K - 1] = X;
-		st.update(K - 1, X);
-		cout << 2 * (S - st.query(0, N - 2)[0]) << '\n';
+		// S -= A[K - 1];
+		// S += X;
+		// A[K - 1] = X;
+		st.update(K - 1, {0, X, X, X});
+		// cout << 2 * (S - st.query(0, N - 2)[0]) << '\n';
+		cout << 2 * st.query(0, N - 1)[3] << '\n';
 	}
 
 	return 0;
