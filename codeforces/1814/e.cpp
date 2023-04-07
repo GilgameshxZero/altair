@@ -1,6 +1,6 @@
 #if defined(__GNUC__) && !defined(__clang__)
 #pragma GCC target("avx2", "bmi", "bmi2", "popcnt", "lzcnt")
-#pragma GCC optimize("O0", "unroll-loops", "rename-registers")
+#pragma GCC optimize("Ofast", "unroll-loops")
 #endif
 
 #include <bits/stdc++.h>
@@ -82,21 +82,34 @@ namespace Rain::Algorithm {
 }
 
 namespace Rain::Algorithm {
-	// Segment tree without lazy propagation nor range updates.
+	// Segment tree with lazy propagation, supporting range queries and range
+	// updates in O(ln N) and O(N) memory.
 	//
-	// Implements the policy pattern. Value must implement the following interface
-	// (omitted from being an implemented as an actual interface, which is fairly
-	// difficult and provides little):
+	// Based on <https://codeforces.com/blog/entry/18051>. Earlier iterations of
+	// this data structure have higher constant factor but enable more intuitive
+	// modifications. This policy-based structure requires a policy of the
+	// following interface:
 	//
-	// Value &retrace(Value const &, Value const &): Aggregate values from two
-	// children while retracing an update. Aggregating with a default Value should
-	// do nothing.
-	// Result &aggregate(Result const &, Result const &): Aggregate two results
-	// from queries on children. Aggregating with a Result converted from a
-	// default Value should do nothing.
-	// void apply(Update const &): Fully apply an update to a leaf node.
+	// static constexpr Value DEFAULT_VALUE: Identity values at creation and
+	// aggregation.
+	//
+	// static constexpr Update DEFAULT_UPDATE: Identify value of an update.
+	//
+	// static void apply(Value &value, Update const &update, std::size_t range):
+	// Fully apply an update to a leaf node.
+	//
+	// static Result aggregate(Result const &left, Result const &right):
+	// Aggregate two results from queries on children. Aggregating with a Result
+	// converted from a default Value should do nothing.
+	//
+	// static void retrace( Value &value, Value const &left, Value const &right,
+	// std::size_t range): Aggregate values from two children while retracing an
+	// update. Aggregating with a default Value should do nothing.
+	//
+	// static void split(Update const &update, Update &left, Update &right,
+	// std::size_t range): Split a lazy update into its children updates.
 	template <typename Policy>
-	class SegmentTree {
+	class SegmentTreeLazy {
 		public:
 		using Value = typename Policy::Value;
 		using Update = typename Policy::Update;
@@ -105,18 +118,59 @@ namespace Rain::Algorithm {
 		protected:
 		// Aggregate values at each node.
 		std::vector<Value> values;
-		LL N;
+
+		// True iff node has a pending lazy update to propagate.
+		std::vector<bool> lazy;
+
+		// Lazily-stored updates.
+		std::vector<Update> updates;
+
+		// Height of the highest node in the tree.
+		std::size_t const HEIGHT;
 
 		public:
 		// Segment tree for a segment array of size size.
-		SegmentTree(LL const size)
-				: values(2 * size, Policy::initialize), N(size) {}
+		SegmentTreeLazy(std::size_t const size)
+				: values(2 * size, Policy::DEFAULT_VALUE),
+					lazy(values.size(), false),
+					updates(values.size(), Policy::DEFAULT_UPDATE),
+					HEIGHT{mostSignificant1BitIdx(values.size())} {}
 
-		// Queries an inclusive range.
-		Result query(LL left, LL right) {
-			Value resLeft{Policy::initialize}, resRight{Policy::initialize};
-			for (left += N, right += N + 1; left < right; left /= 2, right /= 2) {
-				// Order of aggregation may matter.
+		protected:
+		// Propagate all ancestors of nodes in a given inclusive underlying range.
+		void propagate(std::size_t left, std::size_t right) {
+			std::size_t level{this->HEIGHT}, range{1_zu << (this->HEIGHT - 1)};
+			for (left += this->values.size() / 2, right += this->values.size() / 2;
+					 level > 0;
+					 --level, range >>= 1) {
+				for (std::size_t i{left >> level}; i <= (right >> level); ++i) {
+					if (this->lazy[i]) {
+						Policy::apply(this->values[i * 2], this->updates[i], range);
+						Policy::apply(this->values[i * 2 + 1], this->updates[i], range);
+						Policy::split(
+							this->updates[i],
+							this->updates[i * 2],
+							this->updates[i * 2 + 1],
+							range);
+						this->lazy[i * 2] = this->lazy[i * 2 + 1] = true;
+
+						this->updates[i] = Policy::DEFAULT_UPDATE;
+						this->lazy[i] = false;
+					}
+				}
+			}
+		}
+
+		public:
+		// Queries an inclusive range, propagating if necessary then aggregating.
+		Result query(std::size_t left, std::size_t right) {
+			this->propagate(left, left);
+			this->propagate(right, right);
+			Value resLeft{Policy::DEFAULT_VALUE}, resRight{Policy::DEFAULT_VALUE};
+			for (left += this->values.size() / 2,
+					 right += this->values.size() / 2 + 1;
+					 left < right;
+					 left /= 2, right /= 2) {
 				if (left % 2 == 1) {
 					resLeft = Policy::aggregate(resLeft, this->values[left++]);
 				}
@@ -127,13 +181,59 @@ namespace Rain::Algorithm {
 			return Policy::aggregate(resLeft, resRight);
 		}
 
-		// Point update an index.
-		void update(LL idx, LL const &update) {
-			idx += N;
-			Policy::apply(this->values[idx], update);
-			for (idx /= 2; idx >= 1; idx /= 2) {
-				Policy::retrace(
-					this->values[idx], this->values[idx * 2], this->values[idx * 2 + 1]);
+		// Lazy update an inclusive range.
+		void update(std::size_t left, std::size_t right, Update const &update) {
+			this->propagate(left, left);
+			this->propagate(right, right);
+			// Only retrace updates once left or right node has been changed.
+			bool changedLeft{false}, changedRight{false};
+			std::size_t range{1};
+			for (left += this->values.size() / 2,
+					 right += this->values.size() / 2 + 1;
+					 left < right;
+					 left /= 2, right /= 2, range *= 2) {
+				if (changedLeft) {
+					Policy::retrace(
+						this->values[left - 1],
+						this->values[left * 2 - 2],
+						this->values[left * 2 - 1],
+						range);
+				}
+				if (changedRight) {
+					Policy::retrace(
+						this->values[right],
+						this->values[right * 2],
+						this->values[right * 2 + 1],
+						range);
+				}
+				if (left % 2 == 1) {
+					Policy::apply(this->values[left++], update, range);
+					this->lazy[left - 1] = true;
+					this->updates[left - 1] = update;
+					changedLeft = true;
+				}
+				if (right % 2 == 1) {
+					Policy::apply(this->values[--right], update, range);
+					this->lazy[right] = true;
+					this->updates[right] = update;
+					changedRight = true;
+				}
+			}
+			for (left--; right > 0; left /= 2, right /= 2, range *= 2) {
+				if (changedLeft) {
+					Policy::retrace(
+						this->values[left],
+						this->values[left * 2],
+						this->values[left * 2 + 1],
+						range);
+				}
+				if (changedRight && (!changedLeft || left != right)) {
+					Policy::retrace(
+						this->values[right],
+						this->values[right * 2],
+						this->values[right * 2 + 1],
+						range);
+				}
 			}
 		}
 	};
@@ -145,18 +245,18 @@ class Policy {
 	using Update = LL;
 	using Result = array<LL, 4>;
 
-	static constexpr Value initialize{
+	static constexpr Value DEFAULT_VALUE{
 		-LLONG_MAX / 2,
 		-LLONG_MAX / 2,
 		-LLONG_MAX / 2,
 		-LLONG_MAX / 2};
-
-	inline static void apply(Value &value, Update const &update) {
+	static constexpr Update DEFAULT_UPDATE{0};
+	static void apply(Value &value, Update const &update, std::size_t) {
 		value[0] = 0;
 		value[1] = value[2] = -LLONG_MAX / 2;
 		value[3] = update;
 	}
-	inline static Result aggregate(Result const &left, Result const &right) {
+	static Result aggregate(Result const &left, Result const &right) {
 		if (left[0] < 0) {
 			return right;
 		} else if (right[0] < 0) {
@@ -169,66 +269,17 @@ class Policy {
 				max({left[2] + right[1], left[2] + right[3], left[3] + right[1]})};
 		}
 	}
-	inline static void
-	retrace(Value &value, Value const &left, Value const &right) {
+	static void
+	retrace(Value &value, Value const &left, Value const &right, std::size_t) {
 		value = aggregate(left, right);
+	}
+	static void
+	split(Update const &update, Update &left, Update &right, std::size_t) {
+		left = right = update;
 	}
 };
 
 using namespace Rain::Algorithm;
-
-template <class P>
-struct segtree {
-	typedef typename P::T T;
-
-	vector<T> s;
-	int n;
-
-	segtree(int N = 0) : s(2 * N, P::unit), n(N) {}
-
-	void update(int i, const T &val) {
-		for (s[i += n] = val; i /= 2;) s[i] = P::f(s[i * 2], s[i * 2 + 1]);
-	}
-
-	T query(int b, int e) {
-		T ra = P::unit, rb = P::unit;
-		for (b += n, e += n; b < e; b /= 2, e /= 2) {
-			if (b % 2) ra = P::f(ra, s[b++]);
-			if (e % 2) rb = P::f(s[--e], rb);
-		}
-		return P::f(ra, rb);
-	}
-};
-
-struct pol {
-	typedef array<LL, 4> T;
-
-	constexpr static T unit{-1, -1, -1, -1};
-
-	static T f(const T &l, const T &r) {
-		if (l[0] < 0) return r;
-		if (r[0] < 0) return l;
-		return {
-			min({l[0] + r[1], l[2] + r[0], l[2] + r[1]}),
-			min({l[1] + r[1], l[3] + r[0], l[3] + r[1]}),
-			min({l[0] + r[3], l[2] + r[2], l[2] + r[3]}),
-			min({l[1] + r[3], l[3] + r[2], l[3] + r[3]})};
-
-		// if (l[0] < 0) {
-		// 	return r;
-		// } else if (r[0] < 0) {
-		// 	return l;
-		// } else {
-		// 	return {
-		// 		max({l[0] + r[0], l[0] + r[2], l[1] + r[0]}),
-		// 		max({l[0] + r[1], l[0] + r[3], l[1] + r[1]}),
-		// 		max({l[2] + r[0], l[2] + r[2], l[3] + r[0]}),
-		// 		max({l[2] + r[1], l[2] + r[3], l[3] + r[1]})};
-		// }
-	}
-};
-
-// array<LL, 199999> A;
 
 int main(int, char const *[]) {
 	ios_base::sync_with_stdio(false);
@@ -237,28 +288,24 @@ int main(int, char const *[]) {
 	LL N, Q;
 	cin >> N;
 
-	// SegmentTree<Policy> st(N - 1);
-	segtree<pol> st(N - 1);
-	// LL S{0};
+	vector<LL> A(N - 1);
+	SegmentTreeLazy<Policy> st(N - 1);
+	LL S{0};
 	RF(i, 0, N - 1) {
-		LL X;
-		// cin >> A[i];
-		cin >> X;
-		// S += A[i];
-		// st.update(i, A[i]);
-		st.update(i, {0, X, X, X});
+		cin >> A[i];
+		S += A[i];
+		st.update(i, i, A[i]);
 	}
 
 	cin >> Q;
 	RF(i, 0, Q) {
 		LL K, X;
 		cin >> K >> X;
-		// S -= A[K - 1];
-		// S += X;
-		// A[K - 1] = X;
-		st.update(K - 1, {0, X, X, X});
-		// cout << 2 * (S - st.query(0, N - 2)[0]) << '\n';
-		cout << 2 * st.query(0, N - 1)[3] << '\n';
+		S -= A[K - 1];
+		S += X;
+		A[K - 1] = X;
+		st.update(K - 1, K - 1, X);
+		cout << 2 * (S - st.query(0, N - 2)[0]) << '\n';
 	}
 
 	return 0;
