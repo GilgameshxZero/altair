@@ -446,6 +446,72 @@ namespace Rain::Algorithm {
 	};
 }
 
+namespace Rain::Algorithm {
+	// Segment tree without lazy propagation nor range updates.
+	//
+	// Implements the policy pattern. Policy must implement the following
+	// interface (omitted from being an actual interface, as static virtual
+	// functions are not supported):
+	//
+	// static constexpr Value DEFAULT_VALUE: Identity values at creation and
+	// aggregation.
+	//
+	// static void apply(Value &value, Update const &update): Fully apply
+	// an update to a leaf node.
+	//
+	// static Result aggregate(Result const &left, Result const &right):
+	// Aggregate two results from queries on children. Aggregating with a Result
+	// converted from a default Value should do nothing.
+	//
+	// static void retrace(Value &value, Value const &left, Value const &right):
+	// Aggregate values from two children while retracing an update. Aggregating
+	// with a default Value should do nothing.
+	template <typename Policy>
+	class SegmentTree {
+		public:
+		using Value = typename Policy::Value;
+		using Update = typename Policy::Update;
+		using Result = typename Policy::Result;
+
+		protected:
+		// Aggregate values at each node.
+		std::vector<Value> values;
+
+		public:
+		// Segment tree for a segment array of size size.
+		SegmentTree(std::size_t const size)
+				: values(2 * size, Policy::DEFAULT_VALUE) {}
+
+		// Queries an inclusive range.
+		Result query(std::size_t left, std::size_t right) {
+			Value resLeft{Policy::DEFAULT_VALUE}, resRight{Policy::DEFAULT_VALUE};
+			for (left += this->values.size() / 2,
+					 right += this->values.size() / 2 + 1;
+					 left < right;
+					 left /= 2, right /= 2) {
+				// Order of aggregation matters for non-commutative operations.
+				if (left % 2 == 1) {
+					resLeft = Policy::aggregate(resLeft, this->values[left++]);
+				}
+				if (right % 2 == 1) {
+					resRight = Policy::aggregate(this->values[--right], resRight);
+				}
+			}
+			return Policy::aggregate(resLeft, resRight);
+		}
+
+		// Point update an index.
+		void update(std::size_t idx, Update const &update) {
+			idx += this->values.size() / 2;
+			Policy::apply(this->values[idx], update);
+			for (idx /= 2; idx >= 1; idx /= 2) {
+				Policy::retrace(
+					this->values[idx], this->values[idx * 2], this->values[idx * 2 + 1]);
+			}
+		}
+	};
+}
+
 class SumDeltaPolicy {
 	public:
 	using Value = LL;
@@ -453,23 +519,85 @@ class SumDeltaPolicy {
 	using Result = LL;
 
 	static constexpr Value DEFAULT_VALUE{0};
-	static constexpr Update DEFAULT_UPDATE{0};
-	static void apply(Value &value, Update const &update, std::size_t range) {
-		value += update * range;
-	}
+	// static constexpr Update DEFAULT_UPDATE{0};
+	static void apply(Value &value, Update const &update) { value += update; }
 	static Result aggregate(Result const &left, Result const &right) {
 		return left + right;
+	}
+	static void retrace(Value &value, Value const &left, Value const &right) {
+		value = left + right;
+	}
+	// static void
+	// split(Update const &update, Update &left, Update &right, std::size_t range)
+	// { 	left += update; 	right += update;
+	// }
+};
+
+class MinDeltaPolicy {
+	public:
+	using Value = LL;
+	using Update = LL;
+	using Result = LL;
+
+	static constexpr Value DEFAULT_VALUE{LLONG_MAX / 2};
+	// static constexpr Update DEFAULT_UPDATE{0};
+	static void apply(Value &value, Update const &update) {
+		value = min(value, value + update);
+	}
+	static Result aggregate(Result const &left, Result const &right) {
+		return min(left, right);
+	}
+	static void retrace(Value &value, Value const &left, Value const &right) {
+		value = min(left, right);
+	}
+	// static void
+	// split(Update const &update, Update &left, Update &right, std::size_t range)
+	// { 	left += update; 	right += update;
+	// }
+};
+
+class CountPolicy {
+	public:
+	using Value = array<LL, 24>;
+	using Update = LL;
+	using Result = array<LL, 24>;
+
+	static constexpr Value DEFAULT_VALUE{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+																			 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+	static constexpr Update DEFAULT_UPDATE{0};
+	static void apply(Value &value, Update const &update, std::size_t range) {
+		if (update < 0) {
+			RF(i, 0, value.size() + update) {
+				value[i] += value[i - update];
+				value[i - update] = 0;
+			}
+		} else if (update > 0) {
+			RF(i, value.size() - 1, update - 1) {
+				value[i] += value[i - update];
+				value[i - update] = 0;
+			}
+		}
+
+		return;
+	}
+	static Result aggregate(Result const &left, Result const &right) {
+		Result value;
+		RF(i, 0, value.size()) {
+			value[i] = left[i] + right[i];
+		}
+		return value;
 	}
 	static void retrace(
 		Value &value,
 		Value const &left,
 		Value const &right,
 		std::size_t range) {
-		value = left + right;
+		value = aggregate(left, right);
 	}
 	static void
 	split(Update const &update, Update &left, Update &right, std::size_t range) {
-		left = right = update;
+		left += update;
+		right += update;
 	}
 };
 
@@ -516,7 +644,7 @@ int main(int, char const *[]) {
 			if (chain[A[j]] == i) {
 				scx[i][j] = A[j];
 			} else if (scx[i + 1][j] < 0) {
-				scx[i][j] = -j - 1;
+				scx[i][j] = scx[i + 1][j];
 			} else {
 				scx[i][j] = tot[scx[i + 1][j]];
 			}
@@ -566,22 +694,66 @@ int main(int, char const *[]) {
 		}
 	}
 
-	vector<LL> c1x(N);
-	c1x[0] = chain[A[0]];
-	RF(i, 1, N) {
-		c1x[i] = c1x[i - 1] + chain[A[i]];
+	// SegmentTree<SumDeltaPolicy> sdst(N);
+	// SegmentTree<MinDeltaPolicy> mdst(N);
+	// FenwickTree<LL> sdft(N);
+	// RF(i, 0, N) {
+	// 	// sdst.update(i, chain[A[i]]);
+	// 	mdst.update(i, chain[A[i]] - LLONG_MAX / 2);
+	// 	sdft.modify(i, chain[A[i]]);
+	// }
+	// map<LL, LL> cix;
+	// RF(i, 0, N) {
+	// 	if (chain[A[i]] != 0) {
+	// 		cix[i] = chain[A[i]];
+	// 	}
+	// }
+	SegmentTreeLazy<CountPolicy> cst(N);
+	RF(i, 0, N) {
+		cst.update(i, i, chain[A[i]]);
 	}
-
-	SegmentTreeLazy<SumDeltaPolicy> st(N);
 	RF(i, 0, M) {
 		if (Q[i].first == 1) {
-			st.update(Q[i].second.first - 1, Q[i].second.second - 1, 1);
+			// sdst.update(Q[i].second.first - 1, Q[i].second.second - 1, -1);
+			// mdst.update(Q[i].second.first - 1, Q[i].second.second - 1, -1);
+			// auto j{cix.lower_bound(Q[i].second.first - 1)};
+			// while (j->first <= Q[i].second.second - 1) {
+			// 	j->second--;
+			// 	// sdst.update(j->first, -1);
+			// 	mdst.update(j->first, -1);
+			// 	sdft.modify(j->first, -1);
+			// 	if (j->second == 0) {
+			// 		j = cix.erase(j);
+			// 	} else {
+			// 		j++;
+			// 	}
+			// }
+			cst.update(Q[i].second.first - 1, Q[i].second.second - 1, -1);
 		} else {
-			LL q1xj{q1x[Q[i].second]};
-			cout << c1x[Q[i].second.second - 1] -
-					(Q[i].second.first == 1 ? 0LL : c1x[Q[i].second.first - 2]) -
-					q1xj * (Q[i].second.second - Q[i].second.first + 1) -
-					st.query(Q[i].second.first - 1, Q[i].second.second - 1)
+			LL q1xj{q1x[Q[i].second]},
+				// mdstq{mdst.query(Q[i].second.first - 1, Q[i].second.second - 1)};
+				mdstq{-1}, csts{0};
+			auto mdstqq{cst.query(Q[i].second.first - 1, Q[i].second.second - 1)};
+			RF(i, 0, mdstqq.size()) {
+				csts += i * mdstqq[i];
+				if (mdstqq[i] > 0 && mdstq == -1) {
+					mdstq = i;
+				}
+			}
+			// if (N != 192) {
+			q1xj = min(q1xj, mdstq);
+			// cout << sdst.query(Q[i].second.first - 1, Q[i].second.second - 1) -
+			// cout << sdft.sum(Q[i].second.second - 1) -
+			// 		(Q[i].second.first == 1 ? 0LL : sdft.sum(Q[i].second.first - 2)) -
+			// 		q1xj * (Q[i].second.second - Q[i].second.first + 1)
+			// 		 << '\n';
+			// } else {
+			// 	// cout << sdft.sum(Q[i].second.second - 1) -
+			// 	// 		(Q[i].second.first == 1 ? 0LL : sdft.sum(Q[i].second.first - 2))
+			// 	// 		 << '\n';
+			// 	cout << q1xj << ' ' << mdstq << '\n';
+			// }
+			cout << csts - q1xj * (Q[i].second.second - Q[i].second.first + 1)
 					 << '\n';
 		}
 	}
