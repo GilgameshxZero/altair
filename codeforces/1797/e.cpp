@@ -1,6 +1,6 @@
 #if defined(__GNUC__) && !defined(__clang__)
 #pragma GCC target("avx2", "bmi", "bmi2", "popcnt", "lzcnt")
-#pragma GCC optimize("Ofast", "unroll-loops")
+#pragma GCC optimize("O3", "unroll-loops")
 #endif
 
 #include <bits/stdc++.h>
@@ -106,6 +106,79 @@ namespace Rain::Algorithm {
 		// C++17: guaranteed either NRVO or move.
 		return {minFactor, primes};
 	}
+}
+
+namespace Rain::Algorithm {
+	// Union-Find/Disjoint-Set-Union implementation. Near-constant time amortized
+	// union and find. A constant-time amortized Union-Find exists for offline
+	// unions and online finds, but this does not implement it.
+	//
+	// Implements path compression and union by rank. Stores additional parity and
+	// distance extensions:
+	// <https://cp-algorithms.com/data_structures/disjoint_set_union.html>.
+	class DisjointSetUnion {
+		private:
+		mutable std::vector<bool> isRoot;
+		// If a node is root, parent[node] stores the size of the component instead.
+		mutable std::vector<std::size_t> parent;
+		// Parity of the path weight from a node to its parent. Joining i and j
+		// preserves the parity as if an edge had been added between i and j.
+		mutable std::vector<bool> parity;
+		// Length of the path wieght from node to its parent. Joining i and j
+		// preserves the length as if an edge had been added between the roots of i
+		// and j.
+		mutable std::vector<std::size_t> distance;
+
+		public:
+		DisjointSetUnion(std::size_t const size)
+				: isRoot(size, true),
+					parent(size, 1),
+					parity(size, false),
+					distance(size, 0) {}
+
+		std::size_t find(std::size_t const i) const {
+			if (this->isRoot[i]) {
+				return i;
+			}
+			auto rI{this->find(this->parent[i])};
+			this->parity[i] = this->parity[i] ^ this->parity[this->parent[i]];
+			this->distance[i] += this->distance[this->parent[i]];
+			return this->parent[i] = rI;
+		}
+		inline std::size_t rank(std::size_t const i) const {
+			return this->parent[this->find(i)];
+		}
+		inline bool connected(std::size_t const i, std::size_t const j) const {
+			auto rI{this->find(i)}, rJ{this->find(j)};
+			return rI == rJ;
+		}
+		inline std::size_t parityToRoot(std::size_t const i) const {
+			this->find(i);
+			return this->parity[i];
+		}
+		inline std::size_t distanceToRoot(std::size_t const i) const {
+			this->find(i);
+			return this->distance[i];
+		}
+		// Returns false if no join happened; otherwise true.
+		inline bool
+		join(std::size_t const i, std::size_t const j, std::size_t length = 0) {
+			std::size_t rI{this->find(i)}, rJ{this->find(j)};
+			if (rI == rJ) {
+				return false;
+			}
+			if (this->parent[rI] > this->parent[rJ]) {
+				std::swap(rI, rJ);
+			}
+			this->parent[rJ] += this->parent[rI];
+			this->isRoot[rI] = false;
+			this->parent[rI] = rJ;
+			// i and j may be swapped here but it is okay.
+			this->parity[rI] = this->parity[i] ^ this->parity[j] ^ (length % 2);
+			this->distance[rI] = length;
+			return true;
+		}
+	};
 }
 
 // For an overloaded function f, this wraps it in an rvalue-reference lambda so
@@ -556,49 +629,27 @@ class MinDeltaPolicy {
 	// }
 };
 
-class CountPolicy {
+class MinUpdatePolicy {
 	public:
-	using Value = array<LL, 24>;
+	using Value = LL;
 	using Update = LL;
-	using Result = array<LL, 24>;
+	using Result = LL;
 
-	static constexpr Value DEFAULT_VALUE{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-																			 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-	static constexpr Update DEFAULT_UPDATE{0};
-	static void apply(Value &value, Update const &update, std::size_t range) {
-		if (update < 0) {
-			RF(i, 0, value.size() + update) {
-				value[i] += value[i - update];
-				value[i - update] = 0;
-			}
-		} else if (update > 0) {
-			RF(i, value.size() - 1, update - 1) {
-				value[i] += value[i - update];
-				value[i - update] = 0;
-			}
-		}
-
-		return;
+	static constexpr Value DEFAULT_VALUE{LLONG_MAX / 2};
+	// static constexpr Update DEFAULT_UPDATE{0};
+	static void apply(Value &value, Update const &update) {
+		value = min(value, update);
 	}
 	static Result aggregate(Result const &left, Result const &right) {
-		Result value;
-		RF(i, 0, value.size()) {
-			value[i] = left[i] + right[i];
-		}
-		return value;
+		return min(left, right);
 	}
-	static void retrace(
-		Value &value,
-		Value const &left,
-		Value const &right,
-		std::size_t range) {
-		value = aggregate(left, right);
+	static void retrace(Value &value, Value const &left, Value const &right) {
+		value = min(left, right);
 	}
-	static void
-	split(Update const &update, Update &left, Update &right, std::size_t range) {
-		left += update;
-		right += update;
-	}
+	// static void
+	// split(Update const &update, Update &left, Update &right, std::size_t range)
+	// { 	left += update; 	right += update;
+	// }
 };
 
 using namespace Rain::Algorithm;
@@ -694,66 +745,52 @@ int main(int, char const *[]) {
 		}
 	}
 
-	// SegmentTree<SumDeltaPolicy> sdst(N);
-	// SegmentTree<MinDeltaPolicy> mdst(N);
-	// FenwickTree<LL> sdft(N);
-	// RF(i, 0, N) {
-	// 	// sdst.update(i, chain[A[i]]);
-	// 	mdst.update(i, chain[A[i]] - LLONG_MAX / 2);
-	// 	sdft.modify(i, chain[A[i]]);
-	// }
-	// map<LL, LL> cix;
-	// RF(i, 0, N) {
-	// 	if (chain[A[i]] != 0) {
-	// 		cix[i] = chain[A[i]];
-	// 	}
-	// }
-	SegmentTreeLazy<CountPolicy> cst(N);
+	SegmentTree<MinUpdatePolicy> mdst(N);
+	FenwickTree<LL> sdft(N);
 	RF(i, 0, N) {
-		cst.update(i, i, chain[A[i]]);
+		mdst.update(i, chain[A[i]]);
+		sdft.modify(i, chain[A[i]]);
 	}
+	vector<LL> cixc(N), rep(N + 1);
+	DisjointSetUnion nonzero(N + 1);
+	RF(i, 0, N) {
+		cixc[i] = chain[A[i]];
+		rep[i] = i;
+	}
+	rep[N] = N;
+	RF(i, N - 1, -1) {
+		if (cixc[i] != 0) {
+			continue;
+		}
+		LL newrep{max(rep[nonzero.find(i)], rep[nonzero.find(i + 1)])};
+		nonzero.join(i, i + 1);
+		rep[nonzero.find(i)] = newrep;
+	}
+
 	RF(i, 0, M) {
 		if (Q[i].first == 1) {
-			// sdst.update(Q[i].second.first - 1, Q[i].second.second - 1, -1);
-			// mdst.update(Q[i].second.first - 1, Q[i].second.second - 1, -1);
-			// auto j{cix.lower_bound(Q[i].second.first - 1)};
-			// while (j->first <= Q[i].second.second - 1) {
-			// 	j->second--;
-			// 	// sdst.update(j->first, -1);
-			// 	mdst.update(j->first, -1);
-			// 	sdft.modify(j->first, -1);
-			// 	if (j->second == 0) {
-			// 		j = cix.erase(j);
-			// 	} else {
-			// 		j++;
-			// 	}
-			// }
-			cst.update(Q[i].second.first - 1, Q[i].second.second - 1, -1);
+			LL j{Q[i].second.first - 1};
+			if (cixc[j] == 0) {
+				j = rep[nonzero.find(j)];
+			}
+			while (j <= Q[i].second.second - 1) {
+				cixc[j]--;
+				mdst.update(j, cixc[j]);
+				sdft.modify(j, -1);
+				if (cixc[j] == 0) {
+					LL newrep{max(rep[nonzero.find(j)], rep[nonzero.find(j + 1)])};
+					nonzero.join(j, j + 1);
+					rep[nonzero.find(j)] = newrep;
+				}
+				j = rep[nonzero.find(j + 1)];
+			}
 		} else {
 			LL q1xj{q1x[Q[i].second]},
-				// mdstq{mdst.query(Q[i].second.first - 1, Q[i].second.second - 1)};
-				mdstq{-1}, csts{0};
-			auto mdstqq{cst.query(Q[i].second.first - 1, Q[i].second.second - 1)};
-			RF(i, 0, mdstqq.size()) {
-				csts += i * mdstqq[i];
-				if (mdstqq[i] > 0 && mdstq == -1) {
-					mdstq = i;
-				}
-			}
-			// if (N != 192) {
+				mdstq{mdst.query(Q[i].second.first - 1, Q[i].second.second - 1)};
 			q1xj = min(q1xj, mdstq);
-			// cout << sdst.query(Q[i].second.first - 1, Q[i].second.second - 1) -
-			// cout << sdft.sum(Q[i].second.second - 1) -
-			// 		(Q[i].second.first == 1 ? 0LL : sdft.sum(Q[i].second.first - 2)) -
-			// 		q1xj * (Q[i].second.second - Q[i].second.first + 1)
-			// 		 << '\n';
-			// } else {
-			// 	// cout << sdft.sum(Q[i].second.second - 1) -
-			// 	// 		(Q[i].second.first == 1 ? 0LL : sdft.sum(Q[i].second.first - 2))
-			// 	// 		 << '\n';
-			// 	cout << q1xj << ' ' << mdstq << '\n';
-			// }
-			cout << csts - q1xj * (Q[i].second.second - Q[i].second.first + 1)
+			cout << sdft.sum(Q[i].second.second - 1) -
+					(Q[i].second.first == 1 ? 0LL : sdft.sum(Q[i].second.first - 2)) -
+					q1xj * (Q[i].second.second - Q[i].second.first + 1)
 					 << '\n';
 		}
 	}
