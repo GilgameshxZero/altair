@@ -21,35 +21,47 @@ int main(int, char const *[]) {
 	while (T--) {
 		LL K;
 		cin >> K;
-		K--;
-		LL low{0}, high{K * 10}, mid;
-		while (low + 1 < high) {
-			mid = (low + high) / 2;
-			array<LL, 2> c{1, 0};
-			LL div{100000000000000};
-			RF(i, 14, -1) {
-				LL dig{(mid / div) % 10};
-				div /= 10;
-				array<LL, 2> nc{0, 0};
-				if (dig == 4) {
-					nc[1] += 4 * c[0] + 9 * c[1];
-				} else if (dig > 4) {
-					nc[0] += c[0];
-					nc[1] += (dig - 1) * c[0] + 9 * c[1];
-				} else {
-					nc[0] += c[0];
-					nc[1] += dig * c[0] + 9 * c[1];
-				}
-				c.swap(nc);
-			}
-			c[1]--;
-			if (c[0] + c[1] <= K) {
-				low = mid;
-			} else {
-				high = mid;
+		string S;
+		while (K != 0) {
+			S += '0' + K % 9;
+			K /= 9;
+		}
+		RF(i, 0, S.length()) {
+			if (S[i] >= '4') {
+				S[i]++;
 			}
 		}
-		cout << low + 1 << '\n';
+		reverse(S.begin(), S.end());
+		cout << S << '\n';
+		// K--;
+		// LL low{0}, high{K * 10}, mid;
+		// while (low + 1 < high) {
+		// 	mid = (low + high) / 2;
+		// 	array<LL, 2> c{1, 0};
+		// 	LL div{100000000000000};
+		// 	RF(i, 14, -1) {
+		// 		LL dig{(mid / div) % 10};
+		// 		div /= 10;
+		// 		array<LL, 2> nc{0, 0};
+		// 		if (dig == 4) {
+		// 			nc[1] += 4 * c[0] + 9 * c[1];
+		// 		} else if (dig > 4) {
+		// 			nc[0] += c[0];
+		// 			nc[1] += (dig - 1) * c[0] + 9 * c[1];
+		// 		} else {
+		// 			nc[0] += c[0];
+		// 			nc[1] += dig * c[0] + 9 * c[1];
+		// 		}
+		// 		c.swap(nc);
+		// 	}
+		// 	c[1]--;
+		// 	if (c[0] + c[1] <= K) {
+		// 		low = mid;
+		// 	} else {
+		// 		high = mid;
+		// 	}
+		// }
+		// cout << low + 1 << '\n';
 	}
 
 	return 0;
