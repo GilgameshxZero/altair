@@ -22,36 +22,23 @@ int main(int, char const *[]) {
 		LL N;
 		cin >> N;
 
-		vector<LL> A(N), B, C;
-		LL sB{0}, sC{0};
+		vector<LL> A(N), B(N);
+		unordered_map<LL, vector<LL>> pB;
 		RF(i, 0, N) {
-			cin >> A[i];
+			cin >> B[i];
+			pB[B[i]].push_back(i);
 		}
-		RF(i, 0, N) {
-			LL X;
-			cin >> X;
-			if (A[i] == 0) {
-				B.push_back(X);
-				sB += X;
-			} else {
-				C.push_back(X);
-				sC += X;
+		LL I{0};
+		if (B[0] == N + 1) {
+			while (B[I] == N + 1) {
+				A[I] = I + 1;
+				I++;
 			}
-		}
-
-		sort(B.begin(), B.end());
-		sort(C.begin(), C.end());
-		if (B.size() == C.size()) {
-			cout << 2 * (sB + sC) - min(B[0], C[0]) << '\n';
 		} else {
-			if (B.size() > C.size()) {
-				swap(B, C);
-				swap(sB, sC);
+			while (B[N - 1 - I] == 0) {
+				A[I] = N - I;
+				I++;
 			}
-			RF(i, C.size() - 1, C.size() - 1 - B.size()) {
-				sC += C[i];
-			}
-			cout << 2 * sB + sC << '\n';
 		}
 	}
 
