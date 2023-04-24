@@ -109,7 +109,7 @@ DBLSUB_DEP_SRC_DIR_TO_OBJ_DIR = $(**:..\=..\obj\)
 # First compile all outdated files (with /MP), then link everything together.
 # Splitting out the intermediate obj step makes /MP difficult to use.
 $(PROJECT_BIN): $(PROJECT_SRC_DIR)$(SOURCES)
-	@$(MAKE) $(PCH_FILE)
+	@$(MAKE) /$(MAKEFLAGS) $(PCH_FILE)
 	@IF NOT EXIST $(PROJECT_BIN_DIR) MD $(PROJECT_BIN_DIR)
 	@IF NOT EXIST $(PROJECT_OBJ_DIR) MD $(PROJECT_OBJ_DIR)
 	@$(COMPILER) $(COMPILER_FLAGS) /Yu"bits/stdc++.h" /Fo$(PROJECT_OBJ_DIR)$(BIN).obj\
