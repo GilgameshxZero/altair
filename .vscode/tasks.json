@@ -10,7 +10,8 @@
 				"echo": false,
 				"clear": true,
 				"reveal": "silent",
-				"showReuseMessage": false
+				"showReuseMessage": false,
+				"panel": "shared"
 			},
 
 			"command": "make",
@@ -25,7 +26,8 @@
 				"echo": false,
 				"clear": true,
 				"reveal": "silent",
-				"showReuseMessage": false
+				"showReuseMessage": false,
+				"panel": "shared"
 			},
 
 			"command": "cp",
@@ -49,7 +51,8 @@
 				"echo": false,
 				"clear": true,
 				"reveal": "silent",
-				"showReuseMessage": false
+				"showReuseMessage": false,
+				"panel": "shared"
 			},
 			"group": { "kind": "build", "isDefault": true },
 
@@ -80,7 +83,8 @@
 				"echo": false,
 				"clear": true,
 				"reveal": "silent",
-				"showReuseMessage": false
+				"showReuseMessage": false,
+				"panel": "shared"
 			},
 			"group": "build",
 
