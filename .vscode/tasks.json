@@ -6,17 +6,27 @@
 			"label": "clean",
 			"type": "shell",
 			"options": { "cwd": "${workspaceFolder}/build" },
-			"presentation": { "clear": true, "reveal": "silent" },
+			"presentation": {
+				"echo": false,
+				"clear": true,
+				"reveal": "silent",
+				"showReuseMessage": false
+			},
 
 			"command": "make",
 			"args": ["clean"],
-			"windows": { "command": "nmake" }
+			"windows": { "command": "nmake", "args": ["/NOLOGO", "clean"] }
 		},
 		{
 			"label": "new",
 			"type": "shell",
 			"options": { "cwd": "${workspaceFolder}/build" },
-			"presentation": { "clear": true, "reveal": "silent" },
+			"presentation": {
+				"echo": false,
+				"clear": true,
+				"reveal": "silent",
+				"showReuseMessage": false
+			},
 
 			"command": "cp",
 			"args": [
@@ -35,7 +45,12 @@
 			"label": "build.x64.debug",
 			"type": "shell",
 			"options": { "cwd": "${workspaceFolder}/build" },
-			"presentation": { "clear": true },
+			"presentation": {
+				"echo": false,
+				"clear": true,
+				"reveal": "silent",
+				"showReuseMessage": false
+			},
 			"group": { "kind": "build", "isDefault": true },
 
 			"command": "make",
@@ -45,14 +60,28 @@
 				"BIN=${fileBasenameNoExtension}"
 			],
 			"problemMatcher": ["$gcc"],
-			"windows": { "command": "nmake", "problemMatcher": ["$msCompile"] }
+			"windows": {
+				"command": "nmake",
+				"args": [
+					"/NOLOGO",
+					"PROJECT=${relativeFileDirname}",
+					"SOURCES=${fileBasename}",
+					"BIN=${fileBasenameNoExtension}"
+				],
+				"problemMatcher": ["$msCompile"]
+			}
 		},
 		{
 			/* Build the open file in release mode. */
 			"label": "build.x64.release",
 			"type": "shell",
 			"options": { "cwd": "${workspaceFolder}/build" },
-			"presentation": { "clear": true },
+			"presentation": {
+				"echo": false,
+				"clear": true,
+				"reveal": "silent",
+				"showReuseMessage": false
+			},
 			"group": "build",
 
 			"command": "make",
@@ -63,7 +92,17 @@
 				"BUILD=1"
 			],
 			"problemMatcher": ["$gcc"],
-			"windows": { "command": "nmake", "problemMatcher": ["$msCompile"] }
+			"windows": {
+				"command": "nmake",
+				"args": [
+					"/NOLOGO",
+					"PROJECT=${relativeFileDirname}",
+					"SOURCES=${fileBasename}",
+					"BIN=${fileBasenameNoExtension}",
+					"BUILD=1"
+				],
+				"problemMatcher": ["$msCompile"]
+			}
 		}
 	],
 	"inputs": [
