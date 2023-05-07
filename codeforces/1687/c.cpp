@@ -19,38 +19,32 @@ int main(int, char const *[]) {
 	LL T;
 	cin >> T;
 	while (T--) {
-		LL N, M, K;
-		cin >> N >> M >> K;
-
-		vector<LL> A(K);
-		RF(i, 0, K) {
+		LL N, M;
+		cin >> N >> M;
+		vector<LL> A(N), B(N), _PA(N + 1), _PB(N + 1);
+		LL *PA{_PA.data() + 1}, *PB{_PB.data() + 1};
+		RF(i, 0, N) {
 			cin >> A[i];
+			PA[i] = PA[i - 1] + A[i];
 		}
-		sort(A.begin(), A.end());
-		reverse(A.begin(), A.end());
+		RF(i, 0, N) {
+			cin >> B[i];
+			PB[i] = PB[i - 1] + B[i];
+		}
+		vector<vector<LL>> II(N);
+		RF(i, 0, M) {
+			LL X, Y;
+			cin >> X >> Y;
+			II[Y - 1].push_back(X - 1);
+		}
 
-		auto attempt{[&](LL X, LL Y) {
-			LL rem{0};
-			auto B(A);
-			RF(i, 0, A.size()) {
-				if (X < 2) {
-					break;
-				}
-				if (B[i] < 2 * Y) {
-					break;
-				}
-				X -= 2;
-				B[i] -= 2 * Y;
-				rem += (B[i]) / Y;
+		unordered_set<LL> S;
+		S.insert(PA[N - 1]);
+		RF(i, 0, N) {
+			for (auto &j : II[i]) {
+				LL target{PB[i] - PB[j - 1]};
 			}
-			if (rem >= X) {
-				return true;
-			} else {
-				return false;
-			}
-		}};
-
-		cout << (attempt(N, M) || attempt(M, N) ? "Yes\n" : "No\n");
+		}
 	}
 
 	return 0;
