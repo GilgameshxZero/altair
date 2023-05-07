@@ -19,38 +19,29 @@ int main(int, char const *[]) {
 	LL T;
 	cin >> T;
 	while (T--) {
-		LL N, M, K;
-		cin >> N >> M >> K;
+		LL N, K, S{0};
+		cin >> N >> K;
 
-		vector<LL> A(K);
-		RF(i, 0, K) {
+		vector<LL> A(N), P(N);
+		RF(i, 0, N) {
 			cin >> A[i];
-		}
-		sort(A.begin(), A.end());
-		reverse(A.begin(), A.end());
-
-		auto attempt{[&](LL X, LL Y) {
-			LL rem{0};
-			auto B(A);
-			RF(i, 0, A.size()) {
-				if (X < 2) {
-					break;
-				}
-				if (B[i] < 2 * Y) {
-					break;
-				}
-				X -= 2;
-				B[i] -= 2 * Y;
-				rem += (B[i]) / Y;
-			}
-			if (rem >= X) {
-				return true;
+			S += A[i];
+			if (i == 0) {
+				P[i] = A[i];
 			} else {
-				return false;
+				P[i] = P[i - 1] + A[i];
 			}
-		}};
+		}
+		if (K >= N) {
+			cout << S + N * K - N * (N + 1) / 2 << '\n';
+			continue;
+		}
 
-		cout << (attempt(N, M) || attempt(M, N) ? "Yes\n" : "No\n");
+		LL Z{0};
+		RF(i, 0, N - K + 1) {
+			Z = max(Z, P[i + K - 1] - (i == 0 ? 0 : P[i - 1]));
+		}
+		cout << Z + K * (K - 1) / 2 << '\n';
 	}
 
 	return 0;
