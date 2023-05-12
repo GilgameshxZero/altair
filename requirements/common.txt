@@ -1,0 +1,29 @@
+# For Python 3.9.10.
+
+# General.
+six
+dill
+requests
+py7zr
+
+# Style.
+pylint
+autopep8
+yapf
+jedi
+
+# Jupyter.
+tqdm
+ipykernel
+ipywidgets
+jupyterlab
+
+# Scientific computing.
+numpy
+pandas
+matplotlib
+scikit-learn
+scipy
+colormath
+plotly
+opencv-python
