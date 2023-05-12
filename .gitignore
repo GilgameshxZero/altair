@@ -1,10 +1,23 @@
+# Python.
+**/.ipynb_checkpoints/
+**/__pycache__/
+**/*.egg-info/
+**/.venv/
+**/.data/
+
+# Symbolic links to WSL 2 virtualenvs are not directories.
+**/.venv
+
+# Nebo.
 **/*.syncthing*/
 **/*.nebo-files/
 
+# C++.
 **/.vs/
 **/bin/
 **/obj/
 
+# General.
 **.aps
 **.db
 **.dropbox.attr
