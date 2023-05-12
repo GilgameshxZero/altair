@@ -1,0 +1,5 @@
+# Pre-install requirements. Avoids bdist_wheel and version resolution errors.
+
+pip
+wheel
+setuptools
