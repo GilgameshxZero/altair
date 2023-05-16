@@ -287,21 +287,26 @@ int main(int, char const *[]) {
 		}
 
 		LL lnN(mostSignificant1BitIdx(N));
-		vector<vector<LL>> rangeSmall(lnN + 1);
+		vector<vector<LL>> rangeSmall(lnN + 1), rangeLarge(lnN + 1);
 		rangeSmall[0].resize(N);
+		rangeLarge[0].resize(N);
 		RF(i, 0, N) {
 			rangeSmall[0][i] = A[i];
+			rangeLarge[0][i] = A[i];
 		}
 		RF(i, 1, lnN + 1) {
 			rangeSmall[i].resize(N + 1 - (1LL << i));
+			rangeLarge[i].resize(N + 1 - (1LL << i));
 			RF(j, 0, rangeSmall[i].size()) {
 				rangeSmall[i][j] =
 					min(rangeSmall[i - 1][j], rangeSmall[i - 1][j + (1LL << (i - 1))]);
+				rangeLarge[i][j] =
+					max(rangeLarge[i - 1][j], rangeLarge[i - 1][j + (1LL << (i - 1))]);
 			}
 		}
 
 		SegmentTreeLazy<SetSumPolicy> T(N);
-		LL C0B{0}, Z{0}, scan{0};
+		LL Z{0};
 		RF(i, 1, N + 1) {
 			Z += (i - 1) * (N - i + 1);
 		}
@@ -318,27 +323,67 @@ int main(int, char const *[]) {
 					low = mid;
 				}
 			}
-			T.update(i - 1, i - 1, low);
 
-			for (; C0B < i; C0B++) {
-				if (T.query(C0B, C0B) >= i) {
-					break;
+			LL Y{low};
+			low = -1;
+			high = i - 1;
+			while (low + 1 < high) {
+				mid = (low + high) / 2;
+				if (T.query(mid, mid) <= Y) {
+					low = mid;
+				} else {
+					high = mid;
 				}
 			}
-			for (; scan < i - 1; scan++) {
-				if (T.query(scan, scan) > low) {
-					break;
+			T.update(low + 1, i - 1, Y);
+
+			low = -1;
+			high = i - 1;
+			while (low + 1 < high) {
+				mid = (low + high) / 2;
+				if (T.query(mid, mid) >= i - 1) {
+					high = mid;
+				} else {
+					low = mid;
 				}
 			}
-			T.update(scan, i - 1, low);
-			for (; C0B < i; C0B++) {
-				if (T.query(C0B, C0B) >= i) {
-					break;
+			if (low == i - 1) {
+				low--;
+			}
+			if (low >= 0) {
+				Y = low;
+				vector<LL> bounds{-1}, updates;
+				LL P{LLONG_MAX / 2};
+				RF(j, i, max(i, T.query(Y + 1, Y + 1))) {
+					if (A[j] < P) {
+						low = Y + 1;
+						high = bounds.back();
+						while (high + 1 < low) {
+							mid = (low + high) / 2;
+							LL ln(mostSignificant1BitIdx(i - mid)),
+								large{
+									max(rangeLarge[ln][mid], rangeLarge[ln][i - (1LL << ln)])};
+							if (large < A[j]) {
+								low = mid;
+							} else {
+								high = mid;
+							}
+						}
+						bounds.push_back(low);
+						updates.push_back(j);
+						P = A[j];
+					}
+				}
+				bounds.push_back(Y + 1);
+				RF(j, 0, bounds.size() - 2) {
+					if (bounds[j + 2] <= bounds[j + 1]) {
+						continue;
+					}
+					T.update(bounds[j + 1], bounds[j + 2] - 1, updates[j]);
 				}
 			}
-			if (C0B <= i - 1) {
-				Z -= T.query(C0B, i - 1) - (i - 1 - C0B + 1) * (i - 1);
-			}
+
+			Z -= T.query(0, i - 1) - i * (i - 1);
 		}
 
 		cout << Z << '\n';
