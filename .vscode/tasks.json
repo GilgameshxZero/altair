@@ -2,10 +2,11 @@
 	"version": "2.0.0",
 	"tasks": [
 		{
-			/* Remove the intermediates directory obj/ and the output directory bin/. */
 			"label": "clean",
 			"type": "shell",
-			"options": { "cwd": "${workspaceFolder}/build" },
+			"options": {
+				"cwd": "${workspaceFolder}/build"
+			},
 			"presentation": {
 				"echo": false,
 				"clear": true,
@@ -13,10 +14,12 @@
 				"showReuseMessage": false,
 				"panel": "shared"
 			},
-
 			"command": "make",
 			"args": ["clean"],
-			"windows": { "command": "nmake", "args": ["/NOLOGO", "clean"] }
+			"windows": {
+				"command": "nmake",
+				"args": ["/NOLOGO", "clean"]
+			}
 		},
 		{
 			"label": "new",
@@ -38,15 +41,14 @@
 				"code",
 				"-r",
 				"${fileDirname}/${input:new-name}.cpp"
-			],
-			// Seems to make it unlimited.
-			"runOptions": { "instanceLimit": 0 }
+			]
 		},
 		{
-			/* Build the open file in debug mode. */
 			"label": "build.x64.debug",
 			"type": "shell",
-			"options": { "cwd": "${workspaceFolder}/build" },
+			"options": {
+				"cwd": "${workspaceFolder}/build"
+			},
 			"presentation": {
 				"echo": false,
 				"clear": true,
@@ -54,8 +56,10 @@
 				"showReuseMessage": false,
 				"panel": "shared"
 			},
-			"group": { "kind": "build", "isDefault": true },
-
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
 			"command": "make",
 			"args": [
 				"PROJECT=${relativeFileDirname}",
@@ -75,10 +79,11 @@
 			}
 		},
 		{
-			/* Build the open file in release mode. */
 			"label": "build.x64.release",
 			"type": "shell",
-			"options": { "cwd": "${workspaceFolder}/build" },
+			"options": {
+				"cwd": "${workspaceFolder}/build"
+			},
 			"presentation": {
 				"echo": false,
 				"clear": true,
@@ -87,7 +92,6 @@
 				"panel": "shared"
 			},
 			"group": "build",
-
 			"command": "make",
 			"args": [
 				"PROJECT=${relativeFileDirname}",
