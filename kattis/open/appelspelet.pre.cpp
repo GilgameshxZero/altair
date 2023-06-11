@@ -1391,12 +1391,12 @@ int main() {
 #define b push_back
 #define z size()
 #define e else
-#define r(x,y,z) replace(x.begin(),x.end(),y,z);
+#define r(y,z) replace(K.begin(),K.end(),y,z);
 using namespace std;string S=R""()"",
 			ccS,	// 11363, 11418
 			R"""()"",K=R"()""",
 			cL,	 // 554
-			R""()",T;int main(){r(K,'}','\r')r(K,'~','\0')bitset<510000> A,D;vector<int> L{-1},R=L,P=L,Y=L;vector<string> E(1);int C=0,i,j,B=-1,N;for(i=0;i<554;i+=2){for(j=0;j<=((uint8_t)K[i]>>5);j++){if(L[C]<0){L[C]=P.z;E.b(E[C]+"0");}e if(R[C]<0){R[C]=P.z;E.b(E[C]+"1");}e{C=P[C];j--;continue;}L.b(-1);R.b(-1);P.b(C);Y.b(-1);C=P.z-1;}j=((K[i]&0x1f)<<5)+K[i+1];Y[C]=j;C=P[C];}for(i=0;i<S.z;i++)if(i+1<S.z&&S[i]==65&&S[i+1]==78)T+='\r',i++;e if(i+1<S.z&&S[i]==89&&S[i+1]==90){T+='\0';i++;}e{T+=S[i];}S=T;for(i=0;i<11363;i++)for(j=0;j<8;j++)if(1&(S[i]>>(7-j)))D.flip(8*i+j);C=0;for(i=0;i<S.z*8;i++){if(!D[i])C=L[C];e C=R[C];if(L[C]<0){B+=Y[C]+1;A.flip(B);C=0;}}cin>>N;cout<<(N%2&&!A[N/2]?"alf":"beata");})""};
+			R""()",T;int C,i,j,B=-1,N,X=11418;int main(){r('}','\r')r('~','\0')bitset<510000> A,D;vector<int> L{-1},R=L,P=L,Y=L;vector<string> E(1);for(i=0;i<554;i+=2){for(j=0;j<=((uint8_t)K[i]>>5);j++){if(L[C]<0)L[C]=P.z,E.b(E[C]+"0");e if(R[C]<0)R[C]=P.z,E.b(E[C]+"1");e{C=P[C];j--;continue;}L.b(-1);R.b(-1);P.b(C);Y.b(-1);C=P.z-1;}j=((K[i]&0x1f)<<5)+K[i+1];Y[C]=j;C=P[C];}for(i=0;i<X;i++)if(i+1<X&&S[i]==65&&S[i+1]==78)T+='\r',i++;e if(i+1<X&&S[i]==89&&S[i+1]==90)T+='\0',i++;e T+=S[i];S=T;for(i=0;i<X-55;i++)for(j=0;j<8;j++)if(1&(S[i]>>(7-j)))D.flip(8*i+j);C=0;for(i=0;i<X*8;i++){if(!D[i])C=L[C];e C=R[C];if(L[C]<0)B+=Y[C]+1,A.flip(B),C=0;}cin>>N;cout<<(N%2&&!A[N/2]?"alf":"beata");})""};
 
 		{
 			string t;
