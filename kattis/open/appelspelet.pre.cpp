@@ -1,4 +1,5 @@
 // Note: Kattis does not like \0 and \r.
+// Note: Submitting negative chars requires use of the Kattis submission client, and with additional modification of the client to accept binary files.
 
 #include <bits/stdc++.h>
 using namespace std;
@@ -1137,20 +1138,32 @@ string S{
 void dfs(vector<pair<int, int>> &O, string &cL, int &acc, int X) {
 	if (O[X].first <= 0) {
 		stringstream SS;
-		SS << acc;
-		acc = 0;
+		// SS << acc;
 		if (X < 10) {
-			SS << 0;
+			// SS << 0;
 		}
 		if (X < 100) {
-			SS << 0;
+			// SS << 0;
 		}
-		SS << -O[X].first;
-		cL += SS.str();
+		// SS << -O[X].first;
+		int C{-O[X].first};
+		// SS.clear();
+		// SS << acc << (char)(64 + C / 64) << (char)(64 + C % 64);
+		char X[2]{0, 0};
+		X[0] ^= acc;
+		X[0] <<= 5;
+		X[0] ^= C / 32;
+		X[1] ^= C % 32;
+
+		// cL += SS.str();
+		cL += X[0];
+		cL += X[1];
+		acc = 0;
 		return;
 	}
 	acc++;
 	assert(acc < 10);
+	// cout << acc << '\n';
 	dfs(O, cL, acc, O[X].first);
 	dfs(O, cL, acc, O[X].second);
 }
@@ -1233,9 +1246,8 @@ int main() {
 			}
 		}
 
-		int acc{0};
+		int acc{-1};
 		dfs(O, cL, acc, Q.top().second);
-		cL[0]--;
 
 		for (int i{0}; i < M.size(); i++) {
 			cM[i] = P[i];
@@ -1248,67 +1260,66 @@ int main() {
 	}
 
 	{
-		// cout << cL << '\n';
+		cout << cL << '\n';
 		for (auto &i : cM) {
-			// cout << i.first << '\t' << i.second << '\n';
+			cout << i.first << '\t' << i.second << '\n';
 		}
 		// cS += "0000";
-		// cout << cS;
+		cout << cS;
+		// return 0;
 	}
 
-	bitset<500000> dA;
-	{
-		vector<int> L{-1}, R{-1}, P{-1}, Y{-1};
-		vector<string> E{""};
-		map<int, string> M;
-		int cur{0};
-		for (int i{0}; i < cL.length(); i += 4) {
-			for (int j{0}; j <= cL[i] - '0'; j++) {
-				if (L[cur] == -1) {
-					L[cur] = P.size();
-					E.push_back(E[cur] + "0");
-				} else if (R[cur] == -1) {
-					R[cur] = P.size();
-					E.push_back(E[cur] + "1");
-				} else {
-					cur = P[cur];
-					j--;
-					continue;
-				}
-				L.push_back(-1);
-				R.push_back(-1);
-				P.push_back(cur);
-				Y.push_back(-1);
-				cur = P.size() - 1;
-			}
-			int j{(cL[i + 1] - '0') * 100 + (cL[i + 2] - '0') * 10 + cL[i + 3] - '0'};
-			Y[cur] = j;
-			M[j] = E[cur];
-			cur = P[cur];
-		}
+	// bitset<500000> dA;
+	// {
+	// 	vector<int> L{-1}, R{-1}, P{-1}, Y{-1};
+	// 	vector<string> E{""};
+	// 	map<int, string> M;
+	// 	int cur{0};
+	// 	for (int i{0}; i < cL.length(); i += 4) {
+	// 		for (int j{0}; j <= cL[i] - '0'; j++) {
+	// 			if (L[cur] == -1) {
+	// 				L[cur] = P.size();
+	// 				E.push_back(E[cur] + "0");
+	// 			} else if (R[cur] == -1) {
+	// 				R[cur] = P.size();
+	// 				E.push_back(E[cur] + "1");
+	// 			} else {
+	// 				cur = P[cur];
+	// 				j--;
+	// 				continue;
+	// 			}
+	// 			L.push_back(-1);
+	// 			R.push_back(-1);
+	// 			P.push_back(cur);
+	// 			Y.push_back(-1);
+	// 			cur = P.size() - 1;
+	// 		}
+	// 		int j{(cL[i + 1] - '0') * 100 + (cL[i + 2] - '0') * 10 + cL[i + 3] -
+	// '0'}; 		Y[cur] = j; 		M[j] = E[cur]; 		cur = P[cur];
+	// 	}
 
-		int cDA{-1}, ccc{0}, sZ{0};
-		vector<int> Z;
-		cur = 0;
-		for (auto &i : cS) {
-			if (i == '0') {
-				cur = L[cur];
-			} else {
-				cur = R[cur];
-			}
-			if (L[cur] == -1) {
-				cDA += Y[cur] + 1;
-				dA.flip(cDA);
-				Z.push_back(Y[cur]);
-				assert(Z.back() == YY[Z.size() - 1]);
-				sZ += Z.back() + 1;
-				cur = 0;
-				ccc++;
-			}
-		}
+	// 	int cDA{-1}, ccc{0}, sZ{0};
+	// 	vector<int> Z;
+	// 	cur = 0;
+	// 	for (auto &i : cS) {
+	// 		if (i == '0') {
+	// 			cur = L[cur];
+	// 		} else {
+	// 			cur = R[cur];
+	// 		}
+	// 		if (L[cur] == -1) {
+	// 			cDA += Y[cur] + 1;
+	// 			dA.flip(cDA);
+	// 			Z.push_back(Y[cur]);
+	// 			assert(Z.back() == YY[Z.size() - 1]);
+	// 			sZ += Z.back() + 1;
+	// 			cur = 0;
+	// 			ccc++;
+	// 		}
+	// 	}
 
-		int K = 0;
-	}
+	// 	int K = 0;
+	// }
 
 	{
 		int N;
@@ -1319,10 +1330,11 @@ int main() {
 	string ccS;
 	{
 		// cS += "0000";
+		cS += "00";
 		char c;
-		for (int i{0}; i < cS.length(); i += 7) {
+		for (int i{0}; i < cS.length(); i += 8) {
 			c = 0;
-			for (int j{0}; j < 7; j++) {
+			for (int j{0}; j < 8; j++) {
 				c = c * 2 + cS[i + j] - '0';
 			}
 			ccS += c;
@@ -1343,10 +1355,114 @@ int main() {
 	// }
 
 	{
-		assert(ccS.find("RF") == string::npos);
-		assert(ccS.find("PN") == string::npos);
+		bitset<510000> dA;
+		vector<int> L{-1}, R{-1}, P{-1}, Y{-1};
+		vector<string> E{""};
+		int cur{0};
+		for (int i{0}; i < cL.length(); i += 4) {
+			auto k = ((unsigned char)cL[i]>>5);
+			for (int j{0}; j <= (cL[i] >> 5); j++) {
+			}
+			int j = ((cL[i] & 0x1f) << 5) + cL[i + 1];
+			int z = 0;
+		}
+	}
+
+	{
+		// assert(ccS.find("RF") == string::npos);
+		// assert(ccS.find("PN") == string::npos);
 		// assert(ccS.find("~") == string::npos);
 		// assert(ccS.find("}") == string::npos);
+		assert(ccS.find("AN") == string::npos);
+		assert(ccS.find("YZ") == string::npos);
+		// assert(cL.find('\r') == string::npos);
+		// assert(cL.find('\0') == string::npos);
+		assert(cL.find('}') == string::npos);
+		assert(cL.find('~') == string::npos);
+
+		replace(cL.begin(), cL.end(), '\r', '}');
+		replace(cL.begin(), cL.end(), '\0', '~');
+
+		assert(cL.find('\r') == string::npos);
+		assert(cL.find('\0') == string::npos);
+
+		string P[]{
+			R""(#include <bits/stdc++.h>
+#define b push_back
+#define z size()
+#define e else
+#define r(x,y,z) replace(x.begin(),x.end(),y,z);
+using namespace std;string S=R""()"",
+			ccS,	// 11363, 11418
+			R"""()"",K=R"()""",
+			cL,	 // 554
+			R""()",T;int main(){r(K,'}','\r')r(K,'~','\0')bitset<510000> A,D;vector<int> L{-1},R=L,P=L,Y=L;vector<string> E(1);int C=0,i,j,B=-1,N;for(i=0;i<554;i+=2){for(j=0;j<=((uint8_t)K[i]>>5);j++){if(L[C]<0){L[C]=P.z;E.b(E[C]+"0");}e if(R[C]<0){R[C]=P.z;E.b(E[C]+"1");}e{C=P[C];j--;continue;}L.b(-1);R.b(-1);P.b(C);Y.b(-1);C=P.z-1;}j=((K[i]&0x1f)<<5)+K[i+1];Y[C]=j;C=P[C];}for(i=0;i<S.z;i++)if(i+1<S.z&&S[i]==65&&S[i+1]==78)T+='\r',i++;e if(i+1<S.z&&S[i]==89&&S[i+1]==90){T+='\0';i++;}e{T+=S[i];}S=T;for(i=0;i<11363;i++)for(j=0;j<8;j++)if(1&(S[i]>>(7-j)))D.flip(8*i+j);C=0;for(i=0;i<S.z*8;i++){if(!D[i])C=L[C];e C=R[C];if(L[C]<0){B+=Y[C]+1;A.flip(B);C=0;}}cin>>N;cout<<(N%2&&!A[N/2]?"alf":"beata");})""};
+
+		{
+			string t;
+			for (int i{0}; i < P[1].length(); i++) {
+				if (P[1][i] == '\r') {
+					t += "AN";
+				} else if (P[1][i] == '\0') {
+					t += "YZ";
+				} else {
+					t += P[1][i];
+				}
+			}
+			P[1] = t;
+			// replace(P[2].begin(), P[2].end(), '\r', '~');
+			// replace(P[2].begin(), P[2].end(), '\0', '}');
+			// t.clear();
+			// for (int i{0}; i < P[5].length(); i++) {
+			// 	if (P[5][i] == '\n') {
+			// 	} else {
+			// 		t += P[5][i];
+			// 	}
+			// }
+			// P[5] = t;
+			// replace(P[5].begin(), P[5].end(), '\t', ' ');
+			// for (int j{0}; j < 5; j++) {
+			// 	t.clear();
+			// 	for (int i{0}; i < P[5].length(); i++) {
+			// 		if (i + 1 < P[5].length() && P[5][i] == ' ' && P[5][i + 1] == ' ') {
+			// 			;
+			// 		} else {
+			// 			t += P[5][i];
+			// 		}
+			// 	}
+			// 	P[5] = t;
+			// }
+
+			// t.clear();
+			// for (int i{0}; i < P[3].length(); i++) {
+			// 	if (P[3][i] == '\n') {
+			// 	} else {
+			// 		t += P[3][i];
+			// 	}
+			// }
+			// P[3] = t;
+
+			// t.clear();
+			// for (int i{0}; i < P[1].length(); i++) {
+			// 	if (P[1][i] == '\n') {
+			// 	} else {
+			// 		t += P[1][i];
+			// 	}
+			// }
+			// P[1] = t;
+
+			ofstream out("appelspelet.cpp", ios_base::binary);
+			for (int i{0}; i < 6; i++) {
+				out << P[i];
+			}
+			out.close();
+		}
+	}
+
+	return 0;
+}
+
+/*
 
 		string P[]{
 			"#include <bits/stdc++.h>\n",
@@ -1391,10 +1507,10 @@ int main(int, char const *[]) {
 
 	string ccSS;
 	for (int i{0}; i < ccS.length(); i++) {
-		if (i + 1 < ccS.length() && ccS[i] == 'R' && ccS[i + 1] == 'F') {
+		if (i + 1 < ccS.length() && ccS[i] == 'A' && ccS[i + 1] == 'N') {
 			ccSS += '\r';
 			i++;
-		} else if (i + 1 < ccS.length() && ccS[i] == 'P' && ccS[i + 1] == 'N') {
+		} else if (i + 1 < ccS.length() && ccS[i] == 'Y' && ccS[i + 1] == 'Z') {
 			ccSS += '\0';
 			i++;
 		} else {
@@ -1406,16 +1522,16 @@ int main(int, char const *[]) {
 	bitset<200000> cSB;
 	for (int i{0}; i < ccS.length(); i++) {
 		ccS[i] -= 0;
-		for (int j{0}; j < 7; j++) {
-			if (1 & (ccS[i] >> (6 - j))) {
-				cSB.flip(7 * i + j);
+		for (int j{0}; j < 8; j++) {
+			if (1 & (ccS[i] >> (7 - j))) {
+				cSB.flip(8 * i + j);
 			}
 		}
 	}
 
 	int cDA{-1};
 	cur = 0;
-	for (int i{0}; i < ccS.length() * 7; i++) {
+	for (int i{0}; i < ccS.length() * 8; i++) {
 		if (!cSB[i]) {
 			cur = L[cur];
 		} else {
@@ -1433,67 +1549,4 @@ int main(int, char const *[]) {
 	cout << (N % 2 && !dA[N / 2] ? "alf" : "beata");
 	return 0;
 })""};
-
-		{
-			string t;
-			for (int i{0}; i < P[2].length(); i++) {
-				if (P[2][i] == '\r') {
-					t += "RF";
-				} else if (P[2][i] == '\0') {
-					t += "PN";
-				} else {
-					t += P[2][i];
-				}
-			}
-			P[2] = t;
-			// replace(P[2].begin(), P[2].end(), '\r', '~');
-			// replace(P[2].begin(), P[2].end(), '\0', '}');
-			t.clear();
-			for (int i{0}; i < P[5].length(); i++) {
-				if (P[5][i] == '\n') {
-				} else {
-					t += P[5][i];
-				}
-			}
-			P[5] = t;
-			replace(P[5].begin(), P[5].end(), '\t', ' ');
-			for (int j{0}; j < 5; j++) {
-				t.clear();
-				for (int i{0}; i < P[5].length(); i++) {
-					if (i + 1 < P[5].length() && P[5][i] == ' ' && P[5][i + 1] == ' ') {
-						;
-					} else {
-						t += P[5][i];
-					}
-				}
-				P[5] = t;
-			}
-
-			t.clear();
-			for (int i{0}; i < P[3].length(); i++) {
-				if (P[3][i] == '\n') {
-				} else {
-					t += P[3][i];
-				}
-			}
-			P[3] = t;
-
-			t.clear();
-			for (int i{0}; i < P[1].length(); i++) {
-				if (P[1][i] == '\n') {
-				} else {
-					t += P[1][i];
-				}
-			}
-			P[1] = t;
-
-			ofstream out("appelspelet.cpp", ios_base::binary);
-			for (int i{0}; i < 6; i++) {
-				out << P[i];
-			}
-			out.close();
-		}
-	}
-
-	return 0;
-}
+*/
