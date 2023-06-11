@@ -1,7 +1,9 @@
 // Note: Kattis does not like \0 and \r.
-// Note: Submitting negative chars requires use of the Kattis submission client, and with additional modification of the client to accept binary files.
+// Note: Submitting negative chars requires use of the Kattis submission client,
+// and with additional modification of the client to accept binary files.
 
 #include <bits/stdc++.h>
+#include <codecvt>
 using namespace std;
 
 string S{
@@ -1186,6 +1188,7 @@ int main() {
 				if ((i >> j) & 1) {
 					M[K]++;
 					Y.push_back(K);
+					cout << K << ' ';
 					sY += K + 1;
 					K = 0;
 					Z++;
@@ -1204,6 +1207,7 @@ int main() {
 			}
 		}
 		YY = Y;
+		cout << '\n';
 		// cout << Z;
 		// cout << C;
 
@@ -1360,7 +1364,7 @@ int main() {
 		vector<string> E{""};
 		int cur{0};
 		for (int i{0}; i < cL.length(); i += 4) {
-			auto k = ((unsigned char)cL[i]>>5);
+			auto k = ((unsigned char)cL[i] >> 5);
 			for (int j{0}; j <= (cL[i] >> 5); j++) {
 			}
 			int j = ((cL[i] & 0x1f) << 5) + cL[i + 1];
@@ -1383,11 +1387,24 @@ int main() {
 		replace(cL.begin(), cL.end(), '\r', '}');
 		replace(cL.begin(), cL.end(), '\0', '~');
 
+		string t;
+		for (int i{0}; i < ccS.length(); i++) {
+			if (ccS[i] == '\r') {
+				t += "AN";
+			} else if (ccS[i] == '\0') {
+				t += "YZ";
+			} else {
+				t += ccS[i];
+			}
+		}
+		ccS = t;
+
 		assert(cL.find('\r') == string::npos);
 		assert(cL.find('\0') == string::npos);
 
 		string P[]{
-			R""(#include <bits/stdc++.h>
+			"\xEF\xBB\xBF",
+			R""(#include<bits/stdc++.h>
 #define b push_back
 #define z size()
 #define e else
@@ -1396,20 +1413,9 @@ using namespace std;string S=R""()"",
 			ccS,	// 11363, 11418
 			R"""()"",K=R"()""",
 			cL,	 // 554
-			R""()",T;int C,i,j,B=-1,N,X=11418;int main(){r('}','\r')r('~','\0')bitset<510000> A,D;vector<int> L{-1},R=L,P=L,Y=L;vector<string> E(1);for(i=0;i<554;i+=2){for(j=0;j<=((uint8_t)K[i]>>5);j++){if(L[C]<0)L[C]=P.z,E.b(E[C]+"0");e if(R[C]<0)R[C]=P.z,E.b(E[C]+"1");e{C=P[C];j--;continue;}L.b(-1);R.b(-1);P.b(C);Y.b(-1);C=P.z-1;}j=((K[i]&0x1f)<<5)+K[i+1];Y[C]=j;C=P[C];}for(i=0;i<X;i++)if(i+1<X&&S[i]==65&&S[i+1]==78)T+='\r',i++;e if(i+1<X&&S[i]==89&&S[i+1]==90)T+='\0',i++;e T+=S[i];S=T;for(i=0;i<X-55;i++)for(j=0;j<8;j++)if(1&(S[i]>>(7-j)))D.flip(8*i+j);C=0;for(i=0;i<X*8;i++){if(!D[i])C=L[C];e C=R[C];if(L[C]<0)B+=Y[C]+1,A.flip(B),C=0;}cin>>N;cout<<(N%2&&!A[N/2]?"alf":"beata");})""};
+			R""()",T;int C,i,j,B=-1,N,X=11418;int main(){r('}','\r')r('~','\0')bitset<510000> A,D;vector<int> L{-1},R=L,P=L,Y=L;vector<string> E(1);for(i=0;i<554;i+=2){for(j=0;j<=((uint8_t)K[i]>>5);j++){if(L[C]<0)L[C]=P.z,E.b(E[C]+"0");e if(R[C]<0)R[C]=P.z,E.b(E[C]+"1");e{C=P[C];j--;continue;}L.b(-1);R.b(-1);P.b(C);Y.b(-1);C=P.z-1;}j=((K[i]&0x1f)<<5)+K[i+1];Y[C]=j;C=P[C];}for(i=0;i<X;i++)if(i+1<X&&S[i]==65&&S[i+1]==78)T+='\r',i++;e if(i+1<X&&S[i]==89&&S[i+1]==90)T+='\0',i++;e T+=S[i];S=T;for(i=0;i<X-55;i++)for(j=0;j<8;j++)if(1&(S[i]>>(7-j)))D.flip(8*i+j);C=0;for(i=0;i<X*8;i++){if(!D[i])C=L[C];e C=R[C];if(L[C]<0)B+=Y[C]+1,A.flip(B),C=0;}cin>>N;cout<<(N%2&&!A[N/2]?"alf":"beata");}//晏扬)""};
 
 		{
-			string t;
-			for (int i{0}; i < P[1].length(); i++) {
-				if (P[1][i] == '\r') {
-					t += "AN";
-				} else if (P[1][i] == '\0') {
-					t += "YZ";
-				} else {
-					t += P[1][i];
-				}
-			}
-			P[1] = t;
 			// replace(P[2].begin(), P[2].end(), '\r', '~');
 			// replace(P[2].begin(), P[2].end(), '\0', '}');
 			// t.clear();
@@ -1450,11 +1456,26 @@ using namespace std;string S=R""()"",
 			// 	}
 			// }
 			// P[1] = t;
-
-			ofstream out("appelspelet.cpp", ios_base::binary);
-			for (int i{0}; i < 6; i++) {
-				out << P[i];
+			stringstream ss;
+			for (int i{0}; i < 7; i++) {
+				ss << P[i];
 			}
+			string ssss = ss.str();
+			wstring sss;
+			sss.assign(ssss.begin(), ssss.end());
+
+
+			const std::codecvt_mode le_bom = static_cast<std::codecvt_mode>(
+				std::little_endian | std::generate_header | std::consume_header);
+			typedef std::codecvt_utf8<wchar_t, 0x10ffff, le_bom> wcvt_utf16le_bom;
+			wcvt_utf16le_bom cvt(1);
+
+			ofstream out;
+			// std::locale wloc(out.getloc(), &cvt);
+			// out.imbue(wloc);
+
+			out.open("appelspelet.cpp", ios::binary);
+			out << ssss;
 			out.close();
 		}
 	}
