@@ -1185,6 +1185,7 @@ int main() {
 		vector<int> Y;
 		for (auto i : S) {
 			for (auto j : {0, 1, 2, 3, 4, 5}) {
+				// cout << ((i >> j) & 1);
 				if ((i >> j) & 1) {
 					M[K]++;
 					Y.push_back(K);
@@ -1207,7 +1208,8 @@ int main() {
 			}
 		}
 		YY = Y;
-		cout << '\n';
+		// cout << '\n';
+		return 0;
 		// cout << Z;
 		// cout << C;
 
