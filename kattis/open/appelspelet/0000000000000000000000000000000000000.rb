@@ -1,0 +1,1 @@
+puts $0[gets.to_i%37]=="0"?"alf":"beata"
