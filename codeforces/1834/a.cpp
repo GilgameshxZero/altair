@@ -19,6 +19,23 @@ int main() {
 	LL T;
 	cin >> T;
 	while (T--) {
+		LL cN{0}, cP{0}, N, Z{0};
+		cin >> N;
+		RF(i, 0, N) {
+			LL X;
+			cin >> X;
+			cN += X == -1;
+			cP += X == 1;
+		}
+		if (cN % 2 == 1) {
+			Z++;
+			cN--;
+		}
+		while (cN > N / 2) {
+			cN -= 2;
+			Z += 2;
+		}
+		cout << Z << '\n';
 	}
 
 	return 0;
