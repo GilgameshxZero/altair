@@ -1,1 +1,1 @@
-puts$0[gets.to_i%74]==?0?"alf":"beata"
+puts$0[gets.to_i%74]<?1?:alf:"beata"
