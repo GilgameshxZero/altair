@@ -1,0 +1,1 @@
+puts Base64.decode64($0[5..8])
