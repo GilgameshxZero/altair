@@ -1,0 +1,1 @@
+puts$$<20?"alf":"beata"
