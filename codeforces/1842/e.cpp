@@ -300,11 +300,6 @@ int main() {
 		T.update(i, i, -LLONG_MAX / 3 + -i * A + min({X, V + W, i * A}));
 	}
 
-	vector<LL> DD(K + 1);
-	RF(i, 0, K + 1) {
-		DD[i] = T.query(i, i) + i * A;
-	}
-
 	cout << T.query(K, K) + K * A;
 	return 0;
 }
