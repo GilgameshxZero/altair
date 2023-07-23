@@ -37,8 +37,7 @@ int main() {
 			C[i] /= K;
 		}
 
-		vector<LL> R;
-		R.push_back(0);
+		multiset<LL> F;
 		RF(i, 0, N) {
 			LL j{i};
 			for (; j < N && C[j] == C[i]; j++)
@@ -46,23 +45,24 @@ int main() {
 
 			if (C[i] != 0) {
 				sort(B.begin() + i, B.begin() + j);
-				R.resize(C[i] + 1);
-				auto &m{R[C[i]]};
-				LL S{0};
 				RF(k, j - 1, i - 1) {
 					if (j - k > C[i]) {
 						break;
 					}
-					S += B[k];
-					auto l{R[C[i] - (j - k)]};
-					m = max(m, S + l);
+					F.insert(B[k]);
+					if (F.size() > C[i]) {
+						F.erase(F.begin());
+					}
 				}
 			}
 
 			i = j - 1;
 		}
 
-		cout << Z - R.back() << '\n';
+		for(auto &i : F) {
+			Z -= i;
+		}
+		cout << Z << '\n';
 	}
 
 	return 0;
