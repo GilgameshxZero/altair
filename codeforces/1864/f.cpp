@@ -191,33 +191,43 @@ int main() {
 		X[A[i]].push_back(i);
 		Y[A[i]] = {1, 0};
 	}
-	DisjointSetUnion D(N);
-	vector<LL> E(N, 0);
-	LL I{0};
-	unordered_map<LL, LL> L;
+	// DisjointSetUnion D(N);
+	// vector<LL> E(N, 0);
+	// LL I{0};
+	// unordered_map<LL, LL> L;
+	set<LL> S;
 	for (auto i{Y.rbegin()}; i != Y.rend(); i++) {
+		LL y{0};
 		for (auto &j : X[i->first]) {
-			bool lj{j > 0 && E[D.find(j - 1)] > 0},
-				rj{j < N - 1 && E[D.find(j + 1)] > 0};
-			if (lj && rj) {
-				L[E[D.find(j - 1)]]--;
-				L[E[D.find(j + 1)]]--;
-				D.join(j, j - 1);
-				D.join(j, j + 1);
-				I--;
-			} else if (lj) {
-				L[E[D.find(j - 1)]]--;
-				D.join(j, j - 1);
-			} else if (rj) {
-				L[E[D.find(j + 1)]]--;
-				L[E[D.find(j)]]++;
-			} else {
-				I++;
+			auto l{S.upper_bound(j)}, k{S.end()};
+			if (l != S.begin() && l != S.end()) {
+				k = prev(l);
+				if (A[*l] > i->first && A[*k] > i->first) {
+					y++;
+				}
 			}
-			E[D.find(j)] = i->first;
-			L[E[D.find(j)]]++;
+			S.insert(j);
+			// bool lj{j > 0 && E[D.find(j - 1)] > 0},
+			// 	rj{j < N - 1 && E[D.find(j + 1)] > 0};
+			// if (lj && rj) {
+			// 	L[E[D.find(j - 1)]]--;
+			// 	L[E[D.find(j + 1)]]--;
+			// 	D.join(j, j - 1);
+			// 	D.join(j, j + 1);
+			// 	I--;
+			// } else if (lj) {
+			// 	L[E[D.find(j - 1)]]--;
+			// 	D.join(j, j - 1);
+			// } else if (rj) {
+			// 	L[E[D.find(j + 1)]]--;
+			// 	D.join(j, j + 1);
+			// } else {
+			// 	I++;
+			// }
+			// E[D.find(j)] = i->first;
+			// L[E[D.find(j)]]++;
 		}
-		i->second.second = L[i->first] - 1;
+		i->second.second = y;
 		if (i == Y.rbegin()) {
 			continue;
 		}
