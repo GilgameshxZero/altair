@@ -43,7 +43,7 @@ int main() {
 				cout << "! " << Z << endl;
 				continue;
 			}
-			cout << "? " << N / K * K + 1 << endl;
+			cout << "? " << (N / K - 1) * K + 1 << endl;
 			cin >> x;
 			cout << "? " << N - K + 1 << endl;
 			cin >> x;
@@ -58,6 +58,12 @@ int main() {
 			cout << "! " << Z << endl;
 		} else {
 			LL P2{N - P1}, A1{(K - P1) / 2}, A2{(K - P2) / 2};
+			while (A2 < 0) {
+				P1 += 2;
+				P2 -= 2;
+				A1 = (K - P1) / 2;
+				A2 = (K - P2) / 2;
+			}
 			LL Z{0};
 
 			cout << "? " << 1 << endl;
