@@ -1,1 +1,0 @@
-if [ -f "hello world.sh" ]; then echo "alf"; else echo "beata"; fi
