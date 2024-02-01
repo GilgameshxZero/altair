@@ -4,8 +4,6 @@
 **/*.egg-info/
 **/.venv/
 **/.data/
-
-# Symbolic links to WSL 2 virtualenvs are not directories.
 **/.venv
 
 # Nebo.

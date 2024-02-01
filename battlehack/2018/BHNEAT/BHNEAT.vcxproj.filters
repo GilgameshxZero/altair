@@ -1,0 +1,130 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="CHANGES" />
+    <None Include="LICENSE" />
+    <None Include="Makefile" />
+    <None Include="p2mpar3bare.ne" />
+    <None Include="p2nv.ne" />
+    <None Include="p2test.ne" />
+    <None Include="params256.ne" />
+    <None Include="pole1startgenes" />
+    <None Include="pole2_markov.ne" />
+    <None Include="pole2startgenes" />
+    <None Include="pole2startgenes.original" />
+    <None Include="pole2startgenes1" />
+    <None Include="pole2startgenes2" />
+    <None Include="README" />
+    <None Include="test.ne" />
+    <None Include="xorstartgenes" />
+    <None Include="bh.ne" />
+    <None Include="bh-template.py" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="CMakeLists.txt" />
+    <Text Include="bhstartgenes" />
+    <Text Include="xorstartgenes.original" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="experiments.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="gene.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="genome.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="innovation.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="link.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="neat.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="neatmain.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="network.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="nnode.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="organism.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="population.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="species.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="trait.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="bhexp.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="experiments.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="gene.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="genome.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="innovation.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="link.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="neat.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="neatmain.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="network.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="nnode.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="organism.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="population.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="species.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="trait.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="bhexp.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

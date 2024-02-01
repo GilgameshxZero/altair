@@ -1,0 +1,173 @@
+NEAT READING IN bh.netrait_param_mut_prob=0.500000
+trait_mutation_power=1.000000
+linktrait_mut_sig=1.000000
+nodetrait_mut_sig=0.500000
+weight_mut_power=2.500000
+recur_prob=0.000000
+disjoint_coeff=1.000000
+excess_coeff=1.000000
+mutdiff_coeff=0.400000
+compat_threshold=3.000000
+age_significance=1.000000
+survival_thresh=0.200000
+mutate_only_prob=0.250000
+mutate_random_trait_prob=0.100000
+mutate_link_trait_prob=0.100000
+mutate_node_trait_prob=0.100000
+mutate_link_weights_prob=0.900000
+mutate_toggle_enable_prob=0.000000
+mutate_gene_reenable_prob=0.000000
+mutate_add_node_prob=0.030000
+mutate_add_link_prob=0.050000
+interspecies_mate_rate=0.001000
+mate_multipoint_prob=0.600000
+mate_multipoint_avg_prob=0.400000
+mate_singlepoint_prob=0.000000
+mate_only_prob=0.200000
+recur_only_prob=0.000000
+pop_size=16
+dropoff_age=15
+newlink_tries=20
+print_every=5
+babies_stolen=0
+num_runs=1
+loaded
+Please choose an experiment:
+1 - 1-pole balancing
+2 - 2-pole balancing, velocity info provided
+3 - 2-pole balancing, no velocity info provided (non-markov)
+4 - XOR
+5 - BH
+Number: 5
+START BH TEST
+Reading in the start genome
+Reading in Genome id 1
+Spawning Population off Genome2
+Verifying Spawned Pop
+Epoch 1
+name of fname: output\gen_1
+WINNER GEN 1: 3
+Number of Species: 1
+compat_thresh: 3
+Generation 1: overall_average = 0.648438
+orig fitness of Species1(Size 16): 41 last improved 0
+NEW POPULATION RECORD FITNESS: 41
+Epoch 2
+name of fname: output\gen_2
+WINNER GEN 2: 0
+Number of Species: 1
+compat_thresh: 3
+Generation 2: overall_average = 0.710938
+orig fitness of Species1(Size 16): 42 last improved 0
+NEW POPULATION RECORD FITNESS: 42
+Epoch 3
+name of fname: output\gen_3
+WINNER GEN 3: 0
+Number of Species: 1
+compat_thresh: 3
+Generation 3: overall_average = 0.773438
+orig fitness of Species1(Size 16): 43 last improved 0
+NEW POPULATION RECORD FITNESS: 43
+Epoch 4
+name of fname: output\gen_4
+WINNER GEN 4: 11
+Number of Species: 1
+compat_thresh: 3
+Generation 4: overall_average = 0.835938
+orig fitness of Species1(Size 16): 44 last improved 0
+NEW POPULATION RECORD FITNESS: 44
+Epoch 5
+name of fname: output\gen_5
+WINNER GEN 5: 3
+
+/* Species #1 : (Size 16) (AF 14.375) (Age 5)  */
+Number of Species: 1
+compat_thresh: 3
+Generation 5: overall_average = 0.898438
+orig fitness of Species1(Size 16): 45 last improved 0
+NEW POPULATION RECORD FITNESS: 45
+Epoch 6
+name of fname: output\gen_6
+WINNER GEN 6: 0
+Number of Species: 2
+compat_thresh: 3
+Generation 6: overall_average = 1.94792
+orig fitness of Species1(Size 12): 46 last improved 0
+orig fitness of Species2(Size 4): 36 last improved 0
+NEW POPULATION RECORD FITNESS: 46
+Epoch 7
+name of fname: output\gen_7
+WINNER GEN 7: 0
+Number of Species: 2
+compat_thresh: 3
+Generation 7: overall_average = 2.03571
+orig fitness of Species1(Size 7): 47 last improved 0
+orig fitness of Species2(Size 9): 37 last improved 0
+NEW POPULATION RECORD FITNESS: 47
+Epoch 8
+name of fname: output\gen_8
+WINNER GEN 8: 0
+Number of Species: 2
+compat_thresh: 3
+Generation 8: overall_average = 2.2004
+orig fitness of Species1(Size 7): 48 last improved 0
+orig fitness of Species2(Size 9): 38 last improved 0
+NEW POPULATION RECORD FITNESS: 48
+Epoch 9
+name of fname: output\gen_9
+WINNER GEN 9: 0
+Number of Species: 2
+compat_thresh: 3
+Generation 9: overall_average = 2.29688
+orig fitness of Species1(Size 8): 49 last improved 0
+orig fitness of Species2(Size 8): 39 last improved 0
+NEW POPULATION RECORD FITNESS: 49
+Epoch 10
+name of fname: output\gen_10
+WINNER GEN 10: 0
+
+/* Species #1 : (Size 9) (AF 18.8889) (Age 10)  */
+
+/* Species #2 : (Size 7) (AF 20) (Age 5)  */
+Number of Species: 2
+compat_thresh: 3
+Generation 10: overall_average = 2.43056
+orig fitness of Species1(Size 9): 50 last improved 0
+orig fitness of Species2(Size 7): 40 last improved 0
+NEW POPULATION RECORD FITNESS: 50
+Epoch 11
+name of fname: output\gen_11
+WINNER GEN 11: 0
+Number of Species: 2
+compat_thresh: 3
+Generation 11: overall_average = 2.5754
+orig fitness of Species1(Size 7): 51 last improved 0
+orig fitness of Species2(Size 9): 41 last improved 0
+NEW POPULATION RECORD FITNESS: 51
+Epoch 12
+name of fname: output\gen_12
+WINNER GEN 12: 0
+Number of Species: 2
+compat_thresh: 3
+Generation 12: overall_average = 2.68056
+orig fitness of Species1(Size 9): 52 last improved 0
+orig fitness of Species2(Size 7): 42 last improved 0
+NEW POPULATION RECORD FITNESS: 52
+Epoch 13
+name of fname: output\gen_13
+WINNER GEN 13: 0
+Number of Species: 2
+compat_thresh: 3
+Generation 13: overall_average = 2.78571
+orig fitness of Species1(Size 7): 53 last improved 0
+orig fitness of Species2(Size 9): 43 last improved 0
+NEW POPULATION RECORD FITNESS: 53
+Epoch 14
+name of fname: output\gen_14
+WINNER GEN 14: 0
+Number of Species: 2
+compat_thresh: 3
+Generation 14: overall_average = 2.91071
+orig fitness of Species1(Size 7): 54 last improved 0
+orig fitness of Species2(Size 9): 44 last improved 0
+NEW POPULATION RECORD FITNESS: 54
