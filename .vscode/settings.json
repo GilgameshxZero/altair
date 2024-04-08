@@ -1,7 +1,6 @@
 /* Recommended settings for VSCode. Copy and customize to `settings.json`. */
 {
 	"debug.console.closeOnEnd": false,
-	"editor.rulers": [80, 120],
 	"editor.insertSpaces": false,
 	"editor.tabSize": 2,
 
@@ -14,6 +13,8 @@
 	"markdown.styles": [".vscode/default.css"],
 
 	"search.useIgnoreFiles": false,
+
+	// "zenMode.hideLineNumbers": false,
 
 	/* On Windows, enables correct __cplusplus define for Intellisense. */
 	"C_Cpp.default.compilerArgs": ["/Zc:__cplusplus"],
