@@ -1,5 +1,6 @@
 #if defined(__GNUC__) && !defined(__clang__)
-#pragma GCC target("avx", "avx2", "fma", "bmi", "bmi2", "popcnt", "lzcnt")
+#pragma GCC target( \
+	"avx", "avx2", "fma", "bmi", "bmi2", "popcnt", "lzcnt")
 #pragma GCC optimize("Ofast", "unroll-loops")
 #endif
 
@@ -9,35 +10,42 @@ using LL = long long;
 using LD = long double;
 using namespace std;
 
-#define RF(x, from, to) \
-	for (LL x(from), _to(to), _delta{x < _to ? 1LL : -1LL}; x != _to; x += _delta)
+#define RF(x, from, to)                                   \
+	for (LL x(from), _to(to), _delta{x < _to ? 1LL : -1LL}; \
+			 x != _to;                                          \
+			 x += _delta)
 
-// For an overloaded function f, this wraps it in an rvalue-reference lambda so
-// that it may be resolved via perfect forwarding.
+// For an overloaded function f, this wraps it in an
+// rvalue-reference lambda so that it may be resolved via
+// perfect forwarding.
 #define RAIN_FUNCTIONAL_RESOLVE_OVERLOAD(f)          \
 	[](auto &&...args) -> decltype(auto) {             \
 		return f(std::forward<decltype(args)>(args)...); \
 	}
 
 namespace Rain::Functional {
-	// SFINAE for const-iterable types (containers). Assumes sizeof(char) and
-	// sizeof(int) are not equal.
+	// SFINAE for const-iterable types (containers). Assumes
+	// sizeof(char) and sizeof(int) are not equal.
 	template <typename Type>
 	struct isConstIterable {
 		template <typename TypeInner>
-		static char evaluate(typename TypeInner::const_iterator *);
+		static char evaluate(
+			typename TypeInner::const_iterator *);
 		template <typename TypeInner>
 		static int evaluate(...);
 
 		public:
-		enum { value = sizeof(evaluate<Type>(0)) == sizeof(char) };
+		enum {
+			value = sizeof(evaluate<Type>(0)) == sizeof(char)
+		};
 	};
 
 	template <typename>
 	struct isPair : std::false_type {};
 
 	template <typename TypeFirst, typename TypeSecond>
-	struct isPair<std::pair<TypeFirst, TypeSecond>> : std::true_type {};
+	struct isPair<std::pair<TypeFirst, TypeSecond>>
+			: std::true_type {};
 
 	template <typename Type, typename = std::void_t<>>
 	struct isStdHashable : std::false_type {};
@@ -52,50 +60,66 @@ namespace Rain::Functional {
 namespace Rain::Random {
 	using Generator = std::mt19937_64;
 
-	// Default, generally-safe generator when one is not supplied by caller.
+	// Default, generally-safe generator when one is not
+	// supplied by caller.
 	inline Generator generator(
 		std::chrono::duration_cast<std::chrono::nanoseconds>(
-			std::chrono::high_resolution_clock::now().time_since_epoch())
+			std::chrono::high_resolution_clock::now()
+				.time_since_epoch())
 			.count());
 
 	template <typename>
 	struct SplitMixHash;
 
-	// Simple function to combine two 32 or 64-bit hashes, based on
+	// Simple function to combine two 32 or 64-bit hashes,
+	// based on
 	// <https://stackoverflow.com/questions/5889238/why-is-xor-the-default-way-to-combine-hashes>
 	// from Boost.
 	//
-	// SIZE_T_SIZE is a default argument which forces a substitution, and thus
-	// SFINAE.
+	// SIZE_T_SIZE is a default argument which forces a
+	// substitution, and thus SFINAE.
 	template <
 		std::size_t SIZE_T_SIZE = sizeof(std::size_t),
-		typename std::enable_if<SIZE_T_SIZE == 8>::type * = nullptr>
-	static inline std::size_t combineHash(std::size_t &seed, std::size_t next) {
-		return seed ^= next + 0x517cc1b727220a95 + (seed << 6) + (seed >> 2);
+		typename std::enable_if<SIZE_T_SIZE == 8>::type * =
+			nullptr>
+	static inline std::size_t combineHash(
+		std::size_t &seed,
+		std::size_t next) {
+		return seed ^=
+			next + 0x517cc1b727220a95 + (seed << 6) + (seed >> 2);
 	}
 	template <
 		typename Type,
 		std::size_t SIZE_T_SIZE = sizeof(std::size_t),
-		typename std::enable_if<SIZE_T_SIZE == 4>::type * = nullptr>
-	static inline std::size_t combineHash(std::size_t &seed, std::size_t next) {
-		return seed ^= next + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+		typename std::enable_if<SIZE_T_SIZE == 4>::type * =
+			nullptr>
+	static inline std::size_t combineHash(
+		std::size_t &seed,
+		std::size_t next) {
+		return seed ^=
+			next + 0x9e3779b9 + (seed << 6) + (seed >> 2);
 	}
 
-	// SFINAE enables SplitMixHash for all std::hash-able types, and defines
-	// custom unwrapping hash for pairs/containers/etc.
+	// SFINAE enables SplitMixHash for all std::hash-able
+	// types, and defines custom unwrapping hash for
+	// pairs/containers/etc.
 	template <typename Type>
 	struct SplitMixHash {
-		// 64-bit hash from <https://codeforces.com/blog/entry/62393>.
+		// 64-bit hash from
+		// <https://codeforces.com/blog/entry/62393>.
 		template <
 			typename TypeInner = Type,
 			std::size_t SIZE_T_SIZE = sizeof(std::size_t),
-			typename std::enable_if<Functional::isStdHashable<TypeInner>::value>::type
-				* = nullptr,
-			typename std::enable_if<SIZE_T_SIZE == 8>::type * = nullptr>
+			typename std::enable_if<Functional::isStdHashable<
+				TypeInner>::value>::type * = nullptr,
+			typename std::enable_if<SIZE_T_SIZE == 8>::type * =
+				nullptr>
 		std::size_t operator()(Type const &value) const {
 			static const std::size_t FIXED_RANDOM(
-				std::chrono::duration_cast<std::chrono::nanoseconds>(
-					std::chrono::high_resolution_clock::now().time_since_epoch())
+				std::chrono::duration_cast<
+					std::chrono::nanoseconds>(
+					std::chrono::high_resolution_clock::now()
+						.time_since_epoch())
 					.count());
 			std::size_t hash{std::hash<Type>{}(value)};
 			hash += FIXED_RANDOM + 0x9e3779b97f4a7c15;
@@ -104,17 +128,21 @@ namespace Rain::Random {
 			return hash ^ (hash >> 31);
 		}
 
-		// 32-bit hash from <https://groups.google.com/g/prng/c/VFjdFmbMgZI>.
+		// 32-bit hash from
+		// <https://groups.google.com/g/prng/c/VFjdFmbMgZI>.
 		template <
 			typename TypeInner = Type,
 			std::size_t SIZE_T_SIZE = sizeof(std::size_t),
-			typename std::enable_if<Functional::isStdHashable<TypeInner>::value>::type
-				* = nullptr,
-			typename std::enable_if<SIZE_T_SIZE == 4>::type * = nullptr>
+			typename std::enable_if<Functional::isStdHashable<
+				TypeInner>::value>::type * = nullptr,
+			typename std::enable_if<SIZE_T_SIZE == 4>::type * =
+				nullptr>
 		std::size_t operator()(Type const &value) const {
 			static const std::size_t FIXED_RANDOM(
-				std::chrono::duration_cast<std::chrono::nanoseconds>(
-					std::chrono::high_resolution_clock::now().time_since_epoch())
+				std::chrono::duration_cast<
+					std::chrono::nanoseconds>(
+					std::chrono::high_resolution_clock::now()
+						.time_since_epoch())
 					.count());
 			std::size_t hash{std::hash<Type>{}(value)};
 			hash += FIXED_RANDOM + 0x9e3779b9;
@@ -128,11 +156,17 @@ namespace Rain::Random {
 			typename TypeInner = Type,
 			typename std::enable_if<
 				!Functional::isStdHashable<TypeInner>::value &&
-				Functional::isPair<TypeInner>::value>::type * = nullptr>
+				Functional::isPair<TypeInner>::value>::type * =
+				nullptr>
 		std::size_t operator()(Type const &value) const {
 			std::size_t result{0};
-			combineHash(result, SplitMixHash<decltype(value.first)>{}(value.first));
-			combineHash(result, SplitMixHash<decltype(value.second)>{}(value.second));
+			combineHash(
+				result,
+				SplitMixHash<decltype(value.first)>{}(value.first));
+			combineHash(
+				result,
+				SplitMixHash<decltype(value.second)>{}(
+					value.second));
 			return result;
 		}
 
@@ -142,7 +176,8 @@ namespace Rain::Random {
 			typename std::enable_if<
 				!Functional::isStdHashable<TypeInner>::value &&
 				!Functional::isPair<TypeInner>::value &&
-				Functional::isConstIterable<TypeInner>::value>::type * = nullptr>
+				Functional::isConstIterable<TypeInner>::value>::type
+				* = nullptr>
 		std::size_t operator()(Type const &value) const {
 			std::size_t result{0};
 			for (auto const &i : value) {
@@ -152,7 +187,8 @@ namespace Rain::Random {
 		}
 	};
 
-	// Saves the use of std::remove_reference and std::remove_const.
+	// Saves the use of std::remove_reference and
+	// std::remove_const.
 	template <typename Type>
 	struct SplitMixHash<Type &> : SplitMixHash<Type> {};
 	template <typename Type>
@@ -161,49 +197,59 @@ namespace Rain::Random {
 
 namespace Rain::Algorithm {
 	// Implementation for a modulus field over the integers,
-	// supporting basic operations add, subtract, multiply in O(1) and divide in
-	// O(ln M). Division is generally only valid for prime moduli. For O(1)
-	// division, cache multiplicative inverses and multiply with those.
+	// supporting basic operations add, subtract, multiply in
+	// O(1) and divide in O(ln M). Division is generally only
+	// valid for prime moduli. For O(1) division, cache
+	// multiplicative inverses and multiply with those.
 	//
-	// A runtime modulus may be specified with MODULUS 0 in the template and the
-	// appropriate constructor.
+	// A runtime modulus may be specified with MODULUS 0 in
+	// the template and the appropriate constructor.
 	//
-	// Integer must be large enough to store (modulus() - 1)^2.
+	// Integer must be large enough to store (modulus() -
+	// 1)^2.
 	template <typename Integer, std::size_t MODULUS_OUTER = 0>
 	class ModulusField {
 		public:
 		Integer const MODULUS;
 		Integer value;
 
-		// If the integer specified is signed and negative, we want to wrap it back
-		// to the positives first.
+		// If the integer specified is signed and negative, we
+		// want to wrap it back to the positives first.
 		template <
 			typename OtherInteger = std::size_t,
 			std::size_t MODULUS_INNER = MODULUS_OUTER,
-			typename std::enable_if<MODULUS_INNER != 0>::type * = nullptr>
+			typename std::enable_if<MODULUS_INNER != 0>::type * =
+				nullptr>
 		ModulusField(OtherInteger const &value = 0)
 				: MODULUS{MODULUS_OUTER},
 					value(
-						value < 0 ? this->MODULUS - ((0 - value) % this->MODULUS)
+						value < 0 ? this->MODULUS -
+								((0 - value) % this->MODULUS)
 											: value % this->MODULUS) {}
 
 		template <
 			typename OtherInteger = std::size_t,
 			std::size_t MODULUS_INNER = MODULUS_OUTER,
-			typename std::enable_if<MODULUS_INNER == 0>::type * = nullptr>
-		ModulusField(Integer const &modulus, OtherInteger const &value = 0)
+			typename std::enable_if<MODULUS_INNER == 0>::type * =
+				nullptr>
+		ModulusField(
+			Integer const &modulus,
+			OtherInteger const &value = 0)
 				: MODULUS{modulus},
 					value(
-						value < 0 ? this->MODULUS - ((0 - value) % this->MODULUS)
+						value < 0 ? this->MODULUS -
+								((0 - value) % this->MODULUS)
 											: value % this->MODULUS) {}
 
-		// Builds a ModulusField<Integer, MODULUS_OUTER> type, but with the same
-		// underlying modulus value. Uses more specialized SFINAE to differentiate
-		// otherwise identical signatures.
+		// Builds a ModulusField<Integer, MODULUS_OUTER> type,
+		// but with the same underlying modulus value. Uses more
+		// specialized SFINAE to differentiate otherwise
+		// identical signatures.
 		template <
 			typename OtherInteger,
 			std::size_t MODULUS_INNER = MODULUS_OUTER,
-			typename std::enable_if<MODULUS_INNER != 0>::type * = nullptr>
+			typename std::enable_if<MODULUS_INNER != 0>::type * =
+				nullptr>
 		static ModulusField<Integer, MODULUS_OUTER> build(
 			OtherInteger const &value) {
 			return {value};
@@ -212,30 +258,33 @@ namespace Rain::Algorithm {
 		template <
 			typename OtherInteger,
 			std::size_t MODULUS_INNER = MODULUS_OUTER,
-			typename std::enable_if<MODULUS_INNER == 0>::type * = nullptr>
+			typename std::enable_if<MODULUS_INNER == 0>::type * =
+				nullptr>
 		ModulusField<Integer, MODULUS_OUTER> build(
 			OtherInteger const &value) const {
 			return {this->MODULUS, value};
 		}
 
-		// Assignment operators need to be overloaded as this class stores an
-		// additional modulus, which implicitly deletes the default assignment
-		// operator.
+		// Assignment operators need to be overloaded as this
+		// class stores an additional modulus, which implicitly
+		// deletes the default assignment operator.
 		ModulusField<Integer, MODULUS_OUTER> &operator=(
 			ModulusField<Integer, MODULUS_OUTER> const &other) {
-			// Runtime moduli may not actually be the same, so we need to take an
-			// additional mod here.
+			// Runtime moduli may not actually be the same, so we
+			// need to take an additional mod here.
 			this->value = other.value % this->MODULUS;
 			return *this;
 		}
 		template <typename OtherInteger>
-		ModulusField<Integer, MODULUS_OUTER> &operator=(OtherInteger const &other) {
+		ModulusField<Integer, MODULUS_OUTER> &operator=(
+			OtherInteger const &other) {
 			return *this = build(other);
 		}
 
 		// Comparison.
 		template <typename OtherInteger>
-		inline bool operator==(OtherInteger const &other) const {
+		inline bool operator==(
+			OtherInteger const &other) const {
 			return *this == build(other);
 		}
 		template <typename OtherInteger>
@@ -243,15 +292,18 @@ namespace Rain::Algorithm {
 			return std::as_const(*this) == other;
 		}
 		inline bool operator==(
-			ModulusField<Integer, MODULUS_OUTER> const &other) const {
+			ModulusField<Integer, MODULUS_OUTER> const &other)
+			const {
 			// Ignores modulus comparison! Important.
 			return this->value == other.value;
 		}
-		inline bool operator==(ModulusField<Integer, MODULUS_OUTER> const &other) {
+		inline bool operator==(
+			ModulusField<Integer, MODULUS_OUTER> const &other) {
 			return std::as_const(*this) == other;
 		}
 		template <typename OtherInteger>
-		inline bool operator!=(OtherInteger const &other) const {
+		inline bool operator!=(
+			OtherInteger const &other) const {
 			return *this != build(other);
 		}
 		template <typename OtherInteger>
@@ -259,24 +311,31 @@ namespace Rain::Algorithm {
 			return std::as_const(*this) != other;
 		}
 		inline bool operator!=(
-			ModulusField<Integer, MODULUS_OUTER> const &other) const {
+			ModulusField<Integer, MODULUS_OUTER> const &other)
+			const {
 			return !(*this == other);
 		}
-		inline bool operator!=(ModulusField<Integer, MODULUS_OUTER> const &other) {
+		inline bool operator!=(
+			ModulusField<Integer, MODULUS_OUTER> const &other) {
 			return std::as_const(*this) != other;
 		}
-		// Other comparison operators don't make that much sense under modulus.
+		// Other comparison operators don't make that much sense
+		// under modulus.
 
 		// Unary.
-		inline ModulusField<Integer, MODULUS_OUTER> operator-() const {
+		inline ModulusField<Integer, MODULUS_OUTER> operator-()
+			const {
 			return 0 - *this;
 		}
-		inline ModulusField<Integer, MODULUS_OUTER> operator-() {
+		inline ModulusField<Integer, MODULUS_OUTER>
+		operator-() {
 			return -std::as_const(*this);
 		}
 
 		// Cast.
-		explicit operator bool() const { return this->value != 0; }
+		explicit operator bool() const {
+			return this->value != 0;
+		}
 		operator std::size_t() const {
 			return static_cast<std::size_t>(this->value);
 		}
@@ -299,7 +358,8 @@ namespace Rain::Algorithm {
 			return std::as_const(*this) + other;
 		}
 		inline ModulusField<Integer, MODULUS_OUTER> operator+(
-			ModulusField<Integer, MODULUS_OUTER> const &other) const {
+			ModulusField<Integer, MODULUS_OUTER> const &other)
+			const {
 			return build(this->value + other.value);
 		}
 		inline ModulusField<Integer, MODULUS_OUTER> operator+(
@@ -311,10 +371,12 @@ namespace Rain::Algorithm {
 			OtherInteger const &other) {
 			return *this = *this + other;
 		}
-		inline ModulusField<Integer, MODULUS_OUTER> operator++() {
+		inline ModulusField<Integer, MODULUS_OUTER>
+		operator++() {
 			return *this += 1;
 		}
-		inline ModulusField<Integer, MODULUS_OUTER> operator++(int) {
+		inline ModulusField<Integer, MODULUS_OUTER> operator++(
+			int) {
 			auto tmp(*this);
 			*this += 1;
 			return tmp;
@@ -330,8 +392,10 @@ namespace Rain::Algorithm {
 			return std::as_const(*this) - other;
 		}
 		inline ModulusField<Integer, MODULUS_OUTER> operator-(
-			ModulusField<Integer, MODULUS_OUTER> const &other) const {
-			return build(this->value + this->MODULUS - other.value);
+			ModulusField<Integer, MODULUS_OUTER> const &other)
+			const {
+			return build(
+				this->value + this->MODULUS - other.value);
 		}
 		inline ModulusField<Integer, MODULUS_OUTER> operator-(
 			ModulusField<Integer, MODULUS_OUTER> const &other) {
@@ -342,10 +406,12 @@ namespace Rain::Algorithm {
 			OtherInteger const &other) {
 			return *this = *this - other;
 		}
-		inline ModulusField<Integer, MODULUS_OUTER> operator--() {
+		inline ModulusField<Integer, MODULUS_OUTER>
+		operator--() {
 			return *this -= 1;
 		}
-		inline ModulusField<Integer, MODULUS_OUTER> operator--(int) {
+		inline ModulusField<Integer, MODULUS_OUTER> operator--(
+			int) {
 			auto tmp(*this);
 			*this -= 1;
 			return tmp;
@@ -361,7 +427,8 @@ namespace Rain::Algorithm {
 			return std::as_const(*this) * other;
 		}
 		inline ModulusField<Integer, MODULUS_OUTER> operator*(
-			ModulusField<Integer, MODULUS_OUTER> const &other) const {
+			ModulusField<Integer, MODULUS_OUTER> const &other)
+			const {
 			return build(this->value * other.value);
 		}
 		inline ModulusField<Integer, MODULUS_OUTER> operator*(
@@ -384,9 +451,11 @@ namespace Rain::Algorithm {
 			return std::as_const(*this) / other;
 		}
 		inline ModulusField<Integer, MODULUS_OUTER> operator/(
-			ModulusField<Integer, MODULUS_OUTER> const &other) const {
-			// This is only true if this has a multiplicative inverse, which is always
-			// true if the modulus is prime.
+			ModulusField<Integer, MODULUS_OUTER> const &other)
+			const {
+			// This is only true if this has a multiplicative
+			// inverse, which is always true if the modulus is
+			// prime.
 			return *this * other.power(this->MODULUS - 2);
 		}
 		inline ModulusField<Integer, MODULUS_OUTER> operator/(
@@ -399,25 +468,28 @@ namespace Rain::Algorithm {
 			return *this = *this / other;
 		}
 
-		// The following are algorithmic functions based on the modulus field
-		// properties.
+		// The following are algorithmic functions based on the
+		// modulus field properties.
 
-		// Versions of C++ before C++17 should use static member functions intead of
-		// static inline member variables. static inline
-		// std::vector<ModulusField<Integer, MODULUS_OUTER>> 	&factorials() {
-		// static std::vector<ModulusField<Integer, MODULUS_OUTER>> factorials;
-		// return factorials;
+		// Versions of C++ before C++17 should use static member
+		// functions intead of static inline member variables.
+		// static inline std::vector<ModulusField<Integer,
+		// MODULUS_OUTER>> 	&factorials() { static
+		// std::vector<ModulusField<Integer, MODULUS_OUTER>>
+		// factorials; return factorials;
 		// }
-		// static inline std::vector<ModulusField<Integer, MODULUS_OUTER>>
-		// 	&invFactorials() {
-		// 	static std::vector<ModulusField<Integer, MODULUS_OUTER>>
+		// static inline std::vector<ModulusField<Integer,
+		// MODULUS_OUTER>> 	&invFactorials() { 	static
+		// std::vector<ModulusField<Integer, MODULUS_OUTER>>
 		// invFactorials; 	return invFactorials;
 		// }
-		static inline std::vector<ModulusField<Integer, MODULUS_OUTER>> factorials,
-			invFactorials;
+		static inline std::vector<
+			ModulusField<Integer, MODULUS_OUTER>>
+			factorials, invFactorials;
 
-		// Computes the factorials modulus a prime, up to and including N, in O(N).
-		// This enables the choose functions.
+		// Computes the factorials modulus a prime, up to and
+		// including N, in O(N). This enables the choose
+		// functions.
 		static void precomputeFactorials(std::size_t const N) {
 			factorials.resize(N + 1);
 			invFactorials.resize(N + 1);
@@ -427,20 +499,24 @@ namespace Rain::Algorithm {
 			}
 			invFactorials[N] = 1 / factorials[N];
 			for (std::size_t i{0}; i < N; i++) {
-				invFactorials[N - i - 1] = invFactorials[N - i] * (N - i);
+				invFactorials[N - i - 1] =
+					invFactorials[N - i] * (N - i);
 			}
 		}
 
-		// Computes the binomial coefficient (N choose K) modulus a prime, in O(1).
-		// Must have called precomputeFactorials for the largest expected value of N
-		// first.
+		// Computes the binomial coefficient (N choose K)
+		// modulus a prime, in O(1). Must have called
+		// precomputeFactorials for the largest expected value
+		// of N first.
 		inline ModulusField<Integer, MODULUS_OUTER> choose(
 			std::size_t const K) const {
-			std::size_t const N{static_cast<std::size_t>(this->value)};
+			std::size_t const N{
+				static_cast<std::size_t>(this->value)};
 			if (K < 0 || K > N) {
 				return build(0);
 			}
-			return factorials[N] * invFactorials[K] * invFactorials[N - K];
+			return factorials[N] * invFactorials[K] *
+				invFactorials[N - K];
 		}
 
 		// O(ln N) exponentiation.
@@ -460,31 +536,51 @@ namespace Rain::Algorithm {
 	};
 }
 
-template <typename OtherInteger, typename Integer, std::size_t MODULUS_OUTER>
-inline Rain::Algorithm::ModulusField<Integer, MODULUS_OUTER> operator+(
+template <
+	typename OtherInteger,
+	typename Integer,
+	std::size_t MODULUS_OUTER>
+inline Rain::Algorithm::ModulusField<Integer, MODULUS_OUTER>
+operator+(
 	OtherInteger const &left,
-	Rain::Algorithm::ModulusField<Integer, MODULUS_OUTER> const &right) {
+	Rain::Algorithm::
+		ModulusField<Integer, MODULUS_OUTER> const &right) {
 	return right.build(left) + right;
 }
 
-template <typename OtherInteger, typename Integer, std::size_t MODULUS_OUTER>
-inline Rain::Algorithm::ModulusField<Integer, MODULUS_OUTER> operator-(
+template <
+	typename OtherInteger,
+	typename Integer,
+	std::size_t MODULUS_OUTER>
+inline Rain::Algorithm::ModulusField<Integer, MODULUS_OUTER>
+operator-(
 	OtherInteger const &left,
-	Rain::Algorithm::ModulusField<Integer, MODULUS_OUTER> const &right) {
+	Rain::Algorithm::
+		ModulusField<Integer, MODULUS_OUTER> const &right) {
 	return right.build(left) - right;
 }
 
-template <typename OtherInteger, typename Integer, std::size_t MODULUS_OUTER>
-inline Rain::Algorithm::ModulusField<Integer, MODULUS_OUTER> operator*(
+template <
+	typename OtherInteger,
+	typename Integer,
+	std::size_t MODULUS_OUTER>
+inline Rain::Algorithm::ModulusField<Integer, MODULUS_OUTER>
+operator*(
 	OtherInteger const &left,
-	Rain::Algorithm::ModulusField<Integer, MODULUS_OUTER> const &right) {
+	Rain::Algorithm::
+		ModulusField<Integer, MODULUS_OUTER> const &right) {
 	return right.build(left) * right;
 }
 
-template <typename OtherInteger, typename Integer, std::size_t MODULUS_OUTER>
-inline Rain::Algorithm::ModulusField<Integer, MODULUS_OUTER> operator/(
+template <
+	typename OtherInteger,
+	typename Integer,
+	std::size_t MODULUS_OUTER>
+inline Rain::Algorithm::ModulusField<Integer, MODULUS_OUTER>
+operator/(
 	OtherInteger const &left,
-	Rain::Algorithm::ModulusField<Integer, MODULUS_OUTER> const &right) {
+	Rain::Algorithm::
+		ModulusField<Integer, MODULUS_OUTER> const &right) {
 	return right.build(left) / right;
 }
 
@@ -492,27 +588,32 @@ inline Rain::Algorithm::ModulusField<Integer, MODULUS_OUTER> operator/(
 template <typename Integer, std::size_t MODULUS_OUTER>
 inline std::ostream &operator<<(
 	std::ostream &stream,
-	Rain::Algorithm::ModulusField<Integer, MODULUS_OUTER> const &right) {
+	Rain::Algorithm::
+		ModulusField<Integer, MODULUS_OUTER> const &right) {
 	return stream << right.value;
 }
 template <typename Integer, std::size_t MODULUS_OUTER>
 inline std::istream &operator>>(
 	std::istream &stream,
-	Rain::Algorithm::ModulusField<Integer, MODULUS_OUTER> &right) {
+	Rain::Algorithm::ModulusField<Integer, MODULUS_OUTER>
+		&right) {
 	stream >> right.value;
-	right.value = (right.modulus + right.value) % right.modulus;
+	right.value =
+		(right.modulus + right.value) % right.modulus;
 	return stream;
 }
 
-// Hash operator for this user-defined type, which hashes the inner value (not
-// the modulus).
+// Hash operator for this user-defined type, which hashes
+// the inner value (not the modulus).
 namespace std {
 	template <typename Integer, std::size_t MODULUS_OUTER>
-	struct hash<Rain::Algorithm::ModulusField<Integer, MODULUS_OUTER>> {
-		size_t operator()(
-			Rain::Algorithm::ModulusField<Integer, MODULUS_OUTER> const &value)
-			const {
-			return Rain::Random::SplitMixHash<Integer>{}(value.value);
+	struct hash<
+		Rain::Algorithm::ModulusField<Integer, MODULUS_OUTER>> {
+		size_t operator()(Rain::Algorithm::ModulusField<
+											Integer,
+											MODULUS_OUTER> const &value) const {
+			return Rain::Random::SplitMixHash<Integer>{}(
+				value.value);
 		}
 	};
 }
