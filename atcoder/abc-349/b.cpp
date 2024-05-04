@@ -1,0 +1,42 @@
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC target( \
+	"avx", "avx2", "fma", "bmi", "bmi2", "popcnt", "lzcnt")
+#pragma GCC optimize("Ofast", "unroll-loops")
+#endif
+
+#include <bits/stdc++.h>
+
+using LL = long long;
+using LD = long double;
+using namespace std;
+
+#define RF(x, from, to)                                   \
+	for (LL x(from), _to(to), _delta{x < _to ? 1LL : -1LL}; \
+			 x != _to;                                          \
+			 x += _delta)
+
+int main() {
+	ios_base::sync_with_stdio(false);
+	cin.tie(nullptr);
+
+	string S;
+	cin >> S;
+	array<LL, 26> C{0};
+	RF(i, 0, S.length()) {
+		C[S[i] - 'a']++;
+	}
+	array<LL, 101> Z{0};
+	RF(i, 0, 26) {
+		Z[C[i]]++;
+	}
+	bool fail{false};
+	RF(i, 1, 101) {
+		if (Z[i] != 0 && Z[i] != 2) {
+			fail = true;
+			break;
+		}
+	}
+	cout << (fail ? "No" : "Yes") << '\n';
+
+	return 0;
+}
