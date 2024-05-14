@@ -14,7 +14,7 @@
 
 	"search.useIgnoreFiles": false,
 
-	"zenMode.hideLineNumbers": false,
+	"zenMode.hideLineNumbers": true,
 
 	/* On Windows, enables correct __cplusplus define for Intellisense. */
 	"C_Cpp.default.compilerArgs": ["/Zc:__cplusplus"],
