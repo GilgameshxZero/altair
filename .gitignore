@@ -6,6 +6,9 @@
 **/.data/
 **/.venv
 
+# Node.
+**/node_modules/
+
 # Nebo.
 **/*.syncthing*/
 **/*.nebo-files/
