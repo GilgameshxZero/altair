@@ -6,4 +6,4 @@
 	url = ../rain.git
 [submodule "kattis/kattis-cli"]
 	path = kattis/kattis-cli
-	url = git@github.com:GilgameshxZero/kattis-cli.git
+	url = ../kattis-cli.git
