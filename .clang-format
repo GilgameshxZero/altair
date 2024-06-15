@@ -10,7 +10,7 @@
 	AccessModifierOffset: 0,
 	IndentCaseLabels: true,
 
-	AlignAfterOpenBracket: AlwaysBreak,
+	AlignAfterOpenBracket: DontAlign,
 	AlignOperands: false,
 	ContinuationIndentWidth: 2,
 
@@ -22,7 +22,7 @@
 
 	AlignTrailingComments: false,
 	ReflowComments: true,
-	ColumnLimit: 60,
+	ColumnLimit: 80,
 
 	IncludeBlocks: Preserve,
 	SortUsingDeclarations: false,
