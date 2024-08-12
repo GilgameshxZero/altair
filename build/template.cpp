@@ -9,7 +9,8 @@ using LL = long long;
 using LD = long double;
 using namespace std;
 
-#define RF(x, y, z) for (LL x(y), c(z), d{x < c ? 1LL : -1LL}; x != c; x += d)
+#define RF(x, from, to) \
+	for (LL x(from), _to(to), _delta{x < _to ? 1LL : -1LL}; x != _to; x += _delta)
 
 int main() {
 	ios_base::sync_with_stdio(false);
