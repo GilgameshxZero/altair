@@ -10,8 +10,6 @@
 		"settings.json.DEFAULT": "jsonc"
 	},
 
-	"markdown.styles": [".vscode/default.css"],
-
 	"search.useIgnoreFiles": false,
 
 	"zenMode.hideLineNumbers": true,
@@ -25,7 +23,4 @@
 		"editor.defaultFormatter": "ms-vscode.cpptools",
 		"editor.wordWrap": "on"
 	},
-	"[markdown]": {
-		"editor.fontFamily": "'EB Garamond', Georgia, serif"
-	}
 }

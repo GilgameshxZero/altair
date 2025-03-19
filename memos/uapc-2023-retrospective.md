@@ -1,7 +1,7 @@
 <!-- emilia-snapshot-properties
 UAPC 2023 Retrospective
 2023/03/16
-altair
+
 emilia-snapshot-properties -->
 
 # UAPC 2023 retrospective
