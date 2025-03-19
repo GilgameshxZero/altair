@@ -1,7 +1,7 @@
 <!-- emilia-snapshot-properties
 CF1805 notes
 2023/04/04
-altair
+
 emilia-snapshot-properties -->
 
 # CF1805 notes
