@@ -16,15 +16,16 @@ int main() {
 	ios_base::sync_with_stdio(false);
 	cin.tie(nullptr);
 
-	LL N;
+	LL N, Z{0};
 	cin >> N;
-	LL Z{(N % 10) != 0};
-	N /= 10;
-	LL P{2};
 	while (N != 0) {
-		Z += P * (N % 10);
-		P *= 10;
-		N /= 10;
+		LL mD{0}, n{N};
+		while (n != 0) {
+			mD = max(n % 10, mD);
+			n /= 10;
+		}
+		N -= mD;
+		Z++;
 	}
 	cout << Z;
 

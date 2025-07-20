@@ -52,7 +52,7 @@ COMPILER = cl /c
 COMPILER_FLAGS_INCLUDES = /I $(ROOT_DIR)include^\
 # Does not include the /Fo obj output option, as that is set later depending on
 # whether or not we build the pch.
-COMPILER_FLAGS_COMMON = $(COMPILER_FLAGS_INCLUDES) /std:c++17\
+COMPILER_FLAGS_COMMON = $(COMPILER_FLAGS_INCLUDES) /std:c++20\
 	/D _CONSOLE /D _CRT_SECURE_NO_WARNINGS\
 	/D _SILENCE_ALL_CXX17_DEPRECATION_WARNINGS\
 	/Fd$(PCH_PDB) /Fp$(PCH_FILE) /fp:fast /MP /permissive- \
@@ -145,7 +145,7 @@ PROJECT_BIN_DIR := $(BIN_DIR)$(PROJECT)/
 
 COMPILER ?= clang++
 COMPILER_FLAGS_INCLUDES := -I $(ROOT_DIR)include/
-COMPILER_FLAGS_COMMON := $(COMPILER_FLAGS_INCLUDES) -std=c++17 -m64 -pthread\
+COMPILER_FLAGS_COMMON := $(COMPILER_FLAGS_INCLUDES) -std=c++20 -m64 -pthread\
 	-Wall -Wextra\
 	-D _CONSOLE -D _CRT_SECURE_NO_WARNINGS\
 	-D _SILENCE_ALL_CXX17_DEPRECATION_WARNINGS
