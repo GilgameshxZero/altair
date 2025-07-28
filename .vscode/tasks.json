@@ -8,25 +8,19 @@
 				"cwd": "${workspaceFolder}/build"
 			},
 			"presentation": {
-				"echo": false,
 				"clear": true,
 				"reveal": "silent",
 				"showReuseMessage": false,
 				"panel": "shared"
 			},
 			"command": "make",
-			"args": ["clean"],
-			"windows": {
-				"command": "nmake",
-				"args": ["/NOLOGO", "clean"]
-			}
+			"args": ["clean"]
 		},
 		{
 			"label": "new",
 			"type": "shell",
 			"options": { "cwd": "${workspaceFolder}/build" },
 			"presentation": {
-				"echo": false,
 				"clear": true,
 				"reveal": "silent",
 				"showReuseMessage": false,
@@ -44,13 +38,12 @@
 			]
 		},
 		{
-			"label": "build.x64.debug",
+			"label": "build.debug.x64",
 			"type": "shell",
 			"options": {
 				"cwd": "${workspaceFolder}/build"
 			},
 			"presentation": {
-				"echo": false,
 				"clear": true,
 				"reveal": "silent",
 				"showReuseMessage": false,
@@ -61,31 +54,19 @@
 				"isDefault": true
 			},
 			"command": "make",
-			"args": [
-				"PROJECT=${relativeFileDirname}",
-				"SOURCES=${fileBasename}",
-				"BIN=${fileBasenameNoExtension}"
-			],
+			"args": ["PROJ=${relativeFileDirname}", "BIN=${fileBasenameNoExtension}"],
 			"problemMatcher": ["$gcc"],
 			"windows": {
-				"command": "nmake",
-				"args": [
-					"/NOLOGO",
-					"PROJECT=${relativeFileDirname}",
-					"SOURCES=${fileBasename}",
-					"BIN=${fileBasenameNoExtension}"
-				],
 				"problemMatcher": ["$msCompile"]
 			}
 		},
 		{
-			"label": "build.x64.release",
+			"label": "build.release.x64",
 			"type": "shell",
 			"options": {
 				"cwd": "${workspaceFolder}/build"
 			},
 			"presentation": {
-				"echo": false,
 				"clear": true,
 				"reveal": "silent",
 				"showReuseMessage": false,
@@ -94,21 +75,12 @@
 			"group": "build",
 			"command": "make",
 			"args": [
-				"PROJECT=${relativeFileDirname}",
-				"SOURCES=${fileBasename}",
+				"PROJ=${relativeFileDirname}",
 				"BIN=${fileBasenameNoExtension}",
 				"BUILD=1"
 			],
 			"problemMatcher": ["$gcc"],
 			"windows": {
-				"command": "nmake",
-				"args": [
-					"/NOLOGO",
-					"PROJECT=${relativeFileDirname}",
-					"SOURCES=${fileBasename}",
-					"BIN=${fileBasenameNoExtension}",
-					"BUILD=1"
-				],
 				"problemMatcher": ["$msCompile"]
 			}
 		}

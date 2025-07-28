@@ -24,106 +24,168 @@ ifdef MAKEDIR: # gmake: false; nmake: unused target
 # ------------------------------------------------------------------------------
 
 # nmake specific commands.
-# The directory structure here must be consistent with macro substitution
-# structure utilized later.
 ROOT_DIR = ..^\
-OBJ_DIR = $(ROOT_DIR)obj^\
-BIN_DIR = $(ROOT_DIR)bin^\
-PROJECT_OBJ_DIR = $(OBJ_DIR)$(PROJECT)^\
-PROJECT_SRC_DIR = $(ROOT_DIR)$(PROJECT)^\
-!IFNDEF SOURCES
-SOURCES = *.cpp
+REPO_NAME = utulek
+!IFNDEF PROJ
+PROJ_NAME = experiment
+!ELSE
+PROJ_NAME = $(PROJ)
 !ENDIF
 !IFNDEF BIN
-# For the repository, executable filename is not the project name. This is
-# always set by the caller in altair.
-BIN = $(PROJECT)
+BIN_NAME = $(PROJ_NAME)
+!ELSE
+BIN_NAME = $(BIN)
 !ENDIF
-PROJECT_BIN = $(BIN_DIR)$(PROJECT)\$(BIN).exe
-PROJECT_BIN_DIR = $(BIN_DIR)$(PROJECT)^\
+!IFNDEF SRC
+SRC_NAME = $(BIN_NAME).cpp
+!ELSE
+SRC_NAME = $(SRC)
+!ENDIF
+!IFNDEF BUILD
+BUILD_NAME = debug
+!ELSE IF $(BUILD) == 2
+BUILD_NAME = instrument
+!ELSE IF $(BUILD) == 1
+BUILD_NAME = release
+!ELSE
+BUILD_NAME = debug
+!ENDIF
+!IFNDEF ARCH
+ARCH = 64
+!ENDIF
+!IFNDEF PCH
+PCH = 1
+!ENDIF
+!IFNDEF ARGS
+ARGS = < ..\$(ROOT_DIR)build\i.default.txt > ..\$(ROOT_DIR)build\o.default.txt
+!ENDIF
+# Makefile fails if directory doesn't exist.
+!IF [IF EXIST $(ROOT_DIR)experiment\$(BIN_NAME).cpp-assets\ EXIT /B 1] == 1
+INCL = $(INCL) $(ROOT_DIR)experiment\$(BIN_NAME).cpp-assets\*
+!ENDIF
 
-# PCH requires that PDB is shared during compile, but separate during link.
-PCH_SRC = pch.cpp
-PCH_OBJ = $(OBJ_DIR)pch.obj
-PCH_PDB = $(OBJ_DIR)pch.pdb
-PCH_FILE = $(OBJ_DIR)pch.pch
+# The directory structure here must be consistent with macro substitution
+# structure utilized later.
+BIN_DIR = $(ROOT_DIR)bin^\
+PROJ_BIN = $(BIN_DIR)$(PROJ_NAME)\$(BIN_NAME).$(BUILD_NAME).x$(ARCH).exe
+PROJ_BIN_DIR = $(BIN_DIR)$(PROJ_NAME)^\
+OBJ_DIR = $(ROOT_DIR)obj^\
+PROJ_OBJ_DIR = $(OBJ_DIR)$(PROJ_NAME)^\
+PROJ_SRC_DIR = $(ROOT_DIR)$(PROJ_NAME)^\
+PROJ_SRC = $(patsubsti %,$(PROJ_SRC_DIR)\%,$(SRC_NAME))
 
 COMPILER = cl /c
-COMPILER_FLAGS_INCLUDES = /I $(ROOT_DIR)include^\
-# Does not include the /Fo obj output option, as that is set later depending on
-# whether or not we build the pch.
-COMPILER_FLAGS_COMMON = $(COMPILER_FLAGS_INCLUDES) /std:c++20\
-	/D _CONSOLE /D _CRT_SECURE_NO_WARNINGS\
-	/D _SILENCE_ALL_CXX17_DEPRECATION_WARNINGS\
-	/Fd$(PCH_PDB) /Fp$(PCH_FILE) /fp:fast /MP /permissive- \
-	/Zc:__cplusplus /Zc:wchar_t /Zc:forScope /Zc:inline /Zf\
+COMPILER_FLAGS_INCLUDES = /I $(ROOT_DIR)rain\include /I $(ROOT_DIR)include\
+	/I $(ROOT_DIR)experiment
+COMPILER_FLAGS_COMMON = $(COMPILER_FLAGS_INCLUDES) /std:c++20 /D _CONSOLE\
+	/Fp$(OBJ_DIR)$(BUILD_NAME)\x$(ARCH)\pch.pch\
+	/fp:fast /MP /permissive- /Zc:wchar_t /Zc:forScope /Zc:inline /Zf\
 	/GS /W3 /WX- /wd4250 /wd4068 /sdl /diagnostics:column /EHsc /Gm- /nologo
 COMPILER_FLAGS_DEBUG = /D _DEBUG /MDd /Od /RTC1 /JMC /ZI
 COMPILER_FLAGS_RELEASE = /D NDEBUG /MT /O2 /Oi /GL /Gy /Zi
-COMPILER_FLAGS_INSTRUMENT = $(COMPILER_FLAGS_DEBUG) /Fa$(PROJECT_OBJ_DIR)
+COMPILER_FLAGS_INSTRUMENT = $(COMPILER_FLAGS_DEBUG) /Fa$(PROJ_OBJ_DIR)
+COMPILER_FLAGS_64 =
+COMPILER_FLAGS_86 =
 
 LINKER = link
 LINKER_FLAGS_LIBRARIES =
-LINKER_FLAGS_COMMON = $(LINKER_FLAGS_LIBRARIES) /OUT:$(PROJECT_BIN)\
-	/PDB:$(PROJECT_OBJ_DIR)$(BIN).pdb /ILK:$(PROJECT_OBJ_DIR)$(BIN).ilk\
-	/MACHINE:x64 /MANIFESTUAC:"level='asInvoker' uiAccess='false'"\
-	/MANIFESTFILE:$(PROJECT_OBJ_DIR)$(BIN).exe.intermediate.manifest\
-	/LTCGOUT:$(PROJECT_OBJ_DIR)$(BIN).iobj /SUBSYSTEM:CONSOLE /NOLOGO
+LINKER_FLAGS_COMMON = $(LINKER_FLAGS_LIBRARIES) /OUT:$(PROJ_BIN)\
+	/PDB:$(PROJ_OBJ_DIR)$(BUILD_NAME)\x$(ARCH)\$(BIN_NAME).pdb\
+	/ILK:$(PROJ_OBJ_DIR)$(BUILD_NAME)\x$(ARCH)\$(BIN_NAME).ilk\
+	/MANIFESTUAC:"level='asInvoker' uiAccess='false'"\
+	/MANIFESTFILE:$(PROJ_OBJ_DIR)$(BUILD_NAME)\x$(ARCH)\$(BIN_NAME).exe.intermediate.manifest\
+	/LTCGOUT:$(PROJ_OBJ_DIR)$(BUILD_NAME)\x$(ARCH)\$(BIN_NAME).iobj\
+	/SUBSYSTEM:CONSOLE /NOLOGO
 LINKER_FLAGS_DEBUG = /DEBUG
 LINKER_FLAGS_RELEASE = /INCREMENTAL:NO /OPT:ICF /OPT:REF /LTCG:incremental
 LINKER_FLAGS_INSTRUMENT = $(LINKER_FLAGS_DEBUG)
+LINKER_FLAGS_64 = /MACHINE:x64
+LINKER_FLAGS_86 = /MACHINE:x86
 
-# BUILD_TYPE can be either 0 (default; debug), 1 (release), or 2 (instrument).
-!IFNDEF BUILD
-BUILD = 0
-!ENDIF
-!IF $(BUILD) == 1
-COMPILER_FLAGS = $(COMPILER_FLAGS_COMMON) $(COMPILER_FLAGS_RELEASE)
-LINKER_FLAGS = $(LINKER_FLAGS_COMMON) $(LINKER_FLAGS_RELEASE)
-!ELSE IF $(BUILD) == 2
+!IF "$(BUILD_NAME)" == "instrument"
 COMPILER_FLAGS = $(COMPILER_FLAGS_COMMON) $(COMPILER_FLAGS_INSTRUMENT)
 LINKER_FLAGS = $(LINKER_FLAGS_COMMON) $(LINKER_FLAGS_INSTRUMENT)
+!ELSE IF "$(BUILD_NAME)" == "release"
+COMPILER_FLAGS = $(COMPILER_FLAGS_COMMON) $(COMPILER_FLAGS_RELEASE)
+LINKER_FLAGS = $(LINKER_FLAGS_COMMON) $(LINKER_FLAGS_RELEASE)
 !ELSE
 COMPILER_FLAGS = $(COMPILER_FLAGS_COMMON) $(COMPILER_FLAGS_DEBUG)
 LINKER_FLAGS = $(LINKER_FLAGS_COMMON) $(LINKER_FLAGS_DEBUG)
 !ENDIF
 
+!IF $(ARCH) == 86
+COMPILER_FLAGS = $(COMPILER_FLAGS) $(COMPILER_FLAGS_86)
+LINKER_FLAGS = $(LINKER_FLAGS) $(LINKER_FLAGS_86)
+!ELSE
+COMPILER_FLAGS = $(COMPILER_FLAGS) $(COMPILER_FLAGS_64)
+LINKER_FLAGS = $(LINKER_FLAGS) $(LINKER_FLAGS_64)
+!ENDIF
+
 # Real targets.
 # Default/build target only compiles and links, but does not run.
 _default: build
-build: $(PROJECT_BIN)
+# Ordering is important so that version is updated first.
+build: $(PROJ_BIN)
 # Build and run.
 run: build
-	@CD $(BIN_DIR) && $(PROJECT_BIN) $(ARGUMENTS)
+	@ECHO Running $(PROJ_BIN)...
+	@CD $(BIN_DIR)$(PROJ_NAME) &&\
+		$(BIN_NAME).$(BUILD_NAME).x$(ARCH).exe $(ARGS)
 # Clean target removes all intermediates, but remakes the in.txt file.
 clean:
+	@ECHO Cleaning...
 	@IF EXIST $(BIN_DIR) RD /Q /S $(BIN_DIR)
 	@IF EXIST $(OBJ_DIR) RD /Q /S $(OBJ_DIR)
 	@DEL i.*.txt o.*.txt
 	@TYPE NUL > i.default.txt
 	@TYPE NUL > o.default.txt
+# Precompiled headers.
+$(OBJ_DIR)$(BUILD_NAME)\x$(ARCH)\pch.pch: pch.cpp
+	@IF NOT EXIST $(OBJ_DIR) MD $(OBJ_DIR)
+	@IF NOT EXIST $(OBJ_DIR)$(BUILD_NAME) MD $(OBJ_DIR)$(BUILD_NAME)
+	@IF NOT EXIST $(OBJ_DIR)$(BUILD_NAME)\x$(ARCH)\
+		MD $(OBJ_DIR)$(BUILD_NAME)\x$(ARCH)
+	@$(COMPILER) $(COMPILER_FLAGS) /Yc\
+		/Fd$(OBJ_DIR)$(BUILD_NAME)\x$(ARCH)\pch.pdb\
+		/Fo$(OBJ_DIR)$(BUILD_NAME)\x$(ARCH)\pch.obj pch.cpp
+pch.cpp: $(INCL)
 
 # Build target.
-# Define special macro to enable double-substitution.
-DBLSUB_DEP_SRC_DIR_TO_OBJ_DIR = $(**:..\=..\obj\)
 # First compile all outdated files (with /MP), then link everything together.
-# Splitting out the intermediate obj step makes /MP difficult to use.
-$(PROJECT_BIN): $(PROJECT_SRC_DIR)$(SOURCES)
-	@$(MAKE) /$(MAKEFLAGS) $(PCH_FILE)
-	@IF NOT EXIST $(PROJECT_BIN_DIR) MD $(PROJECT_BIN_DIR)
-	@IF NOT EXIST $(PROJECT_OBJ_DIR) MD $(PROJECT_OBJ_DIR)
-	@$(COMPILER) $(COMPILER_FLAGS) /Yu"bits/stdc++.h" /Fo$(PROJECT_OBJ_DIR)$(BIN).obj\
-		$(PROJECT_SRC_DIR)$(SOURCES)
-	@ECHO $(PROJECT_BIN)
-# Consider directly using $(PROJECT_OBJ_DIR)$(BIN) here since projects are
-# necessarily single-source anyway.
-	@$(LINKER) $(LINKER_FLAGS) $(PCH_OBJ)\
-		$(DBLSUB_DEP_SRC_DIR_TO_OBJ_DIR:.cpp=.obj)
+# Need additional variable to parse dependencies correctly.
+$(PROJ_BIN): $(PROJ_SRC)
+	@IF NOT EXIST $(PROJ_BIN_DIR) MD $(PROJ_BIN_DIR)
+	@IF NOT EXIST $(PROJ_OBJ_DIR) MD $(PROJ_OBJ_DIR)
+	@IF NOT EXIST $(PROJ_OBJ_DIR)$(BUILD_NAME) MD $(PROJ_OBJ_DIR)$(BUILD_NAME)
+	@IF NOT EXIST $(PROJ_OBJ_DIR)$(BUILD_NAME)\x$(ARCH)\
+		MD $(PROJ_OBJ_DIR)$(BUILD_NAME)\x$(ARCH)
+	@ECHO Building $(PROJ_BIN)...
+!IF $(PCH) == 0
+	@$(COMPILER) $(COMPILER_FLAGS)\
+		/Fd$(PROJ_OBJ_DIR)$(BUILD_NAME)\x$(ARCH)\$(BIN_NAME).pdb\
+		/Fo$(PROJ_OBJ_DIR)$(BUILD_NAME)\x$(ARCH)\ \
+		$?
+!ELSE
+# PDB and IDB should be derived from the PCH versions.
+	@IF NOT EXIST $(OBJ_DIR)$(BUILD_NAME)\x$(ARCH)\$(BIN_NAME).pdb\
+		CP $(OBJ_DIR)$(BUILD_NAME)\x$(ARCH)\pch.pdb\
+			$(PROJ_OBJ_DIR)$(BUILD_NAME)\x$(ARCH)\$(BIN_NAME).pdb
+	@IF NOT EXIST $(OBJ_DIR)$(BUILD_NAME)\x$(ARCH)\$(BIN_NAME).idb\
+		CP $(OBJ_DIR)$(BUILD_NAME)\x$(ARCH)\pch.idb\
+			$(PROJ_OBJ_DIR)$(BUILD_NAME)\x$(ARCH)\$(BIN_NAME).idb
+	@$(COMPILER) $(COMPILER_FLAGS)\
+		/Fd$(PROJ_OBJ_DIR)$(BUILD_NAME)\x$(ARCH)\$(BIN_NAME).pdb\
+		/Fo$(PROJ_OBJ_DIR)$(BUILD_NAME)\x$(ARCH)\ \
+		/Yu"bits/stdc++.h" $?
+!ENDIF
+	@ECHO Linking $(PROJ_BIN)...
+# It's unclear why some of the wildcards need to be escaped, but it works.
+	@$(LINKER) $(LINKER_FLAGS) $(OBJ_DIR)$(BUILD_NAME)\x$(ARCH)\pch.obj\
+		$(patsubsti %.cpp,%.obj,\
+		$(patsubsti $(PROJ_SRC_DIR)\%,$(PROJ_OBJ_DIR)$(BUILD_NAME)\x$(ARCH)\\%,$**))
 
-# Precompiled headers.
-$(PCH_FILE): $(PCH_SRC)
-	@IF NOT EXIST $(OBJ_DIR) MD $(OBJ_DIR)
-	@$(COMPILER) $(COMPILER_FLAGS) /Yc"bits/stdc++.h" /Fo$(PCH_OBJ) $(PCH_SRC)
+# Mark source files as out of date if any headers have changed.
+$(PROJ_SRC): $(INCL) $(OBJ_DIR)$(BUILD_NAME)\x$(ARCH)\pch.pch
 
 # ------------------------------------------------------------------------------
 !else

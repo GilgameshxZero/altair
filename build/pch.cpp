@@ -4,10 +4,3 @@
 #endif
 
 #include <bits/stdc++.h>
-
-using LL = long long;
-using LD = long double;
-using namespace std;
-
-#define RF(x, from, to) \
-	for (LL x(from), _to(to), _delta{x < _to ? 1LL : -1LL}; x != _to; x += _delta)
