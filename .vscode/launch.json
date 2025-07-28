@@ -4,12 +4,12 @@
 	"version": "0.2.0",
 	"configurations": [
 		{
-			"name": "piped.x64.debug",
+			"name": "piped.debug.x64",
 			"type": "cppdbg",
 			"request": "launch",
-			"preLaunchTask": "build.x64.debug",
-			"program": "${workspaceFolder}${pathSeparator}bin${pathSeparator}${relativeFileDirname}${pathSeparator}${fileBasenameNoExtension}",
-			"cwd": "${workspaceFolder}${pathSeparator}bin",
+			"preLaunchTask": "build.debug.x64",
+			"program": "${workspaceFolder}${pathSeparator}bin${pathSeparator}${relativeFileDirname}${pathSeparator}${fileBasenameNoExtension}.debug.x64",
+			"cwd": "${workspaceFolder}${pathSeparator}bin${pathSeparator}${relativeFileDirname}",
 			"args": [
 				"<",
 				"${workspaceFolder}${pathSeparator}build${pathSeparator}i.default.txt",
@@ -23,13 +23,7 @@
 
 			"windows": { "type": "cppvsdbg" },
 			"osx": {
-				"MIMode": "lldb",
-				"args": [
-					"<",
-					"${workspaceFolder}${pathSeparator}build${pathSeparator}i.default.txt",
-					">",
-					"${workspaceFolder}${pathSeparator}build${pathSeparator}o.default.txt"
-				]
+				"MIMode": "lldb"
 			},
 			"linux": {
 				"setupCommands": [
@@ -47,12 +41,12 @@
 			}
 		},
 		{
-			"name": "interactive.x64.debug",
+			"name": "interactive.debug.x64",
 			"type": "cppdbg",
 			"request": "launch",
-			"preLaunchTask": "build.x64.debug",
-			"program": "${workspaceFolder}${pathSeparator}bin${pathSeparator}${relativeFileDirname}${pathSeparator}${fileBasenameNoExtension}",
-			"cwd": "${workspaceFolder}${pathSeparator}bin",
+			"preLaunchTask": "build.debug.x64",
+			"program": "${workspaceFolder}${pathSeparator}bin${pathSeparator}${relativeFileDirname}${pathSeparator}${fileBasenameNoExtension}.debug.x64",
+			"cwd": "${workspaceFolder}${pathSeparator}bin${pathSeparator}${relativeFileDirname}",
 			"args": [],
 			"console": "integratedTerminal",
 			"stopAtEntry": false,
@@ -76,12 +70,12 @@
 			}
 		},
 		{
-			"name": "piped.x64.release",
+			"name": "piped.release.x64",
 			"type": "cppdbg",
 			"request": "launch",
-			"preLaunchTask": "build.x64.release",
-			"program": "${workspaceFolder}${pathSeparator}bin${pathSeparator}${relativeFileDirname}${pathSeparator}${fileBasenameNoExtension}",
-			"cwd": "${workspaceFolder}${pathSeparator}bin",
+			"preLaunchTask": "build.release.x64",
+			"program": "${workspaceFolder}${pathSeparator}bin${pathSeparator}${relativeFileDirname}${pathSeparator}${fileBasenameNoExtension}.release.x64",
+			"cwd": "${workspaceFolder}${pathSeparator}bin${pathSeparator}${relativeFileDirname}",
 			"args": [
 				"<",
 				"${workspaceFolder}${pathSeparator}build${pathSeparator}i.default.txt",
@@ -111,12 +105,12 @@
 			}
 		},
 		{
-			"name": "interactive.x64.release",
+			"name": "interactive.release.x64",
 			"type": "cppdbg",
 			"request": "launch",
-			"preLaunchTask": "build.x64.release",
-			"program": "${workspaceFolder}${pathSeparator}bin${pathSeparator}${relativeFileDirname}${pathSeparator}${fileBasenameNoExtension}",
-			"cwd": "${workspaceFolder}${pathSeparator}bin",
+			"preLaunchTask": "build.release.x64",
+			"program": "${workspaceFolder}${pathSeparator}bin${pathSeparator}${relativeFileDirname}${pathSeparator}${fileBasenameNoExtension}.release.x64",
+			"cwd": "${workspaceFolder}${pathSeparator}bin${pathSeparator}${relativeFileDirname}",
 			"args": [],
 			"console": "internalTerminal",
 			"stopAtEntry": false,
