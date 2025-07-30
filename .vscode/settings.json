@@ -22,5 +22,6 @@
 	"[cpp]": {
 		"editor.defaultFormatter": "ms-vscode.cpptools",
 		"editor.wordWrap": "on"
-	}
+	},
+	"C_Cpp.errorSquiggles": "enabled"
 }
