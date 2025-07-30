@@ -2,6 +2,8 @@
 # Conditional logic implemented with differing end-of-line comment syntax.
 # To enable multithreaded compilation, nmake compiles all files together with
 # /MP, while gmake compiles separately with -jN.
+# Makefile assumptions are slightly deviated from `utulek` as our pch.cpp is
+# 	shared amongst all projects.
 
 # Variables:
 # PROJECT: name of project; path to files from repository root.
@@ -25,7 +27,7 @@ ifdef MAKEDIR: # gmake: false; nmake: unused target
 
 # nmake specific commands.
 ROOT_DIR = ..^\
-REPO_NAME = utulek
+REPO_NAME = altair
 !IFNDEF PROJ
 PROJ_NAME = experiment
 !ELSE
@@ -75,11 +77,11 @@ PROJ_SRC_DIR = $(ROOT_DIR)$(PROJ_NAME)^\
 PROJ_SRC = $(patsubsti %,$(PROJ_SRC_DIR)\%,$(SRC_NAME))
 
 COMPILER = cl /c
-COMPILER_FLAGS_INCLUDES = /I $(ROOT_DIR)rain\include /I $(ROOT_DIR)include\
-	/I $(ROOT_DIR)experiment
+COMPILER_FLAGS_INCLUDES = /I $(ROOT_DIR)include
 COMPILER_FLAGS_COMMON = $(COMPILER_FLAGS_INCLUDES) /std:c++20 /D _CONSOLE\
 	/Fp$(OBJ_DIR)$(BUILD_NAME)\x$(ARCH)\pch.pch\
-	/fp:fast /MP /permissive- /Zc:wchar_t /Zc:forScope /Zc:inline /Zf\
+	/fp:fast /MP /permissive-\
+	/Zc:__cplusplus /Zc:wchar_t /Zc:forScope /Zc:inline /Zf\
 	/GS /W3 /WX- /wd4250 /wd4068 /sdl /diagnostics:column /EHsc /Gm- /nologo
 COMPILER_FLAGS_DEBUG = /D _DEBUG /MDd /Od /RTC1 /JMC /ZI
 COMPILER_FLAGS_RELEASE = /D NDEBUG /MT /O2 /Oi /GL /Gy /Zi
