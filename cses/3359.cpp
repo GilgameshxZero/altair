@@ -13,9 +13,9 @@ using namespace std;
 	for (LL x(from), _to(to), _delta{x < _to ? 1LL : -1LL}; x != _to; x += _delta)
 
 array<string, 3000> G;
-array<array<int, 3000>, 3000> R;
+array<array<LL, 3000>, 3000> R;
 array<array<bool, 3000>, 3000> Z;
-array<vector<pair<int, int>>, 26> S;
+vector<pair<LL, LL>> S;
 
 int main() {
 	ios_base::sync_with_stdio(false);
@@ -27,6 +27,7 @@ int main() {
 		cin >> G[i];
 	}
 
+	LL X{N};
 	R.back().back() = 0;
 	RF(i, 2 * N - 3, -1) {
 		RF(j, i, -1) {
@@ -40,23 +41,29 @@ int main() {
 			} else {
 				Z[i - j][j] = R[i - j + 1][j] > R[i - j][j + 1];
 			}
-			S[G[i - j][j] - 'A'].push_back(
-				{Z[i - j][j] ? R[i - j][j + 1] : R[i - j + 1][j], j});
-		}
-		int r{0}, p{-1};
-		RF(j, 0, 26) {
-			if (!S[j].empty()) {
-				sort(S[j].begin(), S[j].end());
-				RF(k, 0, S[j].size()) {
-					R[i - S[j][k].second][S[j][k].second] = r;
-					if (S[j][k].second != p) {
-						p = S[j][k].second;
-						r++;
-					}
-				}
-				p = -1;
-				S[j].clear();
+			if (i % 4 == 0) {
+				S.push_back({(Z[i - j][j] ? R[i - j][j + 1] : R[i - j + 1][j]) +
+						X * (G[i - j][j] - 'A'),
+					j});
+			} else {
+				R[i - j][j] = (Z[i - j][j] ? R[i - j][j + 1] : R[i - j + 1][j]) +
+					X * (G[i - j][j] - 'A');
 			}
+		}
+		if (i % 4 == 0) {
+			sort(S.begin(), S.end());
+			R[i - S[0].second][S[0].second] = 0;
+			int r{0};
+			RF(j, 1, S.size()) {
+				if (S[j].first != S[j - 1].first) {
+					r++;
+				}
+				R[i - S[j].second][S[j].second] = r;
+			}
+			S.clear();
+			X = N;
+		} else {
+			X *= N;
 		}
 	}
 
