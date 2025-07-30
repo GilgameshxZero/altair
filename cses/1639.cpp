@@ -18,26 +18,22 @@ int main() {
 
 	string S, T;
 	cin >> S >> T;
-	if (S.length() < T.length()) {
-		swap(S, T);
-	}
 
-	vector<LL> Y(T.length() + 1);
-	Y[1] = S.back() == T.back() ? 0 : 1;
-	RF(i, 2, T.length() + 1) {
-		Y[i] = Y[i - 1] + (S[S.length() - i] == T[T.length() - i] ? 0 : 1);
+	vector<vector<LL>> Z(S.length() + 1, vector<LL>(T.length() + 1));
+	RF(i, 0, S.length() + 1) {
+		Z[i].back() = S.length() - i;
 	}
-	RF(i, 1, S.length() - T.length() + 1) {
-		vector<LL> X(T.length() + 1);
-		X[1] =
-			min(1 + Y[1], S[S.length() - 1 - i] == T[T.length() - 1] ? i : i + 1);
-		RF(j, 2, T.length() + 1) {
-			X[j] = min(1 + Y[j],
-				(S[S.length() - j - i] == T[T.length() - j] ? 0 : 1) + X[j - 1]);
+	RF(i, 0, T.length() + 1) {
+		Z.back()[i] = T.length() - i;
+	}
+	RF(i, S.length() - 1, -1) {
+		RF(j, T.length() - 1, -1) {
+			Z[i][j] = min({1 + Z[i + 1][j],
+				1 + Z[i][j + 1],
+				(S[i] == T[j] ? 0 : 1) + Z[i + 1][j + 1]});
 		}
-		swap(X, Y);
 	}
-	cout << Y[T.length()] << '\n';
+	cout << Z[0][0];
 
 	return 0;
 }
