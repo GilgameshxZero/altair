@@ -5,6 +5,10 @@ SETLOCAL ENABLEDELAYEDEXPANSION
 @REM Careful to not exceed the 8192 string limit.
 SET "INCL="
 
-@REM Suppresses CMD terminate prompt.
-nmake /C %* || CALL;
+@REM Suppresses CMD terminate prompt and error code.
+nmake /C %* || (
+	SET "LEVEL=!ERRORLEVEL!"
+	CALL;
+	EXIT /B !LEVEL!
+)
 ENDLOCAL
