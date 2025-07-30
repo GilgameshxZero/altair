@@ -13,9 +13,9 @@ using namespace std;
 	for (LL x(from), _to(to), _delta{x < _to ? 1LL : -1LL}; x != _to; x += _delta)
 
 array<string, 3000> G;
-array<array<LL, 3000>, 3000> R;
+array<array<int, 3000>, 3000> R;
 array<array<bool, 3000>, 3000> Z;
-array<vector<LL>, 26 * 3000> S;
+array<vector<pair<int, int>>, 26> S;
 
 int main() {
 	ios_base::sync_with_stdio(false);
@@ -40,17 +40,21 @@ int main() {
 			} else {
 				Z[i - j][j] = R[i - j + 1][j] > R[i - j][j + 1];
 			}
-			S[(Z[i - j][j] ? R[i - j][j + 1] : R[i - j + 1][j]) +
-				N * (G[i - j][j] - 'A')]
-				.push_back(j);
+			S[G[i - j][j] - 'A'].push_back(
+				{Z[i - j][j] ? R[i - j][j + 1] : R[i - j + 1][j], j});
 		}
-		LL r{0};
-		RF(j, 0, S.size()) {
-			if (S[j].size() > 0) {
+		int r{0}, p{-1};
+		RF(j, 0, 26) {
+			if (!S[j].empty()) {
+				sort(S[j].begin(), S[j].end());
 				RF(k, 0, S[j].size()) {
-					R[i - S[j][k]][S[j][k]] = r;
+					R[i - S[j][k].second][S[j][k].second] = r;
+					if (S[j][k].second != p) {
+						p = S[j][k].second;
+						r++;
+					}
 				}
-				r++;
+				p = -1;
 				S[j].clear();
 			}
 		}
