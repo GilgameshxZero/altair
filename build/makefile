@@ -172,9 +172,11 @@ $(PROJ_BIN): $(PROJ_SRC)
 	@IF NOT EXIST $(OBJ_DIR)$(BUILD_NAME)\x$(ARCH)\$(BIN_NAME).pdb\
 		CP $(OBJ_DIR)$(BUILD_NAME)\x$(ARCH)\pch.pdb\
 			$(PROJ_OBJ_DIR)$(BUILD_NAME)\x$(ARCH)\$(BIN_NAME).pdb
+# Release builds do not generate IDBs.
 	@IF NOT EXIST $(OBJ_DIR)$(BUILD_NAME)\x$(ARCH)\$(BIN_NAME).idb\
-		CP $(OBJ_DIR)$(BUILD_NAME)\x$(ARCH)\pch.idb\
-			$(PROJ_OBJ_DIR)$(BUILD_NAME)\x$(ARCH)\$(BIN_NAME).idb
+		IF EXIST $(OBJ_DIR)$(BUILD_NAME)\x$(ARCH)\pch.idb\
+			CP $(OBJ_DIR)$(BUILD_NAME)\x$(ARCH)\pch.idb\
+				$(PROJ_OBJ_DIR)$(BUILD_NAME)\x$(ARCH)\$(BIN_NAME).idb
 	@$(COMPILER) $(COMPILER_FLAGS)\
 		/Fd$(PROJ_OBJ_DIR)$(BUILD_NAME)\x$(ARCH)\$(BIN_NAME).pdb\
 		/Fo$(PROJ_OBJ_DIR)$(BUILD_NAME)\x$(ARCH)\ \
