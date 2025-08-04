@@ -10,7 +10,7 @@
 	AccessModifierOffset: 0,
 	IndentCaseLabels: true,
 
-	AlignAfterOpenBracket: DontAlign,
+	AlignAfterOpenBracket: AlwaysBreak,
 	AlignOperands: false,
 	ContinuationIndentWidth: 2,
 
