@@ -98,7 +98,7 @@ namespace Rain::Algorithm {
 			typename std::enable_if<
 				std::is_default_constructible<Value>::value>::type> {
 			protected:
-			Value const DEFAULT_VALUE{};
+			inline Value defaultValue() { return {}; }
 		};
 
 		// SFINAE base class which conditionally defines DEFAULT_UPDATE.
@@ -110,7 +110,7 @@ namespace Rain::Algorithm {
 			typename std::enable_if<
 				std::is_default_constructible<Update>::value>::type> {
 			protected:
-			Update const DEFAULT_UPDATE{};
+			inline Update defaultUpdate() { return {}; }
 		};
 
 		// SFINAE base class which conditionally defines combine. While MSVC allows
@@ -126,25 +126,29 @@ namespace Rain::Algorithm {
 				std::declval<Update const &>())>> {
 			protected:
 			// Stack an update atop an existing, potentially non-empty update, which
-			// will be used lazily later. Order may matter depending on
-			// implementation.
+			// will be used lazily later. Must be associative but may not be
+			// commutative.
 			inline void combine(Update &current, Update const &update, std::size_t) {
 				current += update;
 			}
 		};
 
-		// SFINAE base class which conditionally defines retrace.
+		// SFINAE base class which conditionally defines retrace. retrace is
+		// slightly problematic for segment trees which store non-trivial values at
+		// each node. In such a case, a variant of retrace should be used which
+		// applies the update directly.
 		template <typename Value, typename = void>
 		class PolicyBaseRetrace {};
 
 		template <typename Value>
 		class PolicyBaseRetrace<Value,
-			typename std::void_t<decltype(std::declval<Value>() =
+			typename std::void_t<decltype(std::declval<Value &>() =
 																			std::declval<Value const &>() +
 					std::declval<Value const &>())>> {
 			protected:
 			// Aggregate values from two children while retracing an update.
-			// Aggregating with a default Value should do nothing.
+			// Aggregating with a default Value should do nothing. Must be associative
+			// but may not be commutative.
 			inline void retrace(Value &value,
 				Value const &left,
 				Value const &right,
@@ -170,18 +174,22 @@ namespace Rain::Algorithm {
 		};
 
 		// SFINAE base class which conditionally defines aggregate.
-		template <typename Result, typename = void>
+		template <typename Result, typename Query, typename = void>
 		class PolicyBaseAggregate {};
 
-		template <typename Result>
+		template <typename Result, typename Query>
 		class PolicyBaseAggregate<Result,
+			Query,
 			typename std::enable_if<std::is_constructible<Result,
 				decltype(std::declval<Result const &>() +
 					std::declval<Result const &>())>::value>::type> {
 			protected:
 			// Aggregate two results from queries on children. Aggregating with a
-			// Result converted from a default Value should do nothing.
-			inline Result aggregate(Result const &left, Result const &right) {
+			// Result converted from a default Value should do nothing. Must be
+			// associative but may not be commutative.
+			inline Result aggregate(Result const &left,
+				Result const &right,
+				Query const &) {
 				return {left + right};
 			}
 		};
@@ -195,24 +203,26 @@ namespace Rain::Algorithm {
 		// This default policy represents a sum tree.
 		template <typename ValueType,
 			typename UpdateType = ValueType,
-			typename ResultType = ValueType>
+			typename ResultType = ValueType,
+			typename QueryType = std::nullptr_t>
 		class Policy : protected PolicyBaseDefaultValue<ValueType>,
 									 protected PolicyBaseDefaultUpdate<UpdateType>,
 									 protected PolicyBaseCombine<UpdateType>,
 									 protected PolicyBaseRetrace<ValueType>,
 									 protected PolicyBaseApply<ValueType, UpdateType>,
-									 protected PolicyBaseAggregate<ResultType> {
+									 protected PolicyBaseAggregate<ResultType, QueryType> {
 			protected:
 			// Expose typenames to subclasses (SegmentTreeLazy).
 			using Value = ValueType;
 			using Update = UpdateType;
 			using Result = ResultType;
+			using Query = QueryType;
 
 			// Convert the value at a node to a result. The node may not be a leaf.
 			template <
 				bool isConstructible = std::is_constructible<Result, Value>::value,
 				typename std::enable_if<isConstructible>::type * = nullptr>
-			inline Result convert(Value const &value, std::size_t) {
+			inline Result convert(Value const &value, Query const &, std::size_t) {
 				return {value};
 			}
 		};
@@ -231,13 +241,14 @@ namespace Rain::Algorithm {
 		using Value = typename Policy::Value;
 		using Update = typename Policy::Update;
 		using Result = typename Policy::Result;
+		using Query = typename Policy::Query;
 
 		protected:
 		// Aggregate values at each node. Index 0 is unused.
 		std::vector<Value> values;
 
 		// True iff node has a pending lazy update to propagate to its children. The
-		// udpate has already been applied to the node itself.
+		// update has already been applied to the node itself.
 		std::vector<bool> lazy;
 
 		// Lazily-stored updates.
@@ -249,10 +260,32 @@ namespace Rain::Algorithm {
 		public:
 		// Segment tree for a segment array of size size.
 		SegmentTreeLazy(std::size_t const size)
-				: values(2 * size, this->DEFAULT_VALUE),
-					lazy(values.size(), false),
-					updates(values.size(), this->DEFAULT_UPDATE),
-					HEIGHT{mostSignificant1BitIdx(values.size())} {}
+				: values(2 * size, this->defaultValue()),
+					lazy(this->values.size(), false),
+					updates(this->values.size(), this->defaultUpdate()),
+					HEIGHT{mostSignificant1BitIdx(this->values.size())} {}
+
+		// Segment tree with all values pre-initialized, minimizing build time.
+		SegmentTreeLazy(std::vector<Value> &&values)
+				: values(values.size(), this->defaultValue()),
+					lazy(2 * this->values.size(), false),
+					updates(2 * this->values.size(), this->defaultUpdate()),
+					HEIGHT{mostSignificant1BitIdx(2 * this->values.size())} {
+			this->values.insert(this->values.end(),
+				std::make_move_iterator(values.begin()),
+				std::make_move_iterator(values.end()));
+			for (std::size_t level{1}, range{2_zu}; level < this->HEIGHT;
+				level++, range *= 2) {
+				for (std::size_t i{values.size() >> level};
+					i < (values.size() >> (level - 1));
+					i++) {
+					this->retrace(this->values[i],
+						this->values[i * 2],
+						this->values[i * 2 + 1],
+						range);
+				}
+			}
+		}
 
 		protected:
 		// Propagate all ancestors of nodes in a given inclusive underlying range.
@@ -271,7 +304,7 @@ namespace Rain::Algorithm {
 						this->combine(this->updates[i * 2 + 1], this->updates[i], range);
 						this->lazy[i * 2] = this->lazy[i * 2 + 1] = true;
 
-						this->updates[i] = this->DEFAULT_UPDATE;
+						this->updates[i] = this->defaultUpdate();
 						this->lazy[i] = false;
 					}
 				}
@@ -280,11 +313,13 @@ namespace Rain::Algorithm {
 
 		public:
 		// Queries an inclusive range, propagating if necessary then aggregating.
-		Result query(std::size_t left, std::size_t right) {
+		// Take an optional query parameter `query` which will be used in convert
+		// and aggregate of the results and values.
+		Result query(std::size_t left, std::size_t right, Query const &query = {}) {
 			this->propagate(left, left);
 			this->propagate(right, right);
-			Result resLeft{this->convert(this->DEFAULT_VALUE, 1)},
-				resRight{this->convert(this->DEFAULT_VALUE, 1)};
+			Result resLeft{this->convert(this->defaultValue(), query, 1)},
+				resRight{this->convert(this->defaultValue(), query, 1)};
 			std::size_t range{1};
 			for (left += this->values.size() / 2,
 				right += this->values.size() / 2 + 1;
@@ -292,22 +327,26 @@ namespace Rain::Algorithm {
 				left /= 2, right /= 2, range *= 2) {
 				if (left % 2 == 1) {
 					resLeft = this->aggregate(
-						resLeft, this->convert(this->values[left++], range));
+						resLeft, this->convert(this->values[left++], query, range), query);
 				}
 				if (right % 2 == 1) {
-					resRight = this->aggregate(
-						this->convert(this->values[--right], range), resRight);
+					resRight =
+						this->aggregate(this->convert(this->values[--right], query, range),
+							resRight,
+							query);
 				}
 			}
-			return this->aggregate(resLeft, resRight);
+			return this->aggregate(resLeft, resRight, query);
 		}
 
 		// Lazy update an inclusive range. The updated will be applied identically
 		// to all nodes in the range, save for differences based on the depth of the
 		// node (which will be expressed via the std::size_t range parameter).
 		void update(std::size_t left, std::size_t right, Update const &update) {
-			// this->propagate(left, left);
-			// this->propagate(right, right);
+			// We must propagate here because retrace expects non-lazy nodes to store
+			// the value.
+			this->propagate(left, left);
+			this->propagate(right, right);
 			// Only retrace updates once left or right node has been changed.
 			bool changedLeft{false}, changedRight{false};
 			std::size_t range{1};
@@ -367,67 +406,30 @@ using namespace std;
 #define RF(x, from, to) \
 	for (LL x(from), _to(to), _delta{x < _to ? 1LL : -1LL}; x != _to; x += _delta)
 
-class WLLUpdate {
-	public:
-	LL value;
-
-	// WLLUpdate operator+=(WLLUpdate const &other) {
-	// 	return {this->value += other.value};
-	// }
-
-	WLLUpdate operator*(size_t range) const { return {this->value * (LL)range}; }
-};
-
-class WLLValue {
-	public:
-	LL value;
-
-	// WLLValue() = delete;
-
-	WLLValue operator+=(WLLUpdate const &other) {
-		this->value += other.value;
-		return *this;
-	}
-
-	WLLValue operator+(WLLValue const &other) const {
-		return {this->value + other.value};
-	}
-
-	WLLValue &operator=(WLLValue const &other) {
-		this->value = other.value;
-		return *this;
-	}
-};
-
-class WLLResult {
-	public:
-	LL value;
-
-	// WLLResult() = default;
-	WLLResult(WLLResult const &other) = default;
-	WLLResult(LL const &value) : value{value} {};
-	// WLLResult(WLLValue const &other) { this->value = other.value; }
-
-	WLLResult operator+(WLLResult const &other) const {
-		return {this->value + other.value};
-	}
-};
-
-class Policy
-		: public SegmentTreeLazy<>::Policy<WLLValue, WLLUpdate, WLLResult> {
+class Policy : protected SegmentTreeLazy<>::Policy<LL> {
 	protected:
-	Result convert(Value const &value, size_t) { return {value.value}; }
-	// void apply(Value &value, Update const &update, std::size_t range) {
-	// 	value.value += update.value * range;
-	// }
-	// Result aggregate(Result const &left, Result const &right) {
-	// 	return {left.value + right.value};
-	// }
-	// void retrace(Value &value, Value const &left, Value const &right, size_t) {
-	// 	value.value = left.value + right.value;
-	// }
-	void combine(Update &current, Update const &update, std::size_t) {
-		current.value += update.value;
+	inline Value defaultValue() {
+		return -1000000000000000;
+	}
+	inline void combine(Update &current, Update const &update, std::size_t) {
+		current += update;
+	}
+	inline void retrace(Value &value,
+		Value const &left,
+		Value const &right,
+		std::size_t) {
+		value = max(left, right);
+	}
+	inline void apply(Value &value, Update const &update, std::size_t) {
+		value += update;
+	}
+	inline Result aggregate(Result const &left,
+		Result const &right,
+		Query const &) {
+		return max(left, right);
+	}
+	inline Result convert(Value const &value, Query const &, std::size_t) {
+		return value;
 	}
 };
 
@@ -435,26 +437,26 @@ int main() {
 	ios_base::sync_with_stdio(false);
 	cin.tie(nullptr);
 
-	WLLValue v1, v2, v3;
-	v1 = v2 + v3;
-
 	LL N, Q;
 	cin >> N >> Q;
-	SegmentTreeLazy<Policy> S(N);
-	RF(i, 0, N) {
-		LL X;
-		cin >> X;
-		S.update(i, i, {X});
+	vector<LL> X(N);
+	cin >> X[0];
+	SegmentTreeLazy<Policy> T(N);
+	T.update(0, 0, X[0] + 1000000000000000);
+	RF(i, 1, N) {
+		cin >> X[i];
+		T.update(i, i, T.query(i - 1, i - 1) + X[i] + 1000000000000000);
 	}
 	RF(i, 0, Q) {
-		LL A, B, C, D;
-		cin >> A;
-		if (A == 1) {
-			cin >> B >> C >> D;
-			S.update(B - 1, C - 1, {D});
+		LL a, b, c;
+		cin >> a >> b >> c;
+		if (a == 1) {
+			T.update(b - 1, N - 1, c - X[b - 1]);
+			X[b - 1] = c;
 		} else {
-			cin >> B;
-			cout << S.query(B - 1, B - 1).value << '\n';
+			cout << max(0LL,
+								T.query(b - 1, c - 1) - (b >= 2 ? T.query(b - 2, b - 2) : 0))
+					 << '\n';
 		}
 	}
 
