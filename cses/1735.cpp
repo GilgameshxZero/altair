@@ -69,83 +69,6 @@ inline std::ostream &operator<<(
 }
 
 namespace Rain {
-	// Inline namespaces are implicitly accessible by the parent namespace.
-	inline namespace Literal {
-		// Inject std literals into the Rain namespace. Injecting the entire
-		// namespace via `using namespace std::literals` may cause compilation
-		// issues with default arguments using those literals.
-		using std::string_literals::operator""s;
-		using std::chrono_literals::operator""h;
-		using std::chrono_literals::operator""s;
-		using std::chrono_literals::operator""ms;
-
-		// User-defined literals.
-		inline constexpr std::size_t operator""_zu(unsigned long long value) {
-			return static_cast<std::size_t>(value);
-		}
-		inline std::regex operator""_re(char const *value, std::size_t) {
-			return std::regex(value);
-		}
-		inline constexpr short operator""_ss(unsigned long long value) {
-			return static_cast<short>(value);
-		}
-	}
-}
-
-namespace Rain::Algorithm {
-	// Most significant 1-bit for unsigned integral types of at most long long in
-	// size. Undefined result if x = 0.
-	template <typename Integer>
-	inline std::size_t mostSignificant1BitIdx(Integer const &x) {
-#ifdef __has_builtin
-#if __has_builtin(__builtin_clzll)
-		return 8 * sizeof(unsigned long long) - __builtin_clzll(x) - 1;
-#endif
-#endif
-		for (std::size_t bit{8 * sizeof(Integer) - 1};
-				 bit != std::numeric_limits<std::size_t>::max();
-				 bit--) {
-			if (x & (static_cast<Integer>(1) << bit)) {
-				return bit;
-			}
-		}
-		return std::numeric_limits<std::size_t>::max();
-	}
-
-	// Least significant 1-bit for unsigned integral types of at most long long in
-	// size. Undefined result if x = 0.
-	template <typename Integer>
-	inline std::size_t leastSignificant1BitIdx(Integer const &x) {
-#ifdef __has_builtin
-#if __has_builtin(__builtin_ctzll)
-		return __builtin_ctzll(x);
-#endif
-#endif
-		for (std::size_t bit{0}; bit != 8 * sizeof(Integer); bit++) {
-			if (x & (static_cast<Integer>(1) << bit)) {
-				return bit;
-			}
-		}
-		return std::numeric_limits<std::size_t>::max();
-	}
-
-	// Count of 1-bits in unsigned integral types of at most long long in size.
-	template <typename Integer>
-	inline std::size_t bitPopcount(Integer const &x) {
-#ifdef __has_builtin
-#if __has_builtin(__builtin_popcountll)
-		return __builtin_popcountll(x);
-#endif
-#endif
-		std::size_t count{0};
-		for (std::size_t bit{0}; bit != 8 * sizeof(Integer); bit++) {
-			count += !!(x & (static_cast<Integer>(1) << bit));
-		}
-		return count;
-	}
-}
-
-namespace Rain {
 	// strcasecmp does not exist on Windows.
 	inline int strcasecmp(char const *left, char const *right) {
 #ifdef RAIN_PLATFORM_WINDOWS
@@ -301,6 +224,83 @@ namespace Rain::Error {
 		std::string message(int) const noexcept { return "Generic."; }
 	};
 	using GenericException = Exception<int, GenericErrorCategory>;
+}
+
+namespace Rain {
+	// Inline namespaces are implicitly accessible by the parent namespace.
+	inline namespace Literal {
+		// Inject std literals into the Rain namespace. Injecting the entire
+		// namespace via `using namespace std::literals` may cause compilation
+		// issues with default arguments using those literals.
+		using std::string_literals::operator""s;
+		using std::chrono_literals::operator""h;
+		using std::chrono_literals::operator""s;
+		using std::chrono_literals::operator""ms;
+
+		// User-defined literals.
+		inline constexpr std::size_t operator""_zu(unsigned long long value) {
+			return static_cast<std::size_t>(value);
+		}
+		inline std::regex operator""_re(char const *value, std::size_t) {
+			return std::regex(value);
+		}
+		inline constexpr short operator""_ss(unsigned long long value) {
+			return static_cast<short>(value);
+		}
+	}
+}
+
+namespace Rain::Algorithm {
+	// Most significant 1-bit for unsigned integral types of at most long long in
+	// size. Undefined result if x = 0.
+	template <typename Integer>
+	inline std::size_t mostSignificant1BitIdx(Integer const &x) {
+#ifdef __has_builtin
+#if __has_builtin(__builtin_clzll)
+		return 8 * sizeof(unsigned long long) - __builtin_clzll(x) - 1;
+#endif
+#endif
+		for (std::size_t bit{8 * sizeof(Integer) - 1};
+				 bit != std::numeric_limits<std::size_t>::max();
+				 bit--) {
+			if (x & (static_cast<Integer>(1) << bit)) {
+				return bit;
+			}
+		}
+		return std::numeric_limits<std::size_t>::max();
+	}
+
+	// Least significant 1-bit for unsigned integral types of at most long long in
+	// size. Undefined result if x = 0.
+	template <typename Integer>
+	inline std::size_t leastSignificant1BitIdx(Integer const &x) {
+#ifdef __has_builtin
+#if __has_builtin(__builtin_ctzll)
+		return __builtin_ctzll(x);
+#endif
+#endif
+		for (std::size_t bit{0}; bit != 8 * sizeof(Integer); bit++) {
+			if (x & (static_cast<Integer>(1) << bit)) {
+				return bit;
+			}
+		}
+		return std::numeric_limits<std::size_t>::max();
+	}
+
+	// Count of 1-bits in unsigned integral types of at most long long in size.
+	template <typename Integer>
+	inline std::size_t bitPopcount(Integer const &x) {
+#ifdef __has_builtin
+#if __has_builtin(__builtin_popcountll)
+		return __builtin_popcountll(x);
+#endif
+#endif
+		std::size_t count{0};
+		for (std::size_t bit{0}; bit != 8 * sizeof(Integer); bit++) {
+			count += !!(x & (static_cast<Integer>(1) << bit));
+		}
+		return count;
+	}
 }
 
 namespace Rain::Algorithm {
@@ -530,9 +530,11 @@ namespace Rain::Algorithm {
 		// Propagate all ancestors of a single vertex, optionally beginning at a
 		// specific ancestor depth.
 		inline void propagateTo(std::size_t idx) const {
-			for (std::size_t level{mostSignificant1BitIdx(idx)}, size{1_zu << level};
-					 level > 0;
+			for (std::size_t level{this->DEPTH}, size{1_zu << level}; level > 0;
 					 level--, size /= 2) {
+				if ((idx >> level) == 0) {
+					continue;
+				}
 				this->propagate(idx >> level, size);
 			}
 		}
@@ -873,7 +875,7 @@ namespace Rain::Algorithm {
 		SegmentTreeLazy<SegmentTreeLazyMaxPolicy<ValueType>>;
 
 	// 2D segtree for point updates and range queries.
-	template <std::size_t INNER_DIMENSION, typename ValueType>
+	template <typename ValueType, std::size_t INNER_DIMENSION>
 	class SegmentTreeLazySum2DPointPolicy : public SegmentTreeLazy<>::Policy<
 																						FenwickTree<ValueType>,
 																						std::pair<std::size_t, ValueType>,
@@ -915,9 +917,9 @@ namespace Rain::Algorithm {
 		}
 	};
 
-	template <std::size_t INNER_DIMENSION, typename ValueType>
+	template <typename ValueType, std::size_t INNER_DIMENSION>
 	using SegmentTreeLazySum2DPoint = SegmentTreeLazy<
-		SegmentTreeLazySum2DPointPolicy<INNER_DIMENSION, ValueType>>;
+		SegmentTreeLazySum2DPointPolicy<ValueType, INNER_DIMENSION>>;
 }
 
 using namespace Rain::Algorithm;
@@ -929,27 +931,68 @@ using namespace std;
 #define RF(x, from, to) \
 	for (LL x(from), _to(to), _delta{x < _to ? 1LL : -1LL}; x != _to; x += _delta)
 
+class Policy : public SegmentTreeLazy<>::Policy<LL, pair<bool, LL>> {
+	public:
+	using SuperPolicy = SegmentTreeLazy<>::Policy<LL, pair<bool, LL>>;
+	using typename SuperPolicy::Value;
+	using typename SuperPolicy::Update;
+	using typename SuperPolicy::Result;
+	using typename SuperPolicy::Query;
+
+	static inline void combine(Update &current, Update const &update) {
+		if (!update.first) {
+			current.second += update.second;
+		} else {
+			current = update;
+		}
+	}
+	static inline void
+	retrace(Value &value, Value const &left, Value const &right, Update const &) {
+		value = left + right;
+	}
+	static inline void
+	build(Value &value, Value const &left, Value const &right) {
+		value = left + right;
+	}
+	static inline void
+	apply(Value &value, Update const &update, std::size_t size) {
+		if (!update.first) {
+			value += update.second * size;
+		} else {
+			value = update.second * size;
+		}
+	}
+	static inline Result
+	aggregate(Result const &left, Result const &right, Query const &) {
+		return left + right;
+	}
+};
+
 int main() {
 	ios_base::sync_with_stdio(false);
 	cin.tie(nullptr);
 
 	LL N, Q;
 	cin >> N >> Q;
-	SegmentTreeLazySum<LL> S(N);
+
+	SegmentTreeLazy<Policy> tree(N);
 	RF(i, 0, N) {
-		LL X;
-		cin >> X;
-		S.update(i, i, {X});
+		LL t;
+		cin >> t;
+		tree.update(i, i, {false, t});
 	}
 	RF(i, 0, Q) {
-		LL A, B, C, D;
-		cin >> A;
-		if (A == 1) {
-			cin >> B >> C >> D;
-			S.update(B - 1, C - 1, {D});
+		LL a, b, c, d;
+		cin >> a;
+		if (a == 1) {
+			cin >> b >> c >> d;
+			tree.update(b - 1, c - 1, {false, d});
+		} else if (a == 2) {
+			cin >> b >> c >> d;
+			tree.update(b - 1, c - 1, {true, d});
 		} else {
-			cin >> B;
-			cout << S.query(B - 1, B - 1) << '\n';
+			cin >> b >> c;
+			cout << tree.query(b - 1, c - 1) << '\n';
 		}
 	}
 
