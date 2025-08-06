@@ -2,33 +2,33 @@
 #pragma GCC target("avx", "avx2", "fma", "bmi", "bmi2", "popcnt", "lzcnt")
 #pragma GCC optimize("Ofast", "unroll-loops")
 #endif
-
+ 
 #include <bits/stdc++.h>
-
+ 
 #if defined(_WIN32) || defined(_WIN64)
 #define RAIN_PLATFORM_WINDOWS
 #endif
-
+ 
 #if defined(__APPLE__) || defined(__MACH__)
 #define RAIN_PLATFORM_MACOS
 #endif
-
+ 
 #if defined(__linux__) || defined(linux) || defined(__linux)
 #define RAIN_PLATFORM_LINUX
 #endif
-
+ 
 #if !defined(RAIN_PLATFORM_WINDOWS) && !defined(RAIN_PLATFORM_MACOS) && \
 	!defined(RAIN_PLATFORM_LINUX)
 #define RAIN_PLATFORM_OTHER
 #endif
-
+ 
 #ifdef NDEBUG
 #define RAIN_PLATFORM_NDEBUG
 #endif
-
+ 
 namespace Rain::Platform {
 	enum class Platform { NONE = 0, WINDOWS, MACOS, LINUX };
-
+ 
 	// Get the Platform enum Rain is running on.
 	inline Platform getPlatform() noexcept {
 #ifdef RAIN_PLATFORM_WINDOWS
@@ -41,7 +41,7 @@ namespace Rain::Platform {
 		return Platform::NONE;
 #endif
 	}
-
+ 
 	// Returns whether the code was built in debug mode.
 	inline bool isDebug() noexcept {
 #ifdef RAIN_PLATFORM_NDEBUG
@@ -51,7 +51,7 @@ namespace Rain::Platform {
 #endif
 	}
 }
-
+ 
 // Ease-of-stream for Rain::Platform::Platform.
 inline std::ostream &operator<<(
 	std::ostream &stream,
@@ -67,84 +67,7 @@ inline std::ostream &operator<<(
 			return stream << "Other";
 	}
 }
-
-namespace Rain {
-	// Inline namespaces are implicitly accessible by the parent namespace.
-	inline namespace Literal {
-		// Inject std literals into the Rain namespace. Injecting the entire
-		// namespace via `using namespace std::literals` may cause compilation
-		// issues with default arguments using those literals.
-		using std::string_literals::operator""s;
-		using std::chrono_literals::operator""h;
-		using std::chrono_literals::operator""s;
-		using std::chrono_literals::operator""ms;
-
-		// User-defined literals.
-		inline constexpr std::size_t operator""_zu(unsigned long long value) {
-			return static_cast<std::size_t>(value);
-		}
-		inline std::regex operator""_re(char const *value, std::size_t) {
-			return std::regex(value);
-		}
-		inline constexpr short operator""_ss(unsigned long long value) {
-			return static_cast<short>(value);
-		}
-	}
-}
-
-namespace Rain::Algorithm {
-	// Most significant 1-bit for unsigned integral types of at most long long in
-	// size. Undefined result if x = 0.
-	template <typename Integer>
-	inline std::size_t mostSignificant1BitIdx(Integer const &x) {
-#ifdef __has_builtin
-#if __has_builtin(__builtin_clzll)
-		return 8 * sizeof(unsigned long long) - __builtin_clzll(x) - 1;
-#endif
-#endif
-		for (std::size_t bit{8 * sizeof(Integer) - 1};
-				 bit != std::numeric_limits<std::size_t>::max();
-				 bit--) {
-			if (x & (static_cast<Integer>(1) << bit)) {
-				return bit;
-			}
-		}
-		return std::numeric_limits<std::size_t>::max();
-	}
-
-	// Least significant 1-bit for unsigned integral types of at most long long in
-	// size. Undefined result if x = 0.
-	template <typename Integer>
-	inline std::size_t leastSignificant1BitIdx(Integer const &x) {
-#ifdef __has_builtin
-#if __has_builtin(__builtin_ctzll)
-		return __builtin_ctzll(x);
-#endif
-#endif
-		for (std::size_t bit{0}; bit != 8 * sizeof(Integer); bit++) {
-			if (x & (static_cast<Integer>(1) << bit)) {
-				return bit;
-			}
-		}
-		return std::numeric_limits<std::size_t>::max();
-	}
-
-	// Count of 1-bits in unsigned integral types of at most long long in size.
-	template <typename Integer>
-	inline std::size_t bitPopcount(Integer const &x) {
-#ifdef __has_builtin
-#if __has_builtin(__builtin_popcountll)
-		return __builtin_popcountll(x);
-#endif
-#endif
-		std::size_t count{0};
-		for (std::size_t bit{0}; bit != 8 * sizeof(Integer); bit++) {
-			count += !!(x & (static_cast<Integer>(1) << bit));
-		}
-		return count;
-	}
-}
-
+ 
 namespace Rain {
 	// strcasecmp does not exist on Windows.
 	inline int strcasecmp(char const *left, char const *right) {
@@ -155,7 +78,7 @@ namespace Rain {
 #endif
 	}
 }
-
+ 
 namespace Rain::String {
 	// Convert ASCII string types to lowercase.
 	inline char *toLower(char *const cStr, std::size_t const cStrLen) {
@@ -169,7 +92,7 @@ namespace Rain::String {
 		toLower(&str[0], str.length());
 		return str;
 	}
-
+ 
 	// Trim whitespace characters from both sides of an std::string.
 	inline std::string &trimWhitespace(std::string &str) {
 		str.erase(
@@ -185,7 +108,7 @@ namespace Rain::String {
 			str.end());
 		return str;
 	}
-
+ 
 	// For C-Strings, instead of trimming whitespace, these utilities find the
 	// first/last non-whitespace character in the string.
 	//
@@ -210,7 +133,7 @@ namespace Rain::String {
 				 index += (scanRight ? 1 : -1));
 		return const_cast<char *>(cStr) + index;
 	}
-
+ 
 	// Convert any time to any other type using std::stringstream. Thread-safe.
 	// Prefer specialized methods if available (strtoll, to_string, etc.).
 	//
@@ -230,14 +153,14 @@ namespace Rain::String {
 			return std::strcmp(left, right) < 0;
 		}
 	};
-
+ 
 	// Comparison operator for case-agnostic comparison.
 	struct CaseAgnosticCompare {
 		bool operator()(std::string const &left, std::string const &right) const {
 			return strcasecmp(left.c_str(), right.c_str()) < 0;
 		}
 	};
-
+ 
 	// Case-agnostic hash & equality for std::unordered_map.
 	struct CaseAgnosticHash {
 		std::size_t operator()(std::string const &str) const {
@@ -251,7 +174,7 @@ namespace Rain::String {
 		}
 	};
 }
-
+ 
 namespace Rain::Error {
 	// Subclasses std::exception, implements custom what() string to display error
 	// category name, code, and error code message.
@@ -262,10 +185,10 @@ namespace Rain::Error {
 		private:
 		// A unique ErrorCategory instance.
 		static inline ErrorCategory const errorCategory;
-
+ 
 		Error const error;
 		std::string const explanation;
-
+ 
 		public:
 		// Construct an exception with just the error code, in the format "CATEGORY,
 		// ERROR: MESSAGE".
@@ -275,34 +198,111 @@ namespace Rain::Error {
 						std::string(errorCategory.name()) + ", " +
 						std::to_string(static_cast<int>(error)) + ": " +
 						errorCategory.message(static_cast<int>(error)) + "\n") {}
-
+ 
 		// Return the error (code).
 		Error const &getError() const noexcept { return this->error; }
-
+ 
 		// Return the ErrorCategory for checking equality.
 		static ErrorCategory const &getErrorCategory() noexcept {
 			return Exception<Error, ErrorCategory>::errorCategory;
 		}
-
+ 
 		// Return the preconstructed explanation string.
 		//
 		// Because std::exception::what is virtual, catch blocks only have to catch
 		// std::exception to use this version of what.
 		char const *what() const noexcept { return this->explanation.c_str(); }
 	};
-
+ 
 	// Default generic error category.
 	class GenericErrorCategory : public std::error_category {
 		public:
 		// Name of this category of errors.
 		char const *name() const noexcept { return "Generic"; }
-
+ 
 		// Translates Errors from the enum into string messages.
 		std::string message(int) const noexcept { return "Generic."; }
 	};
 	using GenericException = Exception<int, GenericErrorCategory>;
 }
-
+ 
+namespace Rain {
+	// Inline namespaces are implicitly accessible by the parent namespace.
+	inline namespace Literal {
+		// Inject std literals into the Rain namespace. Injecting the entire
+		// namespace via `using namespace std::literals` may cause compilation
+		// issues with default arguments using those literals.
+		using std::string_literals::operator""s;
+		using std::chrono_literals::operator""h;
+		using std::chrono_literals::operator""s;
+		using std::chrono_literals::operator""ms;
+ 
+		// User-defined literals.
+		inline constexpr std::size_t operator""_zu(unsigned long long value) {
+			return static_cast<std::size_t>(value);
+		}
+		inline std::regex operator""_re(char const *value, std::size_t) {
+			return std::regex(value);
+		}
+		inline constexpr short operator""_ss(unsigned long long value) {
+			return static_cast<short>(value);
+		}
+	}
+}
+ 
+namespace Rain::Algorithm {
+	// Most significant 1-bit for unsigned integral types of at most long long in
+	// size. Undefined result if x = 0.
+	template <typename Integer>
+	inline std::size_t mostSignificant1BitIdx(Integer const &x) {
+#ifdef __has_builtin
+#if __has_builtin(__builtin_clzll)
+		return 8 * sizeof(unsigned long long) - __builtin_clzll(x) - 1;
+#endif
+#endif
+		for (std::size_t bit{8 * sizeof(Integer) - 1};
+				 bit != std::numeric_limits<std::size_t>::max();
+				 bit--) {
+			if (x & (static_cast<Integer>(1) << bit)) {
+				return bit;
+			}
+		}
+		return std::numeric_limits<std::size_t>::max();
+	}
+ 
+	// Least significant 1-bit for unsigned integral types of at most long long in
+	// size. Undefined result if x = 0.
+	template <typename Integer>
+	inline std::size_t leastSignificant1BitIdx(Integer const &x) {
+#ifdef __has_builtin
+#if __has_builtin(__builtin_ctzll)
+		return __builtin_ctzll(x);
+#endif
+#endif
+		for (std::size_t bit{0}; bit != 8 * sizeof(Integer); bit++) {
+			if (x & (static_cast<Integer>(1) << bit)) {
+				return bit;
+			}
+		}
+		return std::numeric_limits<std::size_t>::max();
+	}
+ 
+	// Count of 1-bits in unsigned integral types of at most long long in size.
+	template <typename Integer>
+	inline std::size_t bitPopcount(Integer const &x) {
+#ifdef __has_builtin
+#if __has_builtin(__builtin_popcountll)
+		return __builtin_popcountll(x);
+#endif
+#endif
+		std::size_t count{0};
+		for (std::size_t bit{0}; bit != 8 * sizeof(Integer); bit++) {
+			count += !!(x & (static_cast<Integer>(1) << bit));
+		}
+		return count;
+	}
+}
+ 
 namespace Rain::Algorithm {
 	// Fixed-size Fenwick/Binary-Indexed Tree implementation. O(ln N) point
 	// updates and range queries. Not thread-safe.
@@ -313,11 +313,11 @@ namespace Rain::Algorithm {
 	class FenwickTree {
 		private:
 		std::vector<Value> tree;
-
+ 
 		public:
 		// Creates a Fenwick tree, which may be resized by operations.
 		FenwickTree(std::size_t const size) : tree(size) {}
-
+ 
 		// Computes prefix sum up to and including idx.
 		Value sum(std::size_t const idx) const {
 			Value aggregate{};
@@ -326,7 +326,7 @@ namespace Rain::Algorithm {
 			}
 			return aggregate;
 		}
-
+ 
 		// Modify index by a delta.
 		void modify(std::size_t const idx, Value const &delta) {
 			for (std::size_t i{idx}; i < this->tree.size(); i |= i + 1) {
@@ -335,11 +335,11 @@ namespace Rain::Algorithm {
 		}
 	};
 }
-
+ 
 namespace Rain::Algorithm {
 	template <typename = std::nullptr_t>
 	class SegmentTreeLazy;
-
+ 
 	template <>
 	class SegmentTreeLazy<std::nullptr_t> {
 		public:
@@ -364,13 +364,13 @@ namespace Rain::Algorithm {
 			}
 		};
 		typedef Rain::Error::Exception<Error, ErrorCategory> Exception;
-
+ 
 		private:
 		// SFINAE base class which conditionally defines defaultValue() and
 		// defaultResult().
 		template <typename Value, typename Result, typename = void>
 		class PolicyBaseDefaultValueResult {};
-
+ 
 		template <typename Value, typename Result>
 		class PolicyBaseDefaultValueResult<
 			Value,
@@ -379,7 +379,7 @@ namespace Rain::Algorithm {
 				std::is_default_constructible<Value>::value>::type> {
 			public:
 			static inline Value defaultValue() { return {}; }
-
+ 
 			template <
 				bool isConstructible = std::is_constructible<Result, Value>::value,
 				typename std::enable_if<isConstructible>::type * = nullptr>
@@ -387,11 +387,11 @@ namespace Rain::Algorithm {
 				return {defaultValue()};
 			}
 		};
-
+ 
 		// SFINAE base class which conditionally defines defaultUpdate().
 		template <typename Update, typename = void>
 		class PolicyBaseDefaultUpdate {};
-
+ 
 		template <typename Update>
 		class PolicyBaseDefaultUpdate<
 			Update,
@@ -400,28 +400,27 @@ namespace Rain::Algorithm {
 			public:
 			static inline Update defaultUpdate() { return {}; }
 		};
-
+ 
 		public:
 		// Default policy for SegmentTreeLazy, which has functions disabled by
 		// SFINAE if they do not support expected operations. In that case, the
 		// client should inherit the enabled parts of this disabled policy and
 		// re-implement the disabled functions.
-		//
-		// This default policy represents a sum tree.
 		template <
 			typename ValueType,
 			typename UpdateType = ValueType,
 			typename ResultType = ValueType,
 			typename QueryType = std::nullptr_t>
-		class Policy : public PolicyBaseDefaultValueResult<ValueType, ResultType>,
-									 public PolicyBaseDefaultUpdate<UpdateType> {
+		class PolicyBase
+				: public PolicyBaseDefaultValueResult<ValueType, ResultType>,
+					public PolicyBaseDefaultUpdate<UpdateType> {
 			public:
 			// Expose typenames to subclasses (SegmentTreeLazy).
 			using Value = ValueType;
 			using Update = UpdateType;
 			using Result = ResultType;
 			using Query = QueryType;
-
+ 
 			// Convert the value at a node to a result. The node may not be a leaf.
 			template <
 				bool isConstructible = std::is_constructible<Result, Value>::value,
@@ -430,7 +429,7 @@ namespace Rain::Algorithm {
 			convert(Value const &value, Query const &, std::size_t) {
 				return {value};
 			}
-
+ 
 			// Combine and build are not used in every segtree, and the default is to
 			// throw if used.
 			static inline void combine(Update &current, Update const &update) {
@@ -441,8 +440,234 @@ namespace Rain::Algorithm {
 				throw Exception(Error::NOT_IMPLEMENTED_POLICY);
 			}
 		};
+ 
+		// Wraps a policy to implement a persistent segment tree via the fat-node
+		// technique. Range updates are somewhat dangerous because lazy propagation
+		// may cause some updates to not be stored in the history. I do not believe
+		// lazy propagation is possible in a persistent manner, because lazy
+		// propagation works via the combining of updates, which necessarily
+		// destroys time information, or otherwise is no longer constant-time.
+		//
+		// Updates should typically be applied in non-decreasing order of time. One
+		// may choose to apply an out-of-order update to operate on a previous
+		// "version" of the tree, however, this invalidates later "version"s of the
+		// tree. In this method, it is recommended to compute offline the number of
+		// versions to be able to revert to.
+		//
+		// A query for time `t` is evaluated after all requested updates at time `t`
+		// have been applied.
+		template <typename Policy, typename TimeType = std::size_t>
+		class PolicyPersistentWrapper {
+			public:
+			using Value = std::map<TimeType, typename Policy::Value>;
+			using Update = std::pair<TimeType, typename Policy::Update>;
+			using Result = typename Policy::Result;
+			using Query = std::pair<TimeType, typename Policy::Query>;
+ 
+			static inline Value defaultValue() {
+				return {{std::numeric_limits<TimeType>::min(), Policy::defaultValue()}};
+			}
+			static inline Update defaultUpdate() {
+				return {std::numeric_limits<TimeType>::min(), Policy::defaultUpdate()};
+			}
+			static inline Result defaultResult() { return Policy::defaultResult(); }
+			static inline Result
+			convert(Value const &value, Query const &query, std::size_t size) {
+				return Policy::convert(
+					std::prev(value.upper_bound(query.first))->second,
+					query.second,
+					size);
+			}
+			static inline void combine(Update &current, Update const &update) {
+				current.first = update.first;
+				Policy::combine(current.second, update.second);
+			}
+			// TODO: Persistent retrace performs redundant work in binary searching
+			// left/right each time, so this is slower than necessary by a
+			// constant factor.
+			static inline void retrace(
+				Value &value,
+				Value const &left,
+				Value const &right,
+				Update const &update) {
+				auto hint{std::prev(value.upper_bound(update.first))};
+				auto it{value.insert_or_assign(hint, update.first, hint->second)};
+				Policy::retrace(
+					it->second,
+					std::prev(left.upper_bound(update.first))->second,
+					std::prev(right.upper_bound(update.first))->second,
+					update.second);
+			}
+			static inline void
+			build(Value &value, Value const &left, Value const &right) {
+				auto t{std::max(left.rbegin()->first, right.rbegin()->first)};
+				auto hint{std::prev(value.upper_bound(t))};
+				auto it{value.insert_or_assign(hint, t, hint->second)};
+				Policy::build(
+					it->second, left.rbegin()->second, right.rbegin()->second);
+			}
+			static inline void
+			apply(Value &value, Update const &update, std::size_t size) {
+				auto hint{std::prev(value.upper_bound(update.first))};
+				auto it{value.insert_or_assign(hint, update.first, hint->second)};
+				Policy::apply(it->second, update.second, size);
+			}
+			static inline Result
+			aggregate(Result const &left, Result const &right, Query const &query) {
+				return Policy::aggregate(left, right, query.second);
+			}
+		};
+ 
+		template <typename ValueType>
+		class PolicySum : public PolicyBase<ValueType> {
+			public:
+			using SuperPolicy = PolicyBase<ValueType>;
+			using typename SuperPolicy::Value;
+			using typename SuperPolicy::Update;
+			using typename SuperPolicy::Result;
+			using typename SuperPolicy::Query;
+ 
+			static inline void combine(Update &current, Update const &update) {
+				current += update;
+			}
+			static inline void retrace(
+				Value &value,
+				Value const &left,
+				Value const &right,
+				Update const &) {
+				value = left + right;
+			}
+			static inline void
+			build(Value &value, Value const &left, Value const &right) {
+				value = left + right;
+			}
+			static inline void
+			apply(Value &value, Update const &update, std::size_t size) {
+				value += update * static_cast<Update>(size);
+			}
+			static inline Result
+			aggregate(Result const &left, Result const &right, Query const &) {
+				return left + right;
+			}
+		};
+ 
+		template <typename ValueType>
+		class PolicyMin : public PolicyBase<ValueType> {
+			public:
+			using SuperPolicy = PolicyBase<ValueType>;
+			using typename SuperPolicy::Value;
+			using typename SuperPolicy::Update;
+			using typename SuperPolicy::Result;
+			using typename SuperPolicy::Query;
+ 
+			static inline Result defaultResult() {
+				return std::numeric_limits<Result>::max();
+			}
+			static inline void combine(Update &current, Update const &update) {
+				current += update;
+			}
+			static inline void retrace(
+				Value &value,
+				Value const &left,
+				Value const &right,
+				Update const &) {
+				value = std::min(left, right);
+			}
+			static inline void
+			build(Value &value, Value const &left, Value const &right) {
+				value = std::min(left, right);
+			}
+			static inline void
+			apply(Value &value, Update const &update, std::size_t) {
+				value += update;
+			}
+			static inline Result
+			aggregate(Result const &left, Result const &right, Query const &) {
+				return std::min(left, right);
+			}
+		};
+ 
+		template <typename ValueType>
+		class PolicyMax : public PolicyBase<ValueType> {
+			public:
+			using SuperPolicy = PolicyBase<ValueType>;
+			using typename SuperPolicy::Value;
+			using typename SuperPolicy::Update;
+			using typename SuperPolicy::Result;
+			using typename SuperPolicy::Query;
+ 
+			static inline Result defaultResult() {
+				return std::numeric_limits<Result>::min();
+			}
+			static inline void combine(Update &current, Update const &update) {
+				current += update;
+			}
+			static inline void retrace(
+				Value &value,
+				Value const &left,
+				Value const &right,
+				Update const &) {
+				value = std::max(left, right);
+			}
+			static inline void
+			build(Value &value, Value const &left, Value const &right) {
+				value = std::max(left, right);
+			}
+			static inline void
+			apply(Value &value, Update const &update, std::size_t) {
+				value += update;
+			}
+			static inline Result
+			aggregate(Result const &left, Result const &right, Query const &) {
+				return std::max(left, right);
+			}
+		};
+ 
+		// 2D segtree for point updates and range queries.
+		template <typename ValueType, std::size_t INNER_DIMENSION>
+		class PolicySum2DPoint : public PolicyBase<
+															 FenwickTree<ValueType>,
+															 std::pair<std::size_t, ValueType>,
+															 ValueType,
+															 std::size_t> {
+			public:
+			using SuperPolicy = PolicyBase<
+				FenwickTree<ValueType>,
+				std::pair<std::size_t, ValueType>,
+				ValueType,
+				std::size_t>;
+			using typename SuperPolicy::Value;
+			using typename SuperPolicy::Update;
+			using typename SuperPolicy::Result;
+			using typename SuperPolicy::Query;
+ 
+			static inline Value defaultValue() { return {INNER_DIMENSION}; }
+			static inline Result defaultResult() { return {}; }
+			static inline Result
+			convert(Value const &value, Query const &query, std::size_t) {
+				return value.sum(query);
+			}
+			// combine is omitted because we only support point updates.
+			static inline void retrace(
+				Value &value,
+				Value const &left,
+				Value const &right,
+				Update const &update) {
+				// We can directly apply the update to this vertex.
+				value.modify(update.first, update.second);
+			}
+			// build is omitted because there is no easy way to combine two Fenwicks.
+			static inline void
+			apply(Value &value, Update const &update, std::size_t) {
+				value.modify(update.first, update.second);
+			}
+			static inline Result
+			aggregate(Result const &left, Result const &right, Query const &) {
+				return left + right;
+			}
+		};
 	};
-
+ 
 	// Segment tree with lazy propagation, supporting range queries and range
 	// updates in O(ln N) and O(N) memory.
 	//
@@ -470,32 +695,32 @@ namespace Rain::Algorithm {
 		using Update = typename Policy::Update;
 		using Result = typename Policy::Result;
 		using Query = typename Policy::Query;
-
+ 
 		using Error = SegmentTreeLazy<>::Error;
 		using Exception = SegmentTreeLazy<>::Exception;
-
+ 
 		private:
 		class Vertex {
 			public:
 			Value value{Policy::defaultValue()};
-
+ 
 			// True iff node has a pending lazy update to propagate to its children.
 			// The update has already been applied to the node itself.
 			bool lazy{false};
-
+ 
 			// Lazily-stored updates. Will be the default update if lazy is false.
 			Update update{Policy::defaultUpdate()};
 		};
-
+ 
 		// Depth of the deepest node in the tree.
 		std::size_t const DEPTH;
-
+ 
 		// Number of underlying nodes.
 		std::size_t const SIZE_UNDERLYING;
-
+ 
 		// All vertices in the tree. Vertex 0 is unused.
 		mutable std::vector<Vertex> vertices;
-
+ 
 		// Propagate a single non-leaf vertex in the tree. It is guaranteed that
 		// propagate will never be called on a leaf. propagate may be called on a
 		// bridge, but bridges (and ancestors of them) will never be lazy.
@@ -506,14 +731,14 @@ namespace Rain::Algorithm {
 			if (!this->vertices[idx].lazy) {
 				return;
 			}
-
+ 
 			Policy::apply(
 				this->vertices[idx * 2].value, this->vertices[idx].update, size / 2);
 			Policy::apply(
 				this->vertices[idx * 2 + 1].value,
 				this->vertices[idx].update,
 				size / 2);
-
+ 
 			// Avoid unnecessarily setting lazy on a leaf node.
 			if (idx * 2 < this->SIZE_UNDERLYING) {
 				Policy::combine(
@@ -522,21 +747,23 @@ namespace Rain::Algorithm {
 					this->vertices[idx * 2 + 1].update, this->vertices[idx].update);
 				this->vertices[idx * 2].lazy = this->vertices[idx * 2 + 1].lazy = true;
 			}
-
+ 
 			this->vertices[idx].update = Policy::defaultUpdate();
 			this->vertices[idx].lazy = false;
 		}
-
+ 
 		// Propagate all ancestors of a single vertex, optionally beginning at a
 		// specific ancestor depth.
 		inline void propagateTo(std::size_t idx) const {
-			for (std::size_t level{mostSignificant1BitIdx(idx)}, size{1_zu << level};
-					 level > 0;
+			for (std::size_t level{this->DEPTH}, size{1_zu << level}; level > 0;
 					 level--, size /= 2) {
+				if ((idx >> level) == 0) {
+					continue;
+				}
 				this->propagate(idx >> level, size);
 			}
 		}
-
+ 
 		public:
 		// Publicly accessible way to traverse the tree while abstracting away the
 		// lazy propagation. It is assumed that the tree has been propagated to the
@@ -551,9 +778,9 @@ namespace Rain::Algorithm {
 		class Iterator {
 			private:
 			SegmentTreeLazy<Policy> const *TREE;
-
+ 
 			std::size_t IDX, SIZE;
-
+ 
 			public:
 			// Size is the number of leaf nodes in this subtree. It is only valid if
 			// this is not an ancestor of a bridge.
@@ -564,14 +791,14 @@ namespace Rain::Algorithm {
 					: TREE{tree}, IDX{idx}, SIZE{size} {}
 			Iterator(Iterator const &other)
 					: TREE{other.TREE}, IDX{other.IDX}, SIZE{other.SIZE} {}
-
+ 
 			Iterator &operator=(Iterator const &other) {
 				this->TREE = other.TREE;
 				this->IDX = other.IDX;
 				this->SIZE = other.SIZE;
 				return *this;
 			}
-
+ 
 			inline bool isRoot() { return this->IDX == 1; }
 			inline bool isLeaf() { return this->IDX >= this->TREE->SIZE_UNDERLYING; }
 			inline bool isFrontUnderlying() {
@@ -580,7 +807,7 @@ namespace Rain::Algorithm {
 			inline bool isBackUnderlying() {
 				return this->IDX == this->TREE->SIZE_UNDERLYING * 2 - 1;
 			}
-
+ 
 			inline Iterator parent() {
 				if (this->isRoot()) {
 					throw Exception(Error::ITERATOR_INVALID);
@@ -621,23 +848,23 @@ namespace Rain::Algorithm {
 				this->TREE->propagateTo(this->IDX - 1);
 				return {this->TREE, this->IDX - 1, this->SIZE};
 			}
-
+ 
 			// If updates have changed the tree, re-validate this iterator by
 			// propagating to it.
 			inline void revalidate() { this->TREE->propagateTo(this->IDX); }
-
+ 
 			// Access to iterator value.
 			Value &operator*() { return this->TREE->vertices[this->IDX].value; }
 		};
-
+ 
 		friend Iterator;
-
+ 
 		// Segment tree for a segment array of size size.
 		SegmentTreeLazy(std::size_t size)
 				: DEPTH{mostSignificant1BitIdx(size * 2)},
 					SIZE_UNDERLYING{size},
 					vertices(size * 2) {}
-
+ 
 		// Segment tree with all leaf nodes moved in, and the others constructed in
 		// order. This minimizes build time by a constant factor.
 		SegmentTreeLazy(std::vector<Value> &&values)
@@ -652,7 +879,7 @@ namespace Rain::Algorithm {
 					this->vertices[i * 2 + 1].value);
 			}
 		}
-
+ 
 		// Queries an inclusive range, propagating if necessary then aggregating.
 		Result query(std::size_t left, std::size_t right, Query const &query = {}) {
 			this->propagateTo(left + this->SIZE_UNDERLYING);
@@ -678,7 +905,7 @@ namespace Rain::Algorithm {
 			}
 			return Policy::aggregate(resLeft, resRight, query);
 		}
-
+ 
 		// Lazy update an inclusive range. The updated will be applied identically
 		// to all nodes in the range, save for differences based on the depth of the
 		// node (which will be expressed via the std::size_t range parameter).
@@ -742,7 +969,7 @@ namespace Rain::Algorithm {
 				}
 			}
 		}
-
+ 
 		Iterator root() {
 			this->propagateTo(1);
 			return Iterator(this, 1, 1_zu << this->DEPTH);
@@ -756,202 +983,138 @@ namespace Rain::Algorithm {
 			return Iterator(this, this->SIZE_UNDERLYING * 2 - 1, 1);
 		}
 	};
-
-	template <typename ValueType>
-	class SegmentTreeLazySumPolicy : public SegmentTreeLazy<>::Policy<ValueType> {
-		public:
-		using SuperPolicy = SegmentTreeLazy<>::Policy<ValueType>;
-		using typename SuperPolicy::Value;
-		using typename SuperPolicy::Update;
-		using typename SuperPolicy::Result;
-		using typename SuperPolicy::Query;
-
-		static inline void combine(Update &current, Update const &update) {
-			current += update;
-		}
-		static inline void retrace(
-			Value &value,
-			Value const &left,
-			Value const &right,
-			Update const &) {
-			value = left + right;
-		}
-		static inline void
-		build(Value &value, Value const &left, Value const &right) {
-			value = left + right;
-		}
-		static inline void
-		apply(Value &value, Update const &update, std::size_t size) {
-			value += update * static_cast<Update>(size);
-		}
-		static inline Result
-		aggregate(Result const &left, Result const &right, Query const &) {
-			return left + right;
-		}
-	};
-
-	template <typename ValueType>
-	using SegmentTreeLazySum =
-		SegmentTreeLazy<SegmentTreeLazySumPolicy<ValueType>>;
-
-	template <typename ValueType>
-	class SegmentTreeLazyMinPolicy : public SegmentTreeLazy<>::Policy<ValueType> {
-		public:
-		using SuperPolicy = SegmentTreeLazy<>::Policy<ValueType>;
-		using typename SuperPolicy::Value;
-		using typename SuperPolicy::Update;
-		using typename SuperPolicy::Result;
-		using typename SuperPolicy::Query;
-
-		static inline Result defaultResult() {
-			return std::numeric_limits<Result>::max();
-		}
-		static inline void combine(Update &current, Update const &update) {
-			current += update;
-		}
-		static inline void retrace(
-			Value &value,
-			Value const &left,
-			Value const &right,
-			Update const &) {
-			value = std::min(left, right);
-		}
-		static inline void
-		build(Value &value, Value const &left, Value const &right) {
-			value = std::min(left, right);
-		}
-		static inline void apply(Value &value, Update const &update, std::size_t) {
-			value += update;
-		}
-		static inline Result
-		aggregate(Result const &left, Result const &right, Query const &) {
-			return std::min(left, right);
-		}
-	};
-
-	template <typename ValueType>
-	using SegmentTreeLazyMin =
-		SegmentTreeLazy<SegmentTreeLazyMinPolicy<ValueType>>;
-
-	template <typename ValueType>
-	class SegmentTreeLazyMaxPolicy : public SegmentTreeLazy<>::Policy<ValueType> {
-		public:
-		using SuperPolicy = SegmentTreeLazy<>::Policy<ValueType>;
-		using typename SuperPolicy::Value;
-		using typename SuperPolicy::Update;
-		using typename SuperPolicy::Result;
-		using typename SuperPolicy::Query;
-
-		static inline Result defaultResult() {
-			return std::numeric_limits<Result>::min();
-		}
-		static inline void combine(Update &current, Update const &update) {
-			current += update;
-		}
-		static inline void retrace(
-			Value &value,
-			Value const &left,
-			Value const &right,
-			Update const &) {
-			value = std::max(left, right);
-		}
-		static inline void
-		build(Value &value, Value const &left, Value const &right) {
-			value = std::max(left, right);
-		}
-		static inline void apply(Value &value, Update const &update, std::size_t) {
-			value += update;
-		}
-		static inline Result
-		aggregate(Result const &left, Result const &right, Query const &) {
-			return std::max(left, right);
-		}
-	};
-
-	template <typename ValueType>
-	using SegmentTreeLazyMax =
-		SegmentTreeLazy<SegmentTreeLazyMaxPolicy<ValueType>>;
-
-	// 2D segtree for point updates and range queries.
-	template <std::size_t INNER_DIMENSION, typename ValueType>
-	class SegmentTreeLazySum2DPointPolicy : public SegmentTreeLazy<>::Policy<
-																						FenwickTree<ValueType>,
-																						std::pair<std::size_t, ValueType>,
-																						ValueType,
-																						std::size_t> {
-		public:
-		using SuperPolicy = SegmentTreeLazy<>::Policy<
-			FenwickTree<ValueType>,
-			std::pair<std::size_t, ValueType>,
-			ValueType,
-			std::size_t>;
-		using typename SuperPolicy::Value;
-		using typename SuperPolicy::Update;
-		using typename SuperPolicy::Result;
-		using typename SuperPolicy::Query;
-
-		static inline Value defaultValue() { return {INNER_DIMENSION}; }
-		static inline Result defaultResult() { return {}; }
-		static inline Result
-		convert(Value const &value, Query const &query, std::size_t) {
-			return value.sum(query);
-		}
-		// combine is omitted because we only support point updates.
-		static inline void retrace(
-			Value &value,
-			Value const &left,
-			Value const &right,
-			Update const &update) {
-			// We can directly apply the update to this vertex.
-			value.modify(update.first, update.second);
-		}
-		// build is omitted because there is no easy way to combine two Fenwicks.
-		static inline void apply(Value &value, Update const &update, std::size_t) {
-			value.modify(update.first, update.second);
-		}
-		static inline Result
-		aggregate(Result const &left, Result const &right, Query const &) {
-			return left + right;
-		}
-	};
-
-	template <std::size_t INNER_DIMENSION, typename ValueType>
-	using SegmentTreeLazySum2DPoint = SegmentTreeLazy<
-		SegmentTreeLazySum2DPointPolicy<INNER_DIMENSION, ValueType>>;
+ 
+	template <typename Policy>
+	using SegmentTreeLazyPersistent =
+		SegmentTreeLazy<SegmentTreeLazy<>::PolicyPersistentWrapper<Policy>>;
 }
-
+ 
 using namespace Rain::Algorithm;
-
+ 
 using LL = long long;
 using LD = long double;
 using namespace std;
-
+ 
 #define RF(x, from, to) \
 	for (LL x(from), _to(to), _delta{x < _to ? 1LL : -1LL}; x != _to; x += _delta)
-
+ 
+LL TIME_END{200005};
+ 
+class Policy : public SegmentTreeLazy<>::PolicyPersistentWrapper<
+								 SegmentTreeLazy<>::PolicySum<LL>> {
+	public:
+	static inline void retrace(
+		Value &value,
+		Value const &left,
+		Value const &right,
+		Update const &update) {
+		auto hint{std::prev(value.upper_bound(update.first))};
+		value.insert_or_assign(hint, update.first, hint->second + update.second);
+		while (value.rbegin()->first > TIME_END) {
+			value.erase(value.rbegin()->first);
+		}
+	}
+	static inline void
+	build(Value &value, Value const &left, Value const &right) {
+		value[0] = left.at(0) + right.at(0);
+	}
+	static inline void
+	apply(Value &value, Update const &update, std::size_t size) {
+		auto hint{std::prev(value.upper_bound(update.first))};
+		value.insert_or_assign(
+			hint, update.first, hint->second + update.second * size);
+		while (value.rbegin()->first > TIME_END) {
+			value.erase(value.rbegin()->first);
+		}
+	}
+};
+ 
+SegmentTreeLazy<Policy> *tree;
+vector<vector<LL>> G(200000 + 1);
+vector<pair<pair<LL, LL>, pair<LL, LL>>> X(200000 + 1);
+vector<LL> O(G.size());
+vector<LL> Z(200000 + 1);
+vector<map<size_t, LL>> H(200000);
+ 
+LL GO(LL c, LL o) {
+	O[c] = o;
+	RF(i, 0, G[c].size()) {
+		// Time compression to shorten history.
+		if (X[G[c][i]].first.first == 1 || X[G[c][i]].first.first == 2) {
+			O[G[c][i]] = o;
+		} else {
+			o = GO(G[c][i], o) + 1;
+		}
+	}
+	return o;
+}
+ 
+void GZ(LL c) {
+	RF(j, 0, G[c].size()) {
+		LL i{G[c][j]};
+		if (X[i].first.first == 1) {
+			LL val{tree->query(
+				X[i].second.first - 1, X[i].second.first - 1, {(size_t)O[i], {}})};
+			tree->update(
+				X[i].second.first - 1,
+				X[i].second.first - 1,
+				{O[i], X[i].second.second - val});
+		} else if (X[i].first.first == 2) {
+			Z[i] = tree->query(
+				X[i].second.first - 1, X[i].second.second - 1, {(size_t)O[i], {}});
+		}
+	}
+ 
+	RF(j, G[c].size() - 1, -1) {
+		if (X[G[c][j]].first.first == 3) {
+			GZ(G[c][j]);
+		} else {
+			// History pruning for speedup.
+			TIME_END = O[G[c][j]];
+		}
+	}
+}
+ 
 int main() {
 	ios_base::sync_with_stdio(false);
 	cin.tie(nullptr);
-
+ 
 	LL N, Q;
 	cin >> N >> Q;
-	SegmentTreeLazySum<LL> S(N);
+ 
+	H.resize(N);
 	RF(i, 0, N) {
-		LL X;
-		cin >> X;
-		S.update(i, i, {X});
+		cin >> H[i][0];
 	}
-	RF(i, 0, Q) {
-		LL A, B, C, D;
-		cin >> A;
-		if (A == 1) {
-			cin >> B >> C >> D;
-			S.update(B - 1, C - 1, {D});
+	tree = new SegmentTreeLazy<Policy>(move(H));
+ 
+	vector<LL> C;
+	C.push_back(0);
+	RF(i, 1, Q + 1) {
+		cin >> X[i].first.first >> X[i].first.second;
+		G[C[X[i].first.second - 1]].push_back(i);
+		if (X[i].first.first == 3) {
+			C.push_back(i);
 		} else {
-			cin >> B;
-			cout << S.query(B - 1, B - 1) << '\n';
+			cin >> X[i].second.first >> X[i].second.second;
 		}
 	}
-
+ 
+	// cout << chrono::steady_clock::now().time_since_epoch().count() / 1000000
+	// 		 << '\n';
+	GO(0, 0);
+	// cout << chrono::steady_clock::now().time_since_epoch().count() / 1000000
+	// 		 << '\n';
+	GZ(0);
+	// cout << chrono::steady_clock::now().time_since_epoch().count() / 1000000
+	// 		 << '\n';
+ 
+	RF(i, 1, Q + 1) {
+		if (X[i].first.first == 2) {
+			cout << Z[i] << '\n';
+		}
+	}
+ 
+	delete tree;
 	return 0;
 }

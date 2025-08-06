@@ -873,7 +873,7 @@ namespace Rain::Algorithm {
 		SegmentTreeLazy<SegmentTreeLazyMaxPolicy<ValueType>>;
 
 	// 2D segtree for point updates and range queries.
-	template <std::size_t INNER_DIMENSION, typename ValueType>
+	template <typename ValueType, std::size_t INNER_DIMENSION>
 	class SegmentTreeLazySum2DPointPolicy : public SegmentTreeLazy<>::Policy<
 																						FenwickTree<ValueType>,
 																						std::pair<std::size_t, ValueType>,
@@ -915,9 +915,9 @@ namespace Rain::Algorithm {
 		}
 	};
 
-	template <std::size_t INNER_DIMENSION, typename ValueType>
+	template <typename ValueType, std::size_t INNER_DIMENSION>
 	using SegmentTreeLazySum2DPoint = SegmentTreeLazy<
-		SegmentTreeLazySum2DPointPolicy<INNER_DIMENSION, ValueType>>;
+		SegmentTreeLazySum2DPointPolicy<ValueType, INNER_DIMENSION>>;
 }
 
 using namespace Rain::Algorithm;
@@ -935,21 +935,34 @@ int main() {
 
 	LL N, Q;
 	cin >> N >> Q;
-	SegmentTreeLazySum<LL> S(N);
-	RF(i, 0, N) {
-		LL X;
-		cin >> X;
-		S.update(i, i, {X});
+
+	SegmentTreeLazySum2DPoint<LL, 1001> tree(N + 1);
+	vector<string> G(N + 1);
+	RF(i, 1, N + 1) {
+		cin >> G[i];
+		RF(j, 1, N + 1) {
+			if (G[i][j - 1] == '*') {
+				tree.update(i, i, {j, 1});
+			}
+		}
 	}
 	RF(i, 0, Q) {
-		LL A, B, C, D;
-		cin >> A;
-		if (A == 1) {
-			cin >> B >> C >> D;
-			S.update(B - 1, C - 1, {D});
+		LL a, b, c, d, e;
+		cin >> a;
+		if (a == 1) {
+			cin >> b >> c;
+			if (G[b][c - 1] == '.') {
+				tree.update(b, b, {c, 1});
+				G[b][c - 1] = '*';
+			} else {
+				tree.update(b, b, {c, -1});
+				G[b][c - 1] = '.';
+			}
 		} else {
-			cin >> B;
-			cout << S.query(B - 1, B - 1) << '\n';
+			cin >> b >> c >> d >> e;
+			cout << tree.query(0, d, e) - tree.query(0, d, c - 1) -
+					tree.query(0, b - 1, e) + tree.query(0, b - 1, c - 1)
+					 << '\n';
 		}
 	}
 
