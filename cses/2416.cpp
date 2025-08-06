@@ -250,6 +250,153 @@ namespace Rain {
 	}
 }
 
+// For an overloaded function f, this wraps it in an rvalue-reference lambda so
+// that it may be resolved via perfect forwarding.
+#define RAIN_FUNCTIONAL_RESOLVE_OVERLOAD(f)          \
+	[](auto &&...args) -> decltype(auto) {             \
+		return f(std::forward<decltype(args)>(args)...); \
+	}
+
+namespace Rain::Functional {
+	// SFINAE for const-iterable types (containers). Assumes sizeof(char) and
+	// sizeof(int) are not equal.
+	template <typename Type>
+	struct isConstIterable {
+		template <typename TypeInner>
+		static char evaluate(typename TypeInner::const_iterator *);
+		template <typename TypeInner>
+		static int evaluate(...);
+
+		public:
+		enum { value = sizeof(evaluate<Type>(0)) == sizeof(char) };
+	};
+
+	template <typename>
+	struct isPair : std::false_type {};
+
+	template <typename TypeFirst, typename TypeSecond>
+	struct isPair<std::pair<TypeFirst, TypeSecond>> : std::true_type {};
+
+	template <typename Type, typename = std::void_t<>>
+	struct isStdHashable : std::false_type {};
+
+	template <typename Type>
+	struct isStdHashable<
+		Type,
+		std::void_t<decltype(std::declval<std::hash<Type>>()(
+			std::declval<Type>()))>> : std::true_type {};
+}
+
+namespace Rain::Random {
+	using Generator = std::mt19937_64;
+
+	// Default, generally-safe generator when one is not supplied by caller.
+	inline Generator generator(
+		std::chrono::duration_cast<std::chrono::nanoseconds>(
+			std::chrono::high_resolution_clock::now().time_since_epoch())
+			.count());
+
+	template <typename>
+	struct SplitMixHash;
+
+	// Simple function to combine two 32 or 64-bit hashes, based on
+	// <https://stackoverflow.com/questions/5889238/why-is-xor-the-default-way-to-combine-hashes>
+	// from Boost.
+	//
+	// SIZE_T_SIZE is a default argument which forces a substitution, and thus
+	// SFINAE.
+	template <
+		std::size_t SIZE_T_SIZE = sizeof(std::size_t),
+		typename std::enable_if<SIZE_T_SIZE == 8>::type * = nullptr>
+	static inline std::size_t combineHash(std::size_t &seed, std::size_t next) {
+		return seed ^= next + 0x517cc1b727220a95 + (seed << 6) + (seed >> 2);
+	}
+	template <
+		typename Type,
+		std::size_t SIZE_T_SIZE = sizeof(std::size_t),
+		typename std::enable_if<SIZE_T_SIZE == 4>::type * = nullptr>
+	static inline std::size_t combineHash(std::size_t &seed, std::size_t next) {
+		return seed ^= next + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+	}
+
+	// SFINAE enables SplitMixHash for all std::hash-able types, and defines
+	// custom unwrapping hash for pairs/containers/etc.
+	template <typename Type>
+	struct SplitMixHash {
+		// 64-bit hash from <https://codeforces.com/blog/entry/62393>.
+		template <
+			typename TypeInner = Type,
+			std::size_t SIZE_T_SIZE = sizeof(std::size_t),
+			typename std::enable_if<Functional::isStdHashable<TypeInner>::value>::type
+				* = nullptr,
+			typename std::enable_if<SIZE_T_SIZE == 8>::type * = nullptr>
+		std::size_t operator()(Type const &value) const {
+			static const std::size_t FIXED_RANDOM(
+				std::chrono::duration_cast<std::chrono::nanoseconds>(
+					std::chrono::high_resolution_clock::now().time_since_epoch())
+					.count());
+			std::size_t hash{std::hash<Type>{}(value)};
+			hash += FIXED_RANDOM + 0x9e3779b97f4a7c15;
+			hash = (hash ^ (hash >> 30)) * 0xbf58476d1ce4e5b9;
+			hash = (hash ^ (hash >> 27)) * 0x94d049bb133111eb;
+			return hash ^ (hash >> 31);
+		}
+
+		// 32-bit hash from <https://groups.google.com/g/prng/c/VFjdFmbMgZI>.
+		template <
+			typename TypeInner = Type,
+			std::size_t SIZE_T_SIZE = sizeof(std::size_t),
+			typename std::enable_if<Functional::isStdHashable<TypeInner>::value>::type
+				* = nullptr,
+			typename std::enable_if<SIZE_T_SIZE == 4>::type * = nullptr>
+		std::size_t operator()(Type const &value) const {
+			static const std::size_t FIXED_RANDOM(
+				std::chrono::duration_cast<std::chrono::nanoseconds>(
+					std::chrono::high_resolution_clock::now().time_since_epoch())
+					.count());
+			std::size_t hash{std::hash<Type>{}(value)};
+			hash += FIXED_RANDOM + 0x9e3779b9;
+			hash = (hash ^ (hash >> 16)) * 0x85ebca6b;
+			hash = (hash ^ (hash >> 13)) * 0xc2b2ae35;
+			return hash ^ (hash >> 16);
+		}
+
+		// Unwraps a pair.
+		template <
+			typename TypeInner = Type,
+			typename std::enable_if<
+				!Functional::isStdHashable<TypeInner>::value &&
+				Functional::isPair<TypeInner>::value>::type * = nullptr>
+		std::size_t operator()(Type const &value) const {
+			std::size_t result{0};
+			combineHash(result, SplitMixHash<decltype(value.first)>{}(value.first));
+			combineHash(result, SplitMixHash<decltype(value.second)>{}(value.second));
+			return result;
+		}
+
+		// Unwraps a container.
+		template <
+			typename TypeInner = Type,
+			typename std::enable_if<
+				!Functional::isStdHashable<TypeInner>::value &&
+				!Functional::isPair<TypeInner>::value &&
+				Functional::isConstIterable<TypeInner>::value>::type * = nullptr>
+		std::size_t operator()(Type const &value) const {
+			std::size_t result{0};
+			for (auto const &i : value) {
+				combineHash(result, SplitMixHash<decltype(i)>{}(i));
+			}
+			return result;
+		}
+	};
+
+	// Saves the use of std::remove_reference and std::remove_const.
+	template <typename Type>
+	struct SplitMixHash<Type &> : SplitMixHash<Type> {};
+	template <typename Type>
+	struct SplitMixHash<Type const> : SplitMixHash<Type> {};
+}
+
 namespace Rain::Algorithm {
 	// Most significant 1-bit for unsigned integral types of at most long long in
 	// size. Undefined result if x = 0.
@@ -430,13 +577,20 @@ namespace Rain::Algorithm {
 				return {value};
 			}
 
-			// Combine and build are not used in every segtree, and the default is to
-			// throw if used.
-			static inline void combine(Update &current, Update const &update) {
+			// Some functions do not need to be provided by the policy if the segtree
+			// does not use them.
+			//
+			// `combine` is used iff range updates are used.
+			static inline void combine(Update &, Update const &) {
 				throw Exception(Error::NOT_IMPLEMENTED_POLICY);
 			}
-			static inline void
-			build(Value &value, Value const &left, Value const &right) {
+			// `build` is used iff the segtree is moved from an array in the
+			// constructor.
+			static inline void build(Value &, Value const &, Value const &) {
+				throw Exception(Error::NOT_IMPLEMENTED_POLICY);
+			}
+			// `apply` is used iff the segtree is updated.
+			static inline void apply(Value &, Update const &, std::size_t) {
 				throw Exception(Error::NOT_IMPLEMENTED_POLICY);
 			}
 		};
@@ -998,69 +1152,42 @@ using namespace std;
 #define RF(x, from, to) \
 	for (LL x(from), _to(to), _delta{x < _to ? 1LL : -1LL}; x != _to; x += _delta)
 
-class Value {
-	public:
-	LL sum, minPrefix, maxPrefix, maxSubarraySum;
-};
-
-class Policy : public SegmentTreeLazy<>::PolicyBase<Value, LL, Value> {
-	public:
-	using SuperPolicy = PolicyBase<Value, LL, Value>;
-	using typename SuperPolicy::Value;
-	using typename SuperPolicy::Update;
-	using typename SuperPolicy::Result;
-	using typename SuperPolicy::Query;
-
-	static inline Result convert(Value const &value, Query const &, std::size_t) {
-		return value;
-	}
-	static inline void
-	retrace(Value &value, Value const &left, Value const &right, Update const &) {
-		value.sum = left.sum + right.sum;
-		value.minPrefix = min(left.minPrefix, left.sum + right.minPrefix);
-		value.maxPrefix = max(left.maxPrefix, left.sum + right.maxPrefix);
-		value.maxSubarraySum = max(
-			{left.maxSubarraySum,
-			 right.maxSubarraySum,
-			 left.sum + right.maxPrefix - left.minPrefix});
-	}
-	static inline void
-	apply(Value &value, Update const &update, std::size_t size) {
-		value.sum = update;
-		value.minPrefix = min(0LL, update);
-		value.maxPrefix = max(0LL, update);
-		value.maxSubarraySum = value.maxPrefix;
-	}
-	static inline Result
-	aggregate(Result const &left, Result const &right, Query const &) {
-		return {
-			left.sum + right.sum,
-			min(left.minPrefix, left.sum + right.minPrefix),
-			max(left.maxPrefix, left.sum + right.maxPrefix),
-			max(
-				{left.maxSubarraySum,
-				 right.maxSubarraySum,
-				 left.sum + right.maxPrefix - left.minPrefix})};
-	}
-};
-
 int main() {
 	ios_base::sync_with_stdio(false);
 	cin.tie(nullptr);
 
 	LL N, Q;
 	cin >> N >> Q;
-	SegmentTreeLazy<Policy> tree(N);
+	vector<LL> X(N);
+	vector<pair<pair<LL, LL>, LL>> Y(Q);
 	RF(i, 0, N) {
-		LL x;
-		cin >> x;
-		tree.update(i, i, x);
+		cin >> X[i];
 	}
 	RF(i, 0, Q) {
-		LL a, b;
-		cin >> a >> b;
-		tree.update(a - 1, a - 1, b);
-		cout << tree.query(0, N - 1).maxSubarraySum << '\n';
+		cin >> Y[i].first.first >> Y[i].first.second;
+		Y[i].first.first--;
+		Y[i].first.second--;
+		Y[i].second = i;
+	}
+	sort(Y.begin(), Y.end());
+	reverse(Y.begin(), Y.end());
+	vector<pair<LL, LL>> R;
+	R.push_back({LLONG_MAX, N});
+	LL YC{N - 1};
+	vector<LL> Z(Q);
+	SegmentTreeLazy<SegmentTreeLazy<>::PolicySum<LL>> tree(N);
+	RF(i, 0, Q) {
+		for (; YC >= Y[i].first.first; YC--) {
+			while (R.back().first <= X[YC]) {
+				tree.update(R.back().second, R[R.size() - 2].second - 1, X[YC] - R.back().first);
+				R.pop_back();
+			}
+			R.push_back({X[YC], YC});
+		}
+		Z[Y[i].second] = tree.query(Y[i].first.first, Y[i].first.second);
+	}
+	RF(i, 0, Q) {
+		cout << Z[i] << '\n';
 	}
 
 	return 0;

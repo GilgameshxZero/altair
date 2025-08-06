@@ -430,13 +430,25 @@ namespace Rain::Algorithm {
 				return {value};
 			}
 
-			// Combine and build are not used in every segtree, and the default is to
-			// throw if used.
-			static inline void combine(Update &current, Update const &update) {
+			// Some functions do not need to be provided by the policy if the segtree
+			// does not use them.
+			//
+			// `combine` is used iff range updates are used.
+			static inline void combine(Update &, Update const &) {
 				throw Exception(Error::NOT_IMPLEMENTED_POLICY);
 			}
+			// `build` is used iff the segtree is moved from an array in the
+			// constructor.
+			static inline void build(Value &, Value const &, Value const &) {
+				throw Exception(Error::NOT_IMPLEMENTED_POLICY);
+			}
+			// `retrace` is used iff the segtree is updated.
 			static inline void
-			build(Value &value, Value const &left, Value const &right) {
+			retrace(Value &, Value const &, Value const &, Update const &) {
+				throw Exception(Error::NOT_IMPLEMENTED_POLICY);
+			}
+			// `apply` is used iff the segtree is updated.
+			static inline void apply(Value &, Update const &, std::size_t) {
 				throw Exception(Error::NOT_IMPLEMENTED_POLICY);
 			}
 		};
@@ -998,49 +1010,59 @@ using namespace std;
 #define RF(x, from, to) \
 	for (LL x(from), _to(to), _delta{x < _to ? 1LL : -1LL}; x != _to; x += _delta)
 
+LL const SZ{32};
+
 class Value {
 	public:
-	LL sum, minPrefix, maxPrefix, maxSubarraySum;
+	array<LL, SZ> sum, small;
 };
 
-class Policy : public SegmentTreeLazy<>::PolicyBase<Value, LL, Value> {
+using Result = Value;
+
+class Policy : public SegmentTreeLazy<>::PolicyBase<Value, LL, Result> {
 	public:
-	using SuperPolicy = PolicyBase<Value, LL, Value>;
+	using SuperPolicy = PolicyBase<Value, LL, Result>;
 	using typename SuperPolicy::Value;
 	using typename SuperPolicy::Update;
 	using typename SuperPolicy::Result;
 	using typename SuperPolicy::Query;
 
+	static inline Value defaultValue() { return {}; }
+	static inline Result defaultResult() {
+		Result result;
+		result.sum.fill(0);
+		result.small.fill(LLONG_MAX);
+		return result;
+	}
 	static inline Result convert(Value const &value, Query const &, std::size_t) {
 		return value;
 	}
-	static inline void
-	retrace(Value &value, Value const &left, Value const &right, Update const &) {
-		value.sum = left.sum + right.sum;
-		value.minPrefix = min(left.minPrefix, left.sum + right.minPrefix);
-		value.maxPrefix = max(left.maxPrefix, left.sum + right.maxPrefix);
-		value.maxSubarraySum = max(
-			{left.maxSubarraySum,
-			 right.maxSubarraySum,
-			 left.sum + right.maxPrefix - left.minPrefix});
-	}
-	static inline void
-	apply(Value &value, Update const &update, std::size_t size) {
-		value.sum = update;
-		value.minPrefix = min(0LL, update);
-		value.maxPrefix = max(0LL, update);
-		value.maxSubarraySum = value.maxPrefix;
-	}
+	// static inline void retrace(
+	// 	Value &value,
+	// 	Value const &left,
+	// 	Value const &right,
+	// 	Update const &update) {
+	// }
+	// static inline void
+	// apply(Value &value, Update const &update, std::size_t size) {
+	// }
 	static inline Result
 	aggregate(Result const &left, Result const &right, Query const &) {
-		return {
-			left.sum + right.sum,
-			min(left.minPrefix, left.sum + right.minPrefix),
-			max(left.maxPrefix, left.sum + right.maxPrefix),
-			max(
-				{left.maxSubarraySum,
-				 right.maxSubarraySum,
-				 left.sum + right.maxPrefix - left.minPrefix})};
+		Result result;
+		RF(i, 0, SZ) {
+			result.sum[i] = left.sum[i] + right.sum[i];
+			result.small[i] = min(left.small[i], right.small[i]);
+		}
+		return result;
+	}
+	// static inline void combine(Update &current, Update const &update) {
+	// }
+	static inline void
+	build(Value &value, Value const &left, Value const &right) {
+		RF(i, 0, SZ) {
+			value.sum[i] = left.sum[i] + right.sum[i];
+			value.small[i] = min(left.small[i], right.small[i]);
+		}
 	}
 };
 
@@ -1050,17 +1072,31 @@ int main() {
 
 	LL N, Q;
 	cin >> N >> Q;
-	SegmentTreeLazy<Policy> tree(N);
+
+	vector<Value> TI(N);
 	RF(i, 0, N) {
 		LL x;
 		cin >> x;
-		tree.update(i, i, x);
+		auto sumBucket{mostSignificant1BitIdx(x) + 1}, smallBucket{sumBucket - 1};
+		TI[i].sum[sumBucket] = x;
+		RF(j, 0, SZ) {
+			TI[i].small[j] = (2LL << j);
+		}
+		TI[i].small[smallBucket] = x;
 	}
+	SegmentTreeLazy<Policy> T(move(TI));
+
 	RF(i, 0, Q) {
 		LL a, b;
 		cin >> a >> b;
-		tree.update(a - 1, a - 1, b);
-		cout << tree.query(0, N - 1).maxSubarraySum << '\n';
+		a--;
+		b--;
+		LL bucket{1}, cumSum{0};
+		Result res{T.query(a, b)};
+		for (; bucket < SZ && res.small[bucket - 1] <= cumSum + 1; bucket++) {
+			cumSum += res.sum[bucket];
+		}
+		cout << cumSum + 1 << '\n';
 	}
 
 	return 0;
