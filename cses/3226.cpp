@@ -442,22 +442,26 @@ namespace Rain::Algorithm {
 		};
 
 		// Wraps a policy to implement a persistent segment tree via the fat-node
-		// technique. Range updates are somewhat dangerous because lazy propagation
-		// may cause some updates to not be stored in the history. I do not believe
-		// lazy propagation is possible in a persistent manner, because lazy
-		// propagation works via the combining of updates, which necessarily
-		// destroys time information, or otherwise is no longer constant-time.
+		// technique. In fate node, only the latest copy is modifiable.
 		//
-		// Updates should typically be applied in non-decreasing order of time. One
-		// may choose to apply an out-of-order update to operate on a previous
-		// "version" of the tree, however, this invalidates later "version"s of the
-		// tree. In this method, it is recommended to compute offline the number of
-		// versions to be able to revert to.
+		// To apply updates out-of-order, we recommend the client apply updates and
+		// queries in reverse-time order. In this way, applying an earlier update
+		// will apply it correctly, but also invalidate later, already-applied
+		// "version"s of the tree.
+		//
+		// Lazy range updates are supported by persisting lazy updates. However,
+		// this wrapper does not support it, as there is no query information
+		// provided in `retrace` and `apply`, which is necessary. To support
+		// persistent lazy updates, we prefer a separate path copying alternative
+		// segment tree implementation (TODO).
 		//
 		// A query for time `t` is evaluated after all requested updates at time `t`
 		// have been applied.
+		//
+		// Additional speedups can be had by offline re-ordering of the updates and
+		// applying history pruning in `retrace` and `apply`.
 		template <typename Policy, typename TimeType = std::size_t>
-		class PolicyPersistentWrapper {
+		class PolicyPersistentFatNodeWrapper {
 			public:
 			using Value = std::map<TimeType, typename Policy::Value>;
 			using Update = std::pair<TimeType, typename Policy::Update>;
@@ -985,8 +989,8 @@ namespace Rain::Algorithm {
 	};
 
 	template <typename Policy>
-	using SegmentTreeLazyPersistent =
-		SegmentTreeLazy<SegmentTreeLazy<>::PolicyPersistentWrapper<Policy>>;
+	using SegmentTreeLazyPersistentFatNode =
+		SegmentTreeLazy<SegmentTreeLazy<>::PolicyPersistentFatNodeWrapper<Policy>>;
 }
 
 using namespace Rain::Algorithm;
@@ -998,69 +1002,56 @@ using namespace std;
 #define RF(x, from, to) \
 	for (LL x(from), _to(to), _delta{x < _to ? 1LL : -1LL}; x != _to; x += _delta)
 
-class Value {
-	public:
-	LL sum, minPrefix, maxPrefix, maxSubarraySum;
-};
-
-class Policy : public SegmentTreeLazy<>::PolicyBase<Value, LL, Value> {
-	public:
-	using SuperPolicy = PolicyBase<Value, LL, Value>;
-	using typename SuperPolicy::Value;
-	using typename SuperPolicy::Update;
-	using typename SuperPolicy::Result;
-	using typename SuperPolicy::Query;
-
-	static inline Result convert(Value const &value, Query const &, std::size_t) {
-		return value;
-	}
-	static inline void
-	retrace(Value &value, Value const &left, Value const &right, Update const &) {
-		value.sum = left.sum + right.sum;
-		value.minPrefix = min(left.minPrefix, left.sum + right.minPrefix);
-		value.maxPrefix = max(left.maxPrefix, left.sum + right.maxPrefix);
-		value.maxSubarraySum = max(
-			{left.maxSubarraySum,
-			 right.maxSubarraySum,
-			 left.sum + right.maxPrefix - left.minPrefix});
-	}
-	static inline void
-	apply(Value &value, Update const &update, std::size_t size) {
-		value.sum = update;
-		value.minPrefix = min(0LL, update);
-		value.maxPrefix = max(0LL, update);
-		value.maxSubarraySum = value.maxPrefix;
-	}
-	static inline Result
-	aggregate(Result const &left, Result const &right, Query const &) {
-		return {
-			left.sum + right.sum,
-			min(left.minPrefix, left.sum + right.minPrefix),
-			max(left.maxPrefix, left.sum + right.maxPrefix),
-			max(
-				{left.maxSubarraySum,
-				 right.maxSubarraySum,
-				 left.sum + right.maxPrefix - left.minPrefix})};
-	}
-};
-
 int main() {
 	ios_base::sync_with_stdio(false);
 	cin.tie(nullptr);
 
 	LL N, Q;
 	cin >> N >> Q;
-	SegmentTreeLazy<Policy> tree(N);
-	RF(i, 0, N) {
-		LL x;
-		cin >> x;
-		tree.update(i, i, x);
+
+	vector<LL> P(N + 1);
+	vector<array<LL, 22>> X(N + 1);
+	P[0] = 0;
+	RF(i, 1, N + 1) {
+		cin >> P[i];
+		X[i][0] = max(0LL, P[i]);
+		P[i] += P[i - 1];
 	}
+
+	auto P2{P};
+	SegmentTreeLazy<SegmentTreeLazy<>::PolicyMax<LL>> MX(move(P));
+	SegmentTreeLazy<SegmentTreeLazy<>::PolicyMin<LL>> MN(move(P2));
+	RF(j, 1, X[0].size()) {
+		RF(i, 1, N + 1) {
+			LL s{1LL << (j - 1)};
+			if (i + s >= N + 1) {
+				X[i][j] = X[i][j - 1];
+			} else {
+				X[i][j] = max(
+					{X[i][j - 1],
+					 X[i + s][j - 1],
+					 MX.query(i + s, min(N, i + 2 * s - 1)) -
+						 MN.query(i - 1, i - 1 + s - 1)});
+			}
+		}
+	}
+
 	RF(i, 0, Q) {
 		LL a, b;
 		cin >> a >> b;
-		tree.update(a - 1, a - 1, b);
-		cout << tree.query(0, N - 1).maxSubarraySum << '\n';
+		if (a == b) {
+			cout << X[a][0] << '\n';
+			continue;
+		}
+		LL l{0};
+		for (; (1LL << l) < b - a + 1; l++);
+		l--;
+		cout << max(
+							{X[a][l],
+							 X[b - (1LL << l) + 1][l],
+							 MX.query(a + (1LL << l), b) -
+								 MN.query(a - 1, a - 1 + (1LL << l) - 1)})
+				 << '\n';
 	}
 
 	return 0;

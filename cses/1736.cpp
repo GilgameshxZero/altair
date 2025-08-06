@@ -432,11 +432,10 @@ namespace Rain::Algorithm {
 
 			// Combine and build are not used in every segtree, and the default is to
 			// throw if used.
-			static inline void combine(Update &current, Update const &update) {
+			static inline void combine(Update &, Update const &) {
 				throw Exception(Error::NOT_IMPLEMENTED_POLICY);
 			}
-			static inline void
-			build(Value &value, Value const &left, Value const &right) {
+			static inline void build(Value &value, Value const &, Value const &) {
 				throw Exception(Error::NOT_IMPLEMENTED_POLICY);
 			}
 		};
@@ -1000,7 +999,7 @@ using namespace std;
 
 class Value {
 	public:
-	LL sum, minPrefix, maxPrefix, maxSubarraySum;
+	LL size, sum, triangle;
 };
 
 class Policy : public SegmentTreeLazy<>::PolicyBase<Value, LL, Value> {
@@ -1016,31 +1015,34 @@ class Policy : public SegmentTreeLazy<>::PolicyBase<Value, LL, Value> {
 	}
 	static inline void
 	retrace(Value &value, Value const &left, Value const &right, Update const &) {
-		value.sum = left.sum + right.sum;
-		value.minPrefix = min(left.minPrefix, left.sum + right.minPrefix);
-		value.maxPrefix = max(left.maxPrefix, left.sum + right.maxPrefix);
-		value.maxSubarraySum = max(
-			{left.maxSubarraySum,
-			 right.maxSubarraySum,
-			 left.sum + right.maxPrefix - left.minPrefix});
+		value = {
+			left.size + right.size,
+			left.sum + right.sum,
+			left.sum * right.size + left.triangle + right.triangle};
 	}
 	static inline void
 	apply(Value &value, Update const &update, std::size_t size) {
-		value.sum = update;
-		value.minPrefix = min(0LL, update);
-		value.maxPrefix = max(0LL, update);
-		value.maxSubarraySum = value.maxPrefix;
+		value = {
+			value.size,
+			value.size * update + value.sum,
+			value.size * (value.size + 1) / 2 * update + value.triangle};
 	}
 	static inline Result
 	aggregate(Result const &left, Result const &right, Query const &) {
 		return {
+			left.size + right.size,
 			left.sum + right.sum,
-			min(left.minPrefix, left.sum + right.minPrefix),
-			max(left.maxPrefix, left.sum + right.maxPrefix),
-			max(
-				{left.maxSubarraySum,
-				 right.maxSubarraySum,
-				 left.sum + right.maxPrefix - left.minPrefix})};
+			left.sum * right.size + left.triangle + right.triangle};
+	}
+	static inline void combine(Update &current, Update const &update) {
+		current += update;
+	}
+	static inline void
+	build(Value &value, Value const &left, Value const &right) {
+		value = {
+			left.size + right.size,
+			left.sum + right.sum,
+			left.sum * right.size + left.triangle + right.triangle};
 	}
 };
 
@@ -1050,17 +1052,30 @@ int main() {
 
 	LL N, Q;
 	cin >> N >> Q;
-	SegmentTreeLazy<Policy> tree(N);
+
+	vector<LL> T1(N);
+	vector<Value> T2(N);
 	RF(i, 0, N) {
-		LL x;
-		cin >> x;
-		tree.update(i, i, x);
+		cin >> T1[i];
+		T2[i] = {1, 0, 0};
 	}
+	SegmentTreeLazy<SegmentTreeLazy<>::PolicySum<LL>> ST1(move(T1));
+	SegmentTreeLazy<Policy> ST2(move(T2));
 	RF(i, 0, Q) {
-		LL a, b;
-		cin >> a >> b;
-		tree.update(a - 1, a - 1, b);
-		cout << tree.query(0, N - 1).maxSubarraySum << '\n';
+		LL a, b, c;
+		cin >> a >> b >> c;
+		b--;
+		c--;
+		if (a == 1) {
+			ST2.update(b, c, 1);
+			if (c + 1 < N) {
+				ST2.update(c + 1, c + 1, -(c - b + 1));
+			}
+		} else {
+			auto q1{ST2.query(0, c)},
+				q2{b == 0 ? Value{0, 0, 0} : ST2.query(0, b - 1)};
+			cout << q1.triangle - q2.triangle + ST1.query(b, c) << '\n';
+		}
 	}
 
 	return 0;
