@@ -13,26 +13,35 @@ using namespace std;
 	for (LL x(from), _to(to), _delta{x < _to ? 1LL : -1LL}; x != _to; x += _delta)
 
 LL N, Q;
-array<vector<LL>, 200001> E, H;
+array<vector<LL>, 200001> E;
 array<LL, 200001> Z;
-unordered_set<LL> A;
+array<unordered_set<LL>, 200001> S;
 
 void CZ(LL i, LL p) {
-	for (auto &j : H[i]) {
-		auto k{A.find(j)};
-		if (k == A.end()) {
-			A.insert(j);
-		} else {
-			A.erase(k);
+	for (auto &j : E[i]) {
+		if (j == p) {
+			continue;
+		}
+		CZ(j, i);
+		if (S[j].size() > S[i].size()) {
+			swap(S[i], S[j]);
 		}
 	}
 	for (auto &j : E[i]) {
 		if (j == p) {
 			continue;
 		}
-		CZ(j, i);
+		S[i].merge(S[j]);
 	}
-	Z[i] = A.size();
+	Z[i] += S[i].size();
+	for (auto &j : E[i]) {
+		if (j == p) {
+			continue;
+		}
+		for (auto &k : S[j]) {
+			S[i].erase(k);
+		}
+	}
 }
 
 int main() {
@@ -49,10 +58,17 @@ int main() {
 	RF(i, 0, Q) {
 		LL a, b;
 		cin >> a >> b;
-		H[a].push_back(i);
-		H[b].push_back(i);
+		if (a == b) {
+			Z[a]++;
+			continue;
+		}
+		S[a].insert(i);
+		S[b].insert(i);
 	}
 	CZ(1, 0);
+	RF(i, 1, N + 1) {
+		cout << Z[i] << ' ';
+	}
 
 	return 0;
 }
