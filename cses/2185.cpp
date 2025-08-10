@@ -16,19 +16,26 @@ int main() {
 	ios_base::sync_with_stdio(false);
 	cin.tie(nullptr);
 
-	LL const M{1000000007};
-	LL N;
-	cin >> N;
-	LL Z{0}, SN{(LL)floor(sqrt(N))}, NSN{(LL)floor(N / SN)};
-	RF(i, 1, SN + 1) {
-		LL j{(LL)floor(N / i) % M};
-		Z = (Z + j * (j + 1) / 2) % M;
+	LL N, K;
+	cin >> N >> K;
+	vector<LL> A(K);
+	RF(i, 0, K) {
+		cin >> A[i];
 	}
-	RF(i, 1, NSN) {
-		Z =
-			(Z +
-			 i * (i + 1) / 2 % M * ((LL)floor(N / i) - (LL)floor(N / (i + 1))) % M) %
-			M;
+	LL Z{0};
+	RF(i, 1, (1LL << K)) {
+		LL pc{-1}, pl{1};
+		LD p{1};
+		RF(j, 0, K) {
+			if (i & (1LL << j)) {
+				pc *= -1;
+				pl *= A[j];
+				p *= A[j];
+			}
+		}
+		if (p <= N) {
+			Z += pc * (N / pl);
+		}
 	}
 	cout << Z;
 
