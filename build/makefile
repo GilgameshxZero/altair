@@ -1,21 +1,29 @@
 # GNU make (gmake) & nmake shared makefile.
 # Conditional logic implemented with differing end-of-line comment syntax.
 # To enable multithreaded compilation, nmake compiles all files together with
-# /MP, while gmake compiles separately with -jN.
-# Makefile assumptions are slightly deviated from `utulek` as our pch.cpp is
-# 	shared amongst all projects.
+# 	/MP, while gmake compiles separately with -jN.
+# Files are pre-compiled with pch.cpp.
 
 # Variables:
-# PROJECT: name of project; path to files from repository root.
-# SOURCES: * (default), or a list of filenames in the project directory.
-# BIN: name of output executable (default = PROJECT).
-# BUILD: 0 (default), 1, or 2, specifying the type of build.
-# ARGUMENTS: command-line arguments to pass to the executable to be run.
+# PROJ: a repository can have multiple *project*s, each in their own directory
+# 	(default = test).
+# BIN: name of the project; a project may have multiple (default = SRC (without
+# 	`.cpp`), or PROJ if SRC not defined).
+# SRC: target filenames (can be multiple) to link, starting from the project
+# 	directory (default = BIN.cpp, or *.cpp if BIN is not defined.).
+# BUILD: 0 (default), 1, or 2, specifying the type of build (debug, release,
+# 	instrument).
+# ARCH: 64 (default) or 86, specifying the architecture to build for. The
+# 	environment may need to be initialized accordingly (e.g. for cl.exe).
+# PCH: 0 or 1 (default), whether or not to use precompiled pch.cpp. Always 0 on
+# 	non-Windows.
+# ARGS: command-line arguments to pass to the executable to be run.
+# INCL: set from caller on Windows, enumerates header file directory wildcards.
 
 # Targets:
 # build (default): compile & link.
 # run: compile, link, and run.
-# clean: remove intermediates and output directory.
+# clean: remove intermediates directory.
 
 # Default target defined before any "fake" targets.
 __default: _default
@@ -28,24 +36,28 @@ ifdef MAKEDIR: # gmake: false; nmake: unused target
 # nmake specific commands.
 ROOT_DIR = ..^\
 REPO_NAME = altair
-!IFNDEF PROJ
-PROJ_NAME = experiment
-!ELSE
+# Project name must exist.
 PROJ_NAME = $(PROJ)
-!ENDIF
 !IFNDEF BIN
-BIN_NAME = $(PROJ_NAME)
-!ELSE
-BIN_NAME = $(BIN)
-!ENDIF
 !IFNDEF SRC
-SRC_NAME = $(BIN_NAME).cpp
+BIN = $(PROJ_NAME)
+# This will include all *.cpp* directories as well. In this case, name
+# directories as *.cpp.assets.
+SRC = *.cpp
 !ELSE
-SRC_NAME = $(SRC)
+BIN = $(patsubsti %.cpp,%,$(SRC))
 !ENDIF
+!ELSE
+!IFNDEF SRC
+SRC = $(BIN).cpp
+!ENDIF
+!ENDIF
+BIN_NAME = $(BIN)
+SRC_NAME = $(SRC)
 !IFNDEF BUILD
-BUILD_NAME = debug
-!ELSE IF $(BUILD) == 2
+BUILD = 0
+!ENDIF
+!IF $(BUILD) == 2
 BUILD_NAME = instrument
 !ELSE IF $(BUILD) == 1
 BUILD_NAME = release
@@ -58,12 +70,9 @@ ARCH = 64
 !IFNDEF PCH
 PCH = 1
 !ENDIF
+# Specialization for this repo.
 !IFNDEF ARGS
-ARGS = < ..\$(ROOT_DIR)build\i.default.txt > ..\$(ROOT_DIR)build\o.default.txt
-!ENDIF
-# Makefile fails if directory doesn't exist.
-!IF [IF EXIST $(ROOT_DIR)experiment\$(BIN_NAME).cpp-assets\ EXIT /B 1] == 1
-INCL = $(INCL) $(ROOT_DIR)experiment\$(BIN_NAME).cpp-assets\*
+ARGS = < $(ROOT_DIR)..\build\i.default.txt > $(ROOT_DIR)..\build\o.default.txt
 !ENDIF
 
 # The directory structure here must be consistent with macro substitution
@@ -131,7 +140,7 @@ _default: build
 build: $(PROJ_BIN)
 # Build and run.
 run: build
-	@ECHO Running $(PROJ_BIN)...
+	@ECHO ---------------- [Run] $(BIN_NAME) ----------------
 	@CD $(BIN_DIR)$(PROJ_NAME) &&\
 		$(BIN_NAME).$(BUILD_NAME).x$(ARCH).exe $(ARGS)
 # Clean target removes all intermediates, but remakes the in.txt file.
@@ -157,6 +166,11 @@ pch.cpp: $(INCL)
 # First compile all outdated files (with /MP), then link everything together.
 # Need additional variable to parse dependencies correctly.
 $(PROJ_BIN): $(PROJ_SRC)
+!IF $(PCH) == 1
+	@$(MAKE) /C $(OBJ_DIR)$(BUILD_NAME)\x$(ARCH)\pch.pch\
+		PROJ=$(PROJ) BIN=$(BIN) SRC="$(SRC)" BUILD=$(BUILD) ARCH=$(ARCH) PCH=$(PCH)
+!ENDIF
+	@ECHO ---------------- [Build] $(BIN_NAME) ----------------
 	@IF NOT EXIST $(PROJ_BIN_DIR) MD $(PROJ_BIN_DIR)
 	@IF NOT EXIST $(PROJ_OBJ_DIR) MD $(PROJ_OBJ_DIR)
 	@IF NOT EXIST $(PROJ_OBJ_DIR)$(BUILD_NAME) MD $(PROJ_OBJ_DIR)$(BUILD_NAME)
@@ -190,7 +204,9 @@ $(PROJ_BIN): $(PROJ_SRC)
 		$(patsubsti $(PROJ_SRC_DIR)\%,$(PROJ_OBJ_DIR)$(BUILD_NAME)\x$(ARCH)\\%,$**))
 
 # Mark source files as out of date if any headers have changed.
-$(PROJ_SRC): $(INCL) $(OBJ_DIR)$(BUILD_NAME)\x$(ARCH)\pch.pch
+# An empty target here will correctly set the modified date.
+$(PROJ_SRC): $(INCL) pch.cpp
+	@EXIT
 
 # ------------------------------------------------------------------------------
 !else
@@ -198,27 +214,64 @@ else
 # ------------------------------------------------------------------------------
 
 # GNU make (gmake) specific commands.
+# Second expansion for stem matching syntax.
+.SECONDEXPANSION:
 # For usage of bash commands like `read`.
 SHELL := /bin/bash
+# For recursive dependency listing.
+rwildcard=$(foreach d,\
+	$(wildcard $(1:=/*)),$(call rwildcard,$d,$2) $(filter $(subst *,%,$2),$d))
+
 ROOT_DIR := ../
-OBJ_DIR := $(ROOT_DIR)obj/
+REPO_NAME := rain
+PROJ ?= test
+PROJ_NAME := $(PROJ)
+ifndef BIN
+ifndef SRC
+BIN := $(PROJ_NAME)
+SRC := *.cpp
+else
+BIN := $(patsubst .cpp,,$(SRC))
+endif
+else
+SRC := $(BIN).cpp
+endif
+BIN_NAME := $(BIN)
+SRC_NAME := $(SRC)
+BUILD ?= 0
+ifeq ($(BUILD), 2)
+BUILD_NAME := instrument
+else ifeq ($(BUILD), 1)
+BUILD_NAME := release
+else
+BUILD_NAME := debug
+endif
+ARCH ?= 64
+# PCH is not yet supported on non-Windows systems.
+PCH := 0
+# Specialization for this repo.
+ARGS ?= < $(ROOT_DIR)../build/i.default.txt > $(ROOT_DIR)../build/o.default.txt
+
+# Include .h files, not .hpp for this repo.
+INCL := $(call rwildcard,$(ROOT_DIR)include,*.h)
+
 BIN_DIR := $(ROOT_DIR)bin/
-PROJECT_OBJ_DIR := $(OBJ_DIR)$(PROJECT)/
-PROJECT_SRC_DIR := $(ROOT_DIR)$(PROJECT)/
-SOURCES ?= *.cpp
-BIN ?= $(PROJECT)
-PROJECT_BIN := $(BIN_DIR)$(PROJECT)/$(BIN)
-PROJECT_BIN_DIR := $(BIN_DIR)$(PROJECT)/
+PROJ_BIN := $(BIN_DIR)$(PROJ_NAME)/$(BIN_NAME).$(BUILD_NAME).x$(ARCH)
+PROJ_BIN_DIR := $(BIN_DIR)$(PROJ_NAME)/
+OBJ_DIR := $(ROOT_DIR)obj/
+PROJ_OBJ_DIR := $(OBJ_DIR)$(PROJ_NAME)/
+PROJ_SRC_DIR := $(ROOT_DIR)$(PROJ_NAME)/
+PROJ_SRC = $(patsubst %,$(PROJ_SRC_DIR)%,$(SRC_NAME))
 
 COMPILER ?= clang++
-COMPILER_FLAGS_INCLUDES := -I $(ROOT_DIR)include/
-COMPILER_FLAGS_COMMON := $(COMPILER_FLAGS_INCLUDES) -std=c++20 -m64 -pthread\
-	-Wall -Wextra\
-	-D _CONSOLE -D _CRT_SECURE_NO_WARNINGS\
-	-D _SILENCE_ALL_CXX17_DEPRECATION_WARNINGS
+COMPILER_FLAGS_INCLUDES := -I $(ROOT_DIR)include
+COMPILER_FLAGS_COMMON := $(COMPILER_FLAGS_INCLUDES) -std=c++20 -pthread\
+	-Wall -Wextra -D_CONSOLE -masm=intel
 COMPILER_FLAGS_DEBUG := -D _DEBUG -g -O0
-COMPILER_FLAGS_RELEASE := -D NDEBUG -Ofast
-COMPILER_FLAGS_INSTRUMENT := $(COMPILER_FLAGS_DEBUG) /Fa$(PROJECT_OBJ_DIR)
+COMPILER_FLAGS_RELEASE := -D NDEBUG -O3 -ffast-math
+COMPILER_FLAGS_INSTRUMENT := $(COMPILER_FLAGS_DEBUG) /Fa$(PROJ_OBJ_DIR)
+COMPILER_FLAGS_64 := -m64
+COMPILER_FLAGS_86 := -m32
 
 LINKER := $(COMPILER)
 LINKER_FLAGS_LIBRARIES := -pthread -lresolv
@@ -227,6 +280,8 @@ LINKER_FLAGS_DEBUG :=
 LINKER_FLAGS_RELEASE :=
 LINKER_FLAGS_INSTRUMENT := $(LINKER_FLAGS_DEBUG)\
 	-fsanitize=address,undefined,leak
+LINKER_FLAGS_64 := -m64
+LINKER_FLAGS_86 := -m32
 
 # -lstdc++fs is neither available nor required on typical MacOS C++ compiler
 # implementations.
@@ -234,49 +289,59 @@ ifneq ($(shell uname -s), Darwin)
 	LINKER_FLAGS_LIBRARIES := $(LINKER_FLAGS_LIBRARIES) -lstdc++fs
 endif
 
-BUILD ?= 0
-ifeq ($(BUILD), 1)
-	COMPILER_FLAGS := $(COMPILER_FLAGS_COMMON) $(COMPILER_FLAGS_RELEASE)
-	LINKER_FLAGS := $(LINKER_FLAGS_COMMON) $(LINKER_FLAGS_RELEASE)
-else ifeq ($(BUILD), 2)
+ifeq ($(BUILD_NAME), instrument)
 	COMPILER_FLAGS := $(COMPILER_FLAGS_COMMON) $(COMPILER_FLAGS_INSTRUMENT)
 	LINKER_FLAGS := $(LINKER_FLAGS_COMMON) $(LINKER_FLAGS_INSTRUMENT)
+else ifeq ($(BUILD_NAME), release)
+	COMPILER_FLAGS := $(COMPILER_FLAGS_COMMON) $(COMPILER_FLAGS_RELEASE)
+	LINKER_FLAGS := $(LINKER_FLAGS_COMMON) $(LINKER_FLAGS_RELEASE)
 else
 	COMPILER_FLAGS := $(COMPILER_FLAGS_COMMON) $(COMPILER_FLAGS_DEBUG)
 	LINKER_FLAGS := $(LINKER_FLAGS_COMMON) $(LINKER_FLAGS_DEBUG)
 endif
 
-# Second expansion for stem matching syntax.
-.SECONDEXPANSION:
+ifeq ($(ARCH), 86)
+	COMPILER_FLAGS := $(COMPILER_FLAGS) $(COMPILER_FLAGS_86)
+	LINKER_FLAGS := $(LINKER_FLAGS) $(LINKER_FLAGS_86)
+else
+	COMPILER_FLAGS := $(COMPILER_FLAGS) $(COMPILER_FLAGS_64)
+	LINKER_FLAGS := $(LINKER_FLAGS) $(LINKER_FLAGS_64)
+endif
+
+# Unlike `nmake`, `gmake` first compiles all the relevant obj files, then
+# compiles the relevant binaries.
 # Keep intermediate and output files.
 # Introduce list of project object intermediates parsed from the source
-# directory with SOURCES.
-PROJECT_OBJS := $(addprefix $(PROJECT_OBJ_DIR), $(addsuffix .o,\
-	$(basename $(notdir $(wildcard $(PROJECT_SRC_DIR)$(SOURCES))))))
-.SECONDARY: $(PROJECT_BIN) $(PROJECT_OBJS)
+# directory with SRC_NAME.
+PROJ_OBJ := $(foreach s, $(SRC_NAME),\
+	$(addprefix $(PROJ_OBJ_DIR)$(BUILD_NAME)/x$(ARCH)/, $(addsuffix .o,\
+	$(basename $(notdir $(wildcard $(PROJ_SRC_DIR)$(s)))))))
+.SECONDARY: $(PROJ_BIN) $(PROJ_OBJ)
 
 # Ensure files with the same name as fake targets do not trigger.
 .PHONY: __default _default build run clean
 _default: build
-build: $(PROJECT_BIN)
+build: $(PROJ_BIN)
 run: build
-	@cd $(BIN_DIR) && ./$(PROJECT_BIN) $(ARGUMENTS)
-# Clean, but recreate in.txt file.
+	@echo ---------------- [Run] $(BIN_NAME) ----------------
+	@cd $(PROJ_BIN_DIR) && ./$(BIN_NAME).$(BUILD_NAME).x$(ARCH) $(ARGS)
 clean:
-	@rm -rf $(OBJ_DIR) $(BIN_DIR) i.*.txt o.*.txt
-	@touch i.default.txt o.default.txt
+	@echo Cleaning...
+	@rm -rf $(OBJ_DIR) $(BIN_DIR)
+
+# Compile rule. The first line includes all header dependencies.
+# Stem % matches source file name.
+$(PROJ_OBJ): $(INCL)
+$(PROJ_OBJ): $(PROJ_OBJ_DIR)$(BUILD_NAME)/x$(ARCH)/%.o : $(PROJ_SRC_DIR)$$*.cpp
+	@mkdir -p $(@D)
+	@echo Building $@...
+	@$(COMPILER) $(COMPILER_FLAGS) -c $< -o $@
 
 # Link rule.
-$(PROJECT_BIN): $(BIN_DIR)% : $(PROJECT_OBJS)
+$(PROJ_BIN): $(BIN_DIR)% : $(PROJ_OBJ)
 	@mkdir -p $(@D)
-	@echo $@
-	@$(LINKER) $(PROJECT_OBJS) $(LINKER_FLAGS) -o $@
-
-# Compile rule. Stem % matchines source file name.
-$(PROJECT_OBJS): $(OBJ_DIR)%.o : $(ROOT_DIR)$$*.cpp
-	@mkdir -p $(@D)
-	@echo $@
-	@$(COMPILER) $(COMPILER_FLAGS) -c $< -o $@
+	@echo Linking $@...
+	@$(LINKER) $(PROJ_OBJ) $(LINKER_FLAGS) -o $@
 
 # ------------------------------------------------------------------------------
 endif    # gmake: close condition; nmake: not seen
