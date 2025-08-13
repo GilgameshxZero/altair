@@ -34,7 +34,7 @@ ifdef MAKEDIR: # gmake: false; nmake: unused target
 # ------------------------------------------------------------------------------
 
 # nmake specific commands.
-ROOT_DIR = ..^\
+ROOT_DIR = $(MAKEDIR)\..^\
 REPO_NAME = altair
 # Project name must exist.
 PROJ_NAME = $(PROJ)
@@ -86,7 +86,7 @@ PROJ_SRC_DIR = $(ROOT_DIR)$(PROJ_NAME)^\
 PROJ_SRC = $(patsubsti %,$(PROJ_SRC_DIR)\%,$(SRC_NAME))
 
 COMPILER = cl /c
-COMPILER_FLAGS_INCLUDES = /I $(ROOT_DIR)include
+COMPILER_FLAGS_INCLUDES = /I$(ROOT_DIR)include
 COMPILER_FLAGS_COMMON = $(COMPILER_FLAGS_INCLUDES) /std:c++20 /D _CONSOLE\
 	/Fp$(OBJ_DIR)$(BUILD_NAME)\x$(ARCH)\pch.pch\
 	/fp:fast /MP /permissive-\
@@ -160,7 +160,7 @@ $(OBJ_DIR)$(BUILD_NAME)\x$(ARCH)\pch.pch: pch.cpp
 	@$(COMPILER) $(COMPILER_FLAGS) /Yc\
 		/Fd$(OBJ_DIR)$(BUILD_NAME)\x$(ARCH)\pch.pdb\
 		/Fo$(OBJ_DIR)$(BUILD_NAME)\x$(ARCH)\pch.obj pch.cpp
-pch.cpp: $(INCL)
+pch.cpp: $(INCL_PCH)
 
 # Build target.
 # First compile all outdated files (with /MP), then link everything together.
@@ -264,7 +264,7 @@ PROJ_SRC_DIR := $(ROOT_DIR)$(PROJ_NAME)/
 PROJ_SRC = $(patsubst %,$(PROJ_SRC_DIR)%,$(SRC_NAME))
 
 COMPILER ?= clang++
-COMPILER_FLAGS_INCLUDES := -I $(ROOT_DIR)include
+COMPILER_FLAGS_INCLUDES := -I$(ROOT_DIR)include
 COMPILER_FLAGS_COMMON := $(COMPILER_FLAGS_INCLUDES) -std=c++20 -pthread\
 	-Wall -Wextra -D_CONSOLE -masm=intel
 COMPILER_FLAGS_DEBUG := -D _DEBUG -g -O0
