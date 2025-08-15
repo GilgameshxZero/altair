@@ -5,12 +5,10 @@
 # Files are pre-compiled with pch.cpp.
 
 # Variables:
-# PROJ: a repository can have multiple *project*s, each in their own directory
-# 	(default = test).
-# BIN: name of the project; a project may have multiple (default = SRC (without
-# 	`.cpp`), or PROJ if SRC not defined).
+# PROJ: a repository can have multiple *project*s, each in their own directory.
+# BIN: name of the project; a project may have multiple.
 # SRC: target filenames (can be multiple) to link, starting from the project
-# 	directory (default = BIN.cpp, or *.cpp if BIN is not defined.).
+# 	directory.
 # BUILD: 0 (default), 1, or 2, specifying the type of build (debug, release,
 # 	instrument).
 # ARCH: 64 (default) or 86, specifying the architecture to build for. The
