@@ -4,6 +4,8 @@
 **/*.egg-info/
 **/.venv/
 **/.data/
+**/.bin/
+**/.obj/
 **/.venv
 
 # Node.
@@ -15,8 +17,6 @@
 
 # C++.
 **/.vs/
-**/bin/
-**/obj/
 
 # General.
 **.aps
