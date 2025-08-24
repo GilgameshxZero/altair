@@ -70,15 +70,15 @@ PCH = 1
 !ENDIF
 # Specialization for this repo.
 !IFNDEF ARGS
-ARGS = < $(ROOT_DIR)..\build\i.default.txt > $(ROOT_DIR)..\build\o.default.txt
+ARGS = <"$(ROOT_DIR)build\i.default.txt" >"$(ROOT_DIR)build\o.default.txt"
 !ENDIF
 
 # The directory structure here must be consistent with macro substitution
 # structure utilized later.
-BIN_DIR = $(ROOT_DIR)bin^\
+BIN_DIR = $(ROOT_DIR).bin^\
 PROJ_BIN = $(BIN_DIR)$(PROJ_NAME)\$(BIN_NAME).$(BUILD_NAME).x$(ARCH).exe
 PROJ_BIN_DIR = $(BIN_DIR)$(PROJ_NAME)^\
-OBJ_DIR = $(ROOT_DIR)obj^\
+OBJ_DIR = $(ROOT_DIR).obj^\
 PROJ_OBJ_DIR = $(OBJ_DIR)$(PROJ_NAME)^\
 PROJ_SRC_DIR = $(ROOT_DIR)$(PROJ_NAME)^\
 PROJ_SRC = $(patsubsti %,$(PROJ_SRC_DIR)\%,$(SRC_NAME))
@@ -248,15 +248,15 @@ ARCH ?= 64
 # PCH is not yet supported on non-Windows systems.
 PCH := 0
 # Specialization for this repo.
-ARGS ?= < $(ROOT_DIR)../build/i.default.txt > $(ROOT_DIR)../build/o.default.txt
+ARGS ?= < $(ROOT_DIR)build/i.default.txt > $(ROOT_DIR)build/o.default.txt
 
 # Include .h files, not .hpp for this repo.
 INCL := $(call rwildcard,$(ROOT_DIR)include,*.h)
 
-BIN_DIR := $(ROOT_DIR)bin/
+BIN_DIR := $(ROOT_DIR).bin/
 PROJ_BIN := $(BIN_DIR)$(PROJ_NAME)/$(BIN_NAME).$(BUILD_NAME).x$(ARCH)
 PROJ_BIN_DIR := $(BIN_DIR)$(PROJ_NAME)/
-OBJ_DIR := $(ROOT_DIR)obj/
+OBJ_DIR := $(ROOT_DIR).obj/
 PROJ_OBJ_DIR := $(OBJ_DIR)$(PROJ_NAME)/
 PROJ_SRC_DIR := $(ROOT_DIR)$(PROJ_NAME)/
 PROJ_SRC = $(patsubst %,$(PROJ_SRC_DIR)%,$(SRC_NAME))
