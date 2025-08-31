@@ -45,56 +45,28 @@ using namespace std;
 
 LL const X_MAX{1000000};
 auto [minFactor, primes]{linearSieve(X_MAX)};
-array<LL, X_MAX + 1> C_D;
-
-void uC_D(vector<pair<LL, LL>> &f, LL i, LL x) {
-	if (i == f.size()) {
-		C_D[x]++;
-		return;
-	}
-	RF(j, 0, f[i].second + 1) {
-		uC_D(f, i + 1, x);
-		x *= primes[f[i].first];
-	}
-}
 
 int main() {
 	ios_base::sync_with_stdio(false);
 	cin.tie(nullptr);
 
-	LL N, Z{0};
+	LL N;
 	cin >> N;
 	RF(i, 0, N) {
-		vector<pair<LL, LL>> f;
-		LL x, z{0}, y;
+		LL x;
 		cin >> x;
-		while (x != 1) {
-			if (f.empty() || minFactor[x] != f.back().first) {
-				f.push_back({minFactor[x], 1});
-			} else {
-				f.back().second++;
-			}
-			x /= primes[minFactor[x]];
-		}
-		RF(j, 0, (1LL << f.size())) {
-			y = 1;
-			RF(k, 0, f.size()) {
-				if (j & (1LL << k)) {
-					y *= primes[f[k].first];
-					y *= -1;
+		x++;
+		for (bool fail{true}; fail; x++) {
+			fail = false;
+			for (LL j{0}; j < primes.size() && primes[j] * primes[j] <= x; j++) {
+				if (x % primes[j] == 0) {
+					fail = true;
+					break;
 				}
 			}
-			if (y < 0) {
-				z -= C_D[-y];
-			} else {
-				z += C_D[y];
-			}
 		}
-		Z += z;
-
-		uC_D(f, 0, 1);
+		cout << x - 1 << '\n';
 	}
-	cout << Z;
 
 	return 0;
 }
