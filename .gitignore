@@ -1,27 +1,43 @@
-# Python.
-**/.ipynb_checkpoints/
-**/__pycache__/
-**/*.egg-info/
+// Syncthing.
+**/*local.syncthing*
+**/*archive.syncthing*
+**/.stfolder
+**/.stignore
+**/.stversions
+
+// Personal temporary.
+**/.*.tmp.*
+**/.*.tmp
+
+// General temporary.
+**/*~
+**/*.crdownload
+**/*.part
+**/.*.swp
+**/._*
+**/.DS_Store
+**/.Spotlight-V100
+**/.Trashes
+**/.aps
+**/.db
+**/.dropbox.attr
+**/.stackdump
+**/.user
+**/desktop.ini
+**/ehthumbs.db
+**/Thumbs.db
+
+// Personal development.
 **/.venv/
 **/.data/
 **/.bin/
 **/.obj/
-**/.venv
 
-# Node.
-**/node_modules/
-
-# Nebo.
-**/*.syncthing*/
-**/*.nebo-files/
-
-# C++.
+// General development.
 **/.vs/
-
-# General.
-**.aps
-**.db
-**.dropbox.attr
-**.DS_Store
-**.stackdump
-**.user
+**/.ipynb_checkpoints/
+**/__pycache__/
+**/*.egg-info/
+**/node_modules/
+**/jspm_packages/
+**/*.nebo-files/
