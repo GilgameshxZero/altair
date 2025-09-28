@@ -1,15 +1,15 @@
-// Syncthing.
+# Syncthing.
 **/*local.syncthing*
 **/*archive.syncthing*
 **/.stfolder
 **/.stignore
 **/.stversions
 
-// Personal temporary.
+# Personal temporary.
 **/.*.tmp.*
 **/.*.tmp
 
-// General temporary.
+# General temporary.
 **/*~
 **/*.crdownload
 **/*.part
@@ -27,13 +27,13 @@
 **/ehthumbs.db
 **/Thumbs.db
 
-// Personal development.
+# Personal development.
 **/.venv/
 **/.data/
 **/.bin/
 **/.obj/
 
-// General development.
+# General development.
 **/.vs/
 **/.ipynb_checkpoints/
 **/__pycache__/
