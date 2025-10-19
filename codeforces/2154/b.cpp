@@ -19,16 +19,24 @@ int main() {
 	LL T;
 	cin >> T;
 	while (T--) {
-		LL N, K;
-		string S;
-		cin >> N >> K >> S;
-		LL Z{0}, Y{-1};
-		RF(i, 0, N) {
-			if (S[i] == '1') {
-				if (Y < i) {
-					Z++;
-				}
-				Y = i + K - 1;
+		LL N;
+		cin >> N;
+		vector<LL> A(N + 1);
+		RF(i, 1, N + 1) {
+			cin >> A[i];
+		}
+		A[0] = LLONG_MAX;
+		A.push_back(LLONG_MAX);
+		LL Z{0}, Y{A[1]};
+		RF(i, 2, N + 1) {
+			Y = max(Y, A[i]);
+			if (i % 2 == 0) {
+				A[i] = Y;
+			}
+		}
+		RF(i, 1, N + 1) {
+			if (i % 2 == 1 && A[i] >= min(A[i - 1], A[i + 1])) {
+				Z += A[i] - min(A[i - 1], A[i + 1]) + 1;
 			}
 		}
 		cout << Z << '\n';
