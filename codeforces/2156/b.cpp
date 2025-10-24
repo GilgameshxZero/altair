@@ -19,14 +19,35 @@ int main() {
 	LL T;
 	cin >> T;
 	while (T--) {
-		LL N;
-		cin >> N;
-		LL Z{0};
-		while (N > 2) {
-			Z += N / 3;
-			N -= N / 3 * 2;
+		LL N, Q;
+		cin >> N >> Q;
+		string S;
+		cin >> S;
+		bool A{false};
+		{
+			string SS{S};
+			sort(SS.begin(), SS.end());
+			if (SS.back() == 'A') {
+				A = true;
+			}
 		}
-		cout << Z << '\n';
+		RF(i, 0, Q) {
+			LL B;
+			cin >> B;
+			if (A) {
+				cout << B << '\n';
+				continue;
+			}
+			LL Z{0};
+			for (LL j{0}; B > 0; j = (j + 1) % N, Z++) {
+				if (S[j] == 'A') {
+					B--;
+				} else {
+					B /= 2;
+				}
+			}
+			cout << Z << '\n';
+		}
 	}
 
 	return 0;
