@@ -19,28 +19,6 @@ int main() {
 	LL T;
 	cin >> T;
 	while (T--) {
-		LL N;
-		cin >> N;
-		vector<LL> S;
-		RF(i, 0, N) {
-			LL x;
-			cin >> x;
-			while (!S.empty() && S.back() >= x) {
-				S.pop_back();
-			}
-			S.push_back(x);
-		}
-		vector<LL> Z(S.size() + 1, LLONG_MAX);
-		Z[0] = 0;
-		LL F{0}, G{0};
-		RF(i, 0, S.size()) {
-			Z[i + 1] = min(Z[i + 1], Z[i] + 1);
-			for (; F < S.size() && S[F] <= 2 * S[i]; F++);
-			Z[F] = min(Z[F], Z[i] + 2);
-			for (; G < S.size() && S[G] <= 3 * S[i]; G++);
-			Z[G] = min(Z[G], Z[i] + 3);
-		}
-		cout << Z[S.size()] << '\n';
 	}
 
 	return 0;
