@@ -1252,6 +1252,9 @@ namespace Rain::Math {
 			//
 			// This transposition order helps with cache-locality and vectorization:
 			// <https://codeforces.com/blog/entry/129292?locale=en>.
+			//
+			// Using a custom mod class via the product policy may also help
+			// performance.
 			std::bitset<ORDER> isThisContracted;
 			std::bitset<OTHER_ORDER> isOtherContracted;
 			for (std::size_t i{0}; i < CONTRACT_ORDER; i++) {
