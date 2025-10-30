@@ -1247,7 +1247,11 @@ namespace Rain::Math {
 				}
 			}
 
-			// Transpose all contracted dimensions to the end.
+			// Transpose all contracted dimensions to the end in *this, and to the
+			// beginning in other.
+			//
+			// This transposition order helps with cache-locality and vectorization:
+			// <https://codeforces.com/blog/entry/129292?locale=en>.
 			std::bitset<ORDER> isThisContracted;
 			std::bitset<OTHER_ORDER> isOtherContracted;
 			for (std::size_t i{0}; i < CONTRACT_ORDER; i++) {
@@ -1262,7 +1266,7 @@ namespace Rain::Math {
 				}
 				thisDimPerm[j++] = i;
 			}
-			for (std::size_t i{0}, j{0}; i < OTHER_ORDER; i++) {
+			for (std::size_t i{0}, j{CONTRACT_ORDER}; i < OTHER_ORDER; i++) {
 				if (isOtherContracted[i]) {
 					continue;
 				}
@@ -1270,7 +1274,9 @@ namespace Rain::Math {
 			}
 			for (std::size_t i{CONTRACT_ORDER}; i > 0; i--) {
 				thisDimPerm[ORDER - i] = thisContractDims[CONTRACT_ORDER - i];
-				otherDimPerm[OTHER_ORDER - i] = otherContractDims[CONTRACT_ORDER - i];
+			}
+			for (std::size_t i{0}; i < CONTRACT_ORDER; i++) {
+				otherDimPerm[i] = otherContractDims[i];
 			}
 			auto thisTransposed{this->asTranspose(thisDimPerm)};
 			auto otherTransposed{other.asTranspose(otherDimPerm)};
@@ -1282,12 +1288,13 @@ namespace Rain::Math {
 				resultSize[i] = thisSize[i];
 			}
 			for (std::size_t i{0}; i < OTHER_ORDER - CONTRACT_ORDER; i++) {
-				resultSize[ORDER - CONTRACT_ORDER + i] = otherSize[i];
+				resultSize[ORDER - CONTRACT_ORDER + i] = otherSize[i + CONTRACT_ORDER];
 			}
 
 			// Iterate over all non-contracted dimensions, and compute contraction
 			// (aggregate) of inner product over all remaining dimensions.
 			Tensor<ResultValue, RESULT_ORDER> result(resultSize);
+			result.fill(Policy<Value, OtherValue>::DEFAULT_RESULT);
 			Tensor<>::applyOver<OTHER_ORDER - CONTRACT_ORDER>(
 				[&otherTransposed](
 					// Based on how much `applyOver` unravels, we either end up with a
@@ -1301,29 +1308,26 @@ namespace Rain::Math {
 					typename std::conditional<
 						CONTRACT_ORDER == 0,
 						Value,
-						Tensor<Value, CONTRACT_ORDER>>::type const &thatInner) {
+						Tensor<Value, CONTRACT_ORDER>>::type const &thisInner) {
 					Tensor<>::applyOver<0>(
-						[&thatInner](
-							ResultValue &resultInner,
+						[&resultOuter](
+							Value const &thisValue,
 							typename std::conditional<
-								CONTRACT_ORDER == 0,
-								OtherValue,
-								Tensor<OtherValue, CONTRACT_ORDER>>::type const &otherInner) {
-							// Actually, both `thatInner` and `otherInner` are kept `const`,
-							// but we are lazy and don't code the `const` override for
-							// `applyOver`.
-							resultInner = Policy<Value, OtherValue>::DEFAULT_RESULT;
+								OTHER_ORDER - CONTRACT_ORDER == 0,
+								Value,
+								Tensor<OtherValue, OTHER_ORDER - CONTRACT_ORDER>>::type const
+								&otherInner) {
 							Tensor<>::applyOver<0>(
-								[&resultInner](
-									Value const &thatValue, OtherValue const &otherValue) {
+								[&thisValue](
+									ResultValue &resultInner, OtherValue const &otherValue) {
 									resultInner = Policy<Value, OtherValue>::aggregate(
 										resultInner,
-										Policy<Value, OtherValue>::contract(thatValue, otherValue));
+										Policy<Value, OtherValue>::contract(thisValue, otherValue));
 								},
-								thatInner,
+								resultOuter,
 								otherInner);
 						},
-						resultOuter,
+						thisInner,
 						otherTransposed);
 				},
 				// For some reason, our implementation of `applyOver` only allows
@@ -1378,9 +1382,10 @@ namespace Rain::Math {
 		template <
 			std::size_t TENSOR_ORDER = ORDER,
 			typename std::enable_if<(TENSOR_ORDER == 2)>::type * = nullptr>
-		auto asNearestPowerOf2() const {
+		auto asNearestPowerOf2(std::size_t atLeast = 0) const {
 			auto size{this->size()};
-			auto mSig{Algorithm::mostSignificant1BitIdx(std::max(size[0], size[1]))};
+			auto mSig{Algorithm::mostSignificant1BitIdx(
+				std::max({size[0], size[1], atLeast}))};
 			if ((1_zu << mSig) == size[0] && (1_zu << mSig) == size[1]) {
 				return *this;
 			}
@@ -1405,7 +1410,7 @@ namespace Rain::Math {
 		// Under and including size (1_zu << BASE_SIZE_POWER), Strassen will switch
 		// to use standard computation instead.
 		template <
-			std::size_t BASE_SIZE_POWER = 6,
+			std::size_t BASE_SIZE_POWER = 5,
 			typename OtherValue,
 			std::size_t TENSOR_ORDER = ORDER,
 			typename std::enable_if<(TENSOR_ORDER == 2)>::type * = nullptr,
@@ -1423,7 +1428,8 @@ namespace Rain::Math {
 				(1_zu << BASE_SIZE_POWER)) {
 				return *this * other;
 			}
-			auto a{this->asNearestPowerOf2()}, b{other.asNearestPowerOf2()};
+			auto a{this->asNearestPowerOf2(std::max(otherSize[0], otherSize[1]))},
+				b{other.asNearestPowerOf2(std::max(thisSize[0], thisSize[1]))};
 			auto halfSize{a.SIZES[0] / 2};
 			auto a11{a.asSlice({{{0, halfSize}, {0, halfSize}}})},
 				a12{a.asSlice({{{0, halfSize}, {halfSize, halfSize * 2}}})},
@@ -2236,10 +2242,9 @@ inline std::ostream &operator<<(
 template <typename Derived, typename Underlying, std::size_t MODULUS_OUTER>
 inline std::istream &operator>>(
 	std::istream &stream,
-	Rain::Algorithm::ModulusRingBase<Derived, Underlying, MODULUS_OUTER> const
-		&right) {
+	Rain::Algorithm::ModulusRingBase<Derived, Underlying, MODULUS_OUTER> &right) {
 	stream >> right.value;
-	right.value = (right.modulus + right.value) % right.modulus;
+	right.value = (right.MODULUS + right.value) % right.MODULUS;
 	return stream;
 }
 
@@ -2276,6 +2281,24 @@ using namespace std;
 
 using MF = Rain::Algorithm::ModulusField<LL, 998244353>;
 
+template <typename Left, typename Right>
+class PlusMultModProductPolicy {
+	public:
+	static constexpr inline auto contract(Left const &left, Right const &right) {
+		return left * right;
+	}
+
+	using Result =
+		decltype(contract(std::declval<Left>(), std::declval<Right>()));
+	static inline Result const DEFAULT_RESULT{0};
+
+	static constexpr inline auto aggregate(
+		Result const &left,
+		Result const &right) {
+		return (left + right) % 998244353;
+	}
+};
+
 int main() {
 	ios_base::sync_with_stdio(false);
 	cin.tie(nullptr);
@@ -2283,25 +2306,21 @@ int main() {
 	std::size_t N, M, K;
 	cin >> N >> M >> K;
 
-	Rain::Math::Tensor<MF, 2> A{{N, M}}, B{{M, K}};
+	Rain::Math::Tensor<LL, 2> A{{N, M}}, B{{M, K}};
 	RF(i, 0, N) {
 		RF(j, 0, M) {
-			LL x;
-			cin >> x;
-			A[i][j] = x;
+			cin >> A[i][j];
 		}
 	}
 	RF(i, 0, M) {
 		RF(j, 0, K) {
-			LL x;
-			cin >> x;
-			B[i][j] = x;
+			cin >> B[i][j];
 		}
 	}
-	auto C{A.productStrassen(B)};
+	auto C{A.product<1, PlusMultModProductPolicy>(B, {1}, {0})};
 	RF(i, 0, N) {
 		RF(j, 0, K) {
-			cout << C[i][j] << ' ';
+			cout << (C[i][j] % 998244353) << ' ';
 		}
 		cout << '\n';
 	}

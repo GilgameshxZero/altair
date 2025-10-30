@@ -9,7 +9,7 @@
 			},
 			"presentation": {
 				"clear": true,
-				"reveal": "silent",
+				"reveal": "never",
 				"showReuseMessage": false,
 				"panel": "shared"
 			},
@@ -22,7 +22,7 @@
 			"options": { "cwd": "${workspaceFolder}/build" },
 			"presentation": {
 				"clear": true,
-				"reveal": "silent",
+				"reveal": "never",
 				"showReuseMessage": false,
 				"panel": "shared"
 			},
@@ -45,7 +45,7 @@
 			},
 			"presentation": {
 				"clear": true,
-				"reveal": "silent",
+				"reveal": "never",
 				"showReuseMessage": false,
 				"panel": "shared"
 			},
@@ -68,7 +68,7 @@
 			},
 			"presentation": {
 				"clear": true,
-				"reveal": "silent",
+				"reveal": "never",
 				"showReuseMessage": false,
 				"panel": "shared"
 			},
