@@ -17,11 +17,11 @@
 	/* On Windows, enables correct __cplusplus define for Intellisense. */
 	"C_Cpp.default.compilerArgs": ["/Zc:__cplusplus"],
 	"C_Cpp.default.cppStandard": "c++20",
-	"C_Cpp.default.includePath": ["include",  "rain/include"],
+	"C_Cpp.default.includePath": ["include", "rain/include"],
+	"C_Cpp.errorSquiggles": "enabled",
 
 	"[cpp]": {
-		"editor.defaultFormatter": "ms-vscode.cpptools",
+		"editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd",
 		"editor.wordWrap": "on"
-	},
-	"C_Cpp.errorSquiggles": "enabled"
+	}
 }
