@@ -6,7 +6,7 @@
 	"configurations": [
 		{
 			"name": "piped.debug.x64",
-			"type": "cppdbg",
+			"type": "lldb",
 			"request": "launch",
 			"preLaunchTask": "build.debug.x64",
 			"program": "${workspaceFolder}${pathSeparator}.bin${pathSeparator}${relativeFileDirname}${pathSeparator}${fileBasenameNoExtension}.debug.x64",
@@ -17,13 +17,20 @@
 				">",
 				"${workspaceFolder}${pathSeparator}build${pathSeparator}o.default.txt"
 			],
+			// Override for extension which does not allow pipe.
+			"stdio": [
+				"${workspaceFolder}${pathSeparator}build${pathSeparator}i.default.txt",
+				"${workspaceFolder}${pathSeparator}build${pathSeparator}o.default.txt",
+				null
+			],
 			"console": "integratedTerminal",
-			"stopAtEntry": false,
-			"MIMode": "gdb",
+			// Can be used to adjust input location.
+			"terminal": "",
 			"internalConsoleOptions": "neverOpen",
+			"stopAtEntry": false,
 
-			"windows": { "type": "cppvsdbg" },
-			"osx": { "MIMode": "lldb" }
+			"windows": { "type": "cppvsdbg", "MIMode": "gdb" },
+			"osx": { "type": "cppdbg", "MIMode": "lldb" }
 		},
 		{
 			"name": "interactive.debug.x64",
@@ -36,6 +43,7 @@
 			"console": "integratedTerminal",
 			"stopAtEntry": false,
 			"MIMode": "gdb",
+			"internalConsoleOptions": "neverOpen",
 
 			"windows": { "type": "cppvsdbg" },
 			"osx": { "MIMode": "lldb" }
@@ -72,6 +80,7 @@
 			"console": "internalTerminal",
 			"stopAtEntry": false,
 			"MIMode": "gdb",
+			"internalConsoleOptions": "neverOpen",
 
 			"windows": { "type": "cppvsdbg" },
 			"osx": { "MIMode": "lldb" }
