@@ -11,79 +11,76 @@
 			"preLaunchTask": "build.debug.x64",
 			"program": "${workspaceFolder}${pathSeparator}.bin${pathSeparator}${relativeFileDirname}${pathSeparator}${fileBasenameNoExtension}.debug.x64",
 			"cwd": "${workspaceFolder}${pathSeparator}.bin${pathSeparator}${relativeFileDirname}",
-			"args": [
-				"<",
-				"${workspaceFolder}${pathSeparator}build${pathSeparator}i.default.txt",
-				">",
-				"${workspaceFolder}${pathSeparator}build${pathSeparator}o.default.txt"
-			],
-			// Override for extension which does not allow pipe.
+			// Used by `vadimcn.vscode-lldb` as opposed to piping via arguments.
 			"stdio": [
 				"${workspaceFolder}${pathSeparator}build${pathSeparator}i.default.txt",
 				"${workspaceFolder}${pathSeparator}build${pathSeparator}o.default.txt",
 				null
 			],
 			"console": "integratedTerminal",
-			// Can be used to adjust input location.
+			// Never show the terminal for piped configurations.
 			"terminal": "",
 			"internalConsoleOptions": "neverOpen",
 			"stopAtEntry": false,
 
-			"windows": { "type": "cppvsdbg", "MIMode": "gdb" },
-			"osx": { "type": "cppdbg", "MIMode": "lldb" }
+			"windows": {
+				"program": "${workspaceFolder}${pathSeparator}.bin${pathSeparator}${relativeFileDirname}${pathSeparator}${fileBasenameNoExtension}.debug.x64.exe"
+			}
 		},
 		{
 			"name": "interactive.debug.x64",
-			"type": "cppdbg",
+			"type": "lldb",
 			"request": "launch",
 			"preLaunchTask": "build.debug.x64",
 			"program": "${workspaceFolder}${pathSeparator}.bin${pathSeparator}${relativeFileDirname}${pathSeparator}${fileBasenameNoExtension}.debug.x64",
 			"cwd": "${workspaceFolder}${pathSeparator}.bin${pathSeparator}${relativeFileDirname}",
-			"args": [],
 			"console": "integratedTerminal",
-			"stopAtEntry": false,
-			"MIMode": "gdb",
+			"terminal": "integrated",
 			"internalConsoleOptions": "neverOpen",
+			"stopAtEntry": false,
 
-			"windows": { "type": "cppvsdbg" },
-			"osx": { "MIMode": "lldb" }
+			"windows": {
+				"program": "${workspaceFolder}${pathSeparator}.bin${pathSeparator}${relativeFileDirname}${pathSeparator}${fileBasenameNoExtension}.debug.x64.exe"
+			}
 		},
 		{
 			"name": "piped.release.x64",
-			"type": "cppdbg",
+			"type": "lldb",
 			"request": "launch",
 			"preLaunchTask": "build.release.x64",
 			"program": "${workspaceFolder}${pathSeparator}.bin${pathSeparator}${relativeFileDirname}${pathSeparator}${fileBasenameNoExtension}.release.x64",
 			"cwd": "${workspaceFolder}${pathSeparator}.bin${pathSeparator}${relativeFileDirname}",
-			"args": [
-				"<",
+			// Used by `vadimcn.vscode-lldb` as opposed to piping via arguments.
+			"stdio": [
 				"${workspaceFolder}${pathSeparator}build${pathSeparator}i.default.txt",
-				">",
-				"${workspaceFolder}${pathSeparator}build${pathSeparator}o.default.txt"
+				"${workspaceFolder}${pathSeparator}build${pathSeparator}o.default.txt",
+				null
 			],
-			"console": "internalTerminal",
-			"stopAtEntry": false,
-			"MIMode": "gdb",
+			"console": "integratedTerminal",
+			// Never show the terminal for piped configurations.
+			"terminal": "",
 			"internalConsoleOptions": "neverOpen",
+			"stopAtEntry": false,
 
-			"windows": { "type": "cppvsdbg" },
-			"osx": { "MIMode": "lldb" }
+			"windows": {
+				"program": "${workspaceFolder}${pathSeparator}.bin${pathSeparator}${relativeFileDirname}${pathSeparator}${fileBasenameNoExtension}.release.x64.exe"
+			}
 		},
 		{
 			"name": "interactive.release.x64",
-			"type": "cppdbg",
+			"type": "lldb",
 			"request": "launch",
-			"preLaunchTask": "build.release.x64",
-			"program": "${workspaceFolder}${pathSeparator}.bin${pathSeparator}${relativeFileDirname}${pathSeparator}${fileBasenameNoExtension}.release.x64",
+			"preLaunchTask": "build.v.x64",
+			"program": "${workspaceFolder}${pathSeparator}.bin${pathSeparator}${relativeFileDirname}${pathSeparator}${fileBasenameNoExtension}.v.x64",
 			"cwd": "${workspaceFolder}${pathSeparator}.bin${pathSeparator}${relativeFileDirname}",
-			"args": [],
-			"console": "internalTerminal",
-			"stopAtEntry": false,
-			"MIMode": "gdb",
+			"console": "integratedTerminal",
+			"terminal": "integrated",
 			"internalConsoleOptions": "neverOpen",
+			"stopAtEntry": false,
 
-			"windows": { "type": "cppvsdbg" },
-			"osx": { "MIMode": "lldb" }
+			"windows": {
+				"program": "${workspaceFolder}${pathSeparator}.bin${pathSeparator}${relativeFileDirname}${pathSeparator}${fileBasenameNoExtension}.v.x64.exe"
+			}
 		}
 	]
 }
