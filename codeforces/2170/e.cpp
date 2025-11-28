@@ -31,21 +31,20 @@ int main() {
 
 		vector<LL> STP(N + 1);
 		LL LRI{0}, MB{0}, MBX;
-		bool F{false};
-		RF(i, 1, N + 1) {
+		STP[1] = 2;
+		RF(i, 2, N + 1) {
 			MBX = MB;
 			for (; LRI < M && LR[LRI].first <= i; LRI++) {
 				MBX = max(MBX, LR[LRI].second);
-				F = true;
 			}
 
-			STP[i] = (MOD + STP[i - 1] + (STP[i - 1] - STP[MB] + !F * 2)) % MOD;
+			STP[i] = (MOD + STP[i - 1] + (STP[i - 1] - STP[MB])) % MOD;
 			MB = MBX;
 
-			RF(j, 1, i + 1) {
-				cout << (MOD + STP[j] - STP[j - 1]) % MOD << ' ';
-			}
-			cout << '\n';
+			// RF(j, 1, i + 1) {
+			// 	cout << (MOD + STP[j] - STP[j - 1]) % MOD << ' ';
+			// }
+			// cout << '\n';
 		}
 		cout << (MOD + STP[N] - STP[MB]) % MOD << '\n';
 	}
