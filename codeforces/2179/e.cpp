@@ -23,6 +23,33 @@ int main() {
 	LL T;
 	cin >> T;
 	while (T--) {
+		LL N, C[2];
+		cin >> N >> C[0] >> C[1];
+		string S;
+		cin >> S;
+		vector<LL> X(N);
+		RF(i, 0, N) {
+			cin >> X[i];
+		}
+		LL R[4]{};
+		RF(i, 0, N) {
+			R[S[i] - '0'] += X[i] / 2 + 1;
+			R[2] += X[i] - X[i] / 2 - 1;
+			R[3] += X[i] % 2 == 0;
+		}
+		if (
+			R[0] > C[0] || R[1] > C[1] ||
+			R[0] + R[1] + R[2] > C[0] + C[1]) {
+			cout << "NO\n";
+			continue;
+		}
+		if (
+			R[0] == 0 && C[0] - R[2] - R[3] - (C[1] - R[1]) > 0 ||
+			R[1] == 0 && C[1] - R[2] - R[3] - (C[0] - R[0]) > 0) {
+			cout << "NO\n";
+			continue;
+		}
+		cout << "YES\n";
 	}
 
 	return 0;

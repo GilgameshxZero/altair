@@ -2,30 +2,19 @@
 	"version": "2.0.0",
 	"tasks": [
 		{
-			"label": "clean",
 			"type": "shell",
-			"options": {
-				"cwd": "${workspaceFolder}/build"
-			},
-			"presentation": {
-				"clear": true,
-				"reveal": "never",
-				"showReuseMessage": false,
-				"panel": "shared"
-			},
+			"label": "clean",
+			"options": { "cwd": "${workspaceFolder}/build" },
+			"presentation": { "clear": true, "reveal": "silent", "close": true },
+
 			"command": "make",
 			"args": ["clean"]
 		},
 		{
-			"label": "new",
 			"type": "shell",
+			"label": "new",
 			"options": { "cwd": "${workspaceFolder}/build" },
-			"presentation": {
-				"clear": true,
-				"reveal": "never",
-				"showReuseMessage": false,
-				"panel": "shared"
-			},
+			"presentation": { "clear": true, "reveal": "silent", "close": true },
 
 			"command": "cp",
 			"args": [
@@ -37,41 +26,24 @@
 			]
 		},
 		{
-			"label": "build.debug.x64",
 			"type": "shell",
-			"options": {
-				"cwd": "${workspaceFolder}/build"
-			},
-			"presentation": {
-				"clear": true,
-				"reveal": "never",
-				"showReuseMessage": false,
-				"panel": "shared"
-			},
-			"group": {
-				"kind": "build",
-				"isDefault": true
-			},
+			"label": "build.debug.x64",
+			"options": { "cwd": "${workspaceFolder}/build" },
+			"presentation": { "clear": true, "reveal": "silent" },
+			"group": { "kind": "build", "isDefault": true },
+
 			"command": "make",
 			"args": ["PROJ=${relativeFileDirname}", "BIN=${fileBasenameNoExtension}"],
 			"problemMatcher": ["$gcc"],
-			"windows": {
-				"problemMatcher": ["$msCompile"]
-			}
+			"windows": { "problemMatcher": ["$msCompile"] }
 		},
 		{
 			"label": "build.release.x64",
 			"type": "shell",
-			"options": {
-				"cwd": "${workspaceFolder}/build"
-			},
-			"presentation": {
-				"clear": true,
-				"reveal": "never",
-				"showReuseMessage": false,
-				"panel": "shared"
-			},
+			"options": { "cwd": "${workspaceFolder}/build" },
+			"presentation": { "clear": true, "reveal": "silent" },
 			"group": "build",
+
 			"command": "make",
 			"args": [
 				"PROJ=${relativeFileDirname}",
@@ -79,9 +51,7 @@
 				"BUILD=1"
 			],
 			"problemMatcher": ["$gcc"],
-			"windows": {
-				"problemMatcher": ["$msCompile"]
-			}
+			"windows": { "problemMatcher": ["$msCompile"] }
 		}
 	],
 	"inputs": [
