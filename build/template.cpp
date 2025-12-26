@@ -20,9 +20,9 @@ int main() {
 	ios_base::sync_with_stdio(false);
 	cin.tie(nullptr);
 
-	LL T;
-	cin >> T;
-	while (T--) {
+	LL _T;
+	cin >> _T;
+	while (_T--) {
 	}
 
 	return 0;
