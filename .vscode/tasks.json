@@ -29,7 +29,7 @@
 			"type": "shell",
 			"label": "build.debug.x64",
 			"options": { "cwd": "${workspaceFolder}/build" },
-			"presentation": { "clear": true, "reveal": "silent" },
+			"presentation": { "clear": true, "reveal": "never" },
 			"group": { "kind": "build", "isDefault": true },
 
 			"command": "make",
@@ -41,7 +41,7 @@
 			"label": "build.release.x64",
 			"type": "shell",
 			"options": { "cwd": "${workspaceFolder}/build" },
-			"presentation": { "clear": true, "reveal": "silent" },
+			"presentation": { "clear": true, "reveal": "never" },
 			"group": "build",
 
 			"command": "make",
