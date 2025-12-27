@@ -84,7 +84,7 @@ int main() {
 			continue;
 		}
 		if (C.size() == 1) {
-			cout << R[0] * ZP << '\n';
+			cout << R[0] * ZP % M << '\n';
 			continue;
 		}
 		vector<LL> YOA[2];
