@@ -70,11 +70,11 @@ int main() {
 		vector<LL> P(N), S(N), R(N), C;
 		P[0] = -1;
 		toCanonical(N, E, P, S, R, C, 0);
-		cout << "Canons: ";
-		RF(i, 0, C.size()) {
-			cout << C[i] << ' ';
-		}
-		cout << '\n';
+		// cout << "Canons: ";
+		// RF(i, 0, C.size()) {
+		// 	cout << C[i] << ' ';
+		// }
+		// cout << '\n';
 		LL ZP{1};
 		RF(i, 0, C.size()) {
 			ZP = ZP * C[i] % M;
@@ -103,7 +103,8 @@ int main() {
 			R[0] * YOA[1][1] % M};
 		RF(i, 1, C.size() - 1) {
 			ZOA =
-				(ZOA + R[0] * YOA[0][i - 1] * YOA[1][i + 1]) % M;
+				(ZOA + R[0] * YOA[0][i - 1] % M * YOA[1][i + 1]) %
+				M;
 		}
 		cout << ZP * ZOA % M * PM[C.size() - 1] % M << '\n';
 	}
