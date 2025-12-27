@@ -1,5 +1,7 @@
-#if defined(__GNUC__) && !defined(__clang__) && !defined(__MINGW32__)
-#pragma GCC target("avx", "avx2", "fma", "bmi", "bmi2", "popcnt", "lzcnt")
+#if defined(__GNUC__) && !defined(__clang__) && \
+	!defined(__MINGW32__)
+#pragma GCC target( \
+	"avx", "avx2", "fma", "bmi", "bmi2", "popcnt", "lzcnt")
 #pragma GCC optimize("Ofast", "unroll-loops")
 #endif
 
@@ -9,14 +11,10 @@ using LL = long long;
 using LD = long double;
 using namespace std;
 
-#define RF(x, from, to) \
-	for (LL x(from), _to(to), _delta{x < _to ? 1LL : -1LL}; x != _to; x += _delta)
-
-class Info {
-	public:
-	LL MR, YR, YO;
-	pair<LL, LL> RG;
-};
+#define RF(x, from, to)                                   \
+	for (LL x(from), _to(to), _delta{x < _to ? 1LL : -1LL}; \
+			 x != _to;                                          \
+			 x += _delta)
 
 int main() {
 	ios_base::sync_with_stdio(false);
@@ -32,32 +30,21 @@ int main() {
 			cin >> P[i];
 		}
 		P.push_back(LLONG_MAX);
-		array<Info, 2> Z;
-		Z[0].MR = P[1] - P[0];
-		Z[0].RG = {0, 0};
-		Z[0].YR = Z[0].YO = 0;
+		LL R[2]{0, P[1] - P[0]}, Z{0};
 		RF(i, 1, N) {
-			Z[1].MR = min(P[i] - P[i - 1], P[i + 1] - P[i]);
-			Z[1].YR = 0;
-			Z[1].RG = {P[i] - P[i - 1] - Z[0].MR, Z[1].MR};
-			if (Z[1].RG.second > Z[1].RG.first) {
-				Z[1].YR = 1 + Z[0].YO;
-				if (Z[0].RG.second > Z[0].RG.first) {
-					if (
-						Z[0].RG.second + Z[1].RG.second > P[i] - P[i - 1] &&
-						Z[0].RG.first + Z[1].RG.first < P[i] - P[i - 1]) {
-						Z[1].RG.first =
-							max(Z[1].RG.first, P[i] - P[i - 1] - Z[0].RG.second);
-						Z[1].RG.second =
-							min(Z[1].RG.second, P[i] - P[i - 1] - Z[0].RG.first);
-						Z[1].YR = max(Z[1].YR, 1 + Z[0].YR);
-					}
-				}
+			LL S[2]{0, min(P[i] - P[i - 1], P[i + 1] - P[i])};
+			S[0] = max(S[0], P[i] - P[i - 1] - R[1]);
+			S[1] = min(S[1], P[i] - P[i - 1] - R[0]);
+			if (S[0] >= S[1]) {
+				S[0] = 0;
+				S[1] = min(P[i] - P[i - 1], P[i + 1] - P[i]);
+				S[1] = min(S[1], P[i] - P[i - 1] - R[0]);
+			} else {
+				Z++;
 			}
-			Z[1].YO = max(Z[0].YR, Z[0].YO);
-			swap(Z[0], Z[1]);
+			swap(S, R);
 		}
-		cout << max(Z[0].YO, Z[0].YR) << '\n';
+		cout << Z << '\n';
 	}
 
 	return 0;
