@@ -1,10 +1,25 @@
-# For Python 3.9.10.
+# For Python 3.11.9.
+# Packages dependent on `jaxlib` are not available on Windows.
+-r pre.txt
 
 # General.
 six
 dill
 requests
 py7zr
+python-dotenv
+lxml
+
+# Utility.
+magic-wormhole
+qrcode
+zstandard
+gdown
+selenium
+flask
+fonttools
+brotli
+librosa
 
 # Style.
 pylint
@@ -27,3 +42,6 @@ scipy
 colormath
 plotly
 opencv-python
+
+# altair.
+-e .
