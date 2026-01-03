@@ -1,3 +1,6 @@
+# Project.
+**/.env
+
 # Syncthing.
 **/*local.syncthing*
 **/*archive.syncthing*
