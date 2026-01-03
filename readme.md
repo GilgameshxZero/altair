@@ -14,3 +14,7 @@ Token|Meaning
 `interactive`|Does not pipe standard I/O from/to any files.
 
 Notably, no external console should be launched in any configuration.
+
+---
+
+The Python environment on Darwin requires `brew install llvm@20 && export CMAKE_PREFIX_PATH="/usr/local/opt/llvm@20"`.
