@@ -23,7 +23,54 @@ int main() {
 	LL _T;
 	cin >> _T;
 	while (_T--) {
-		
+		LL N;
+		cin >> N;
+		vector<LL> A(N + 1);
+		A[0] = N;
+		RF(i, 1, N + 1) {
+			cin >> A[i];
+		}
+		vector<LL> C(A);
+		sort(C.begin(), C.end());
+		reverse(C.begin(), C.end());
+		if (A != C) {
+			cout << "NO\n";
+			continue;
+		}
+		vector<LL> B(N + 1), D;
+		vector<bool> E(N + 1, true);
+		RF(i, 0, N + 1) {
+			E[A[i]] = false;
+		}
+		RF(i, 0, N + 1) {
+			if (E[i]) {
+				D.push_back(i);
+			}
+		}
+
+		bool F{false};
+		B[1] = N;
+		RF(i, 1, N + 1) {
+			if (A[i] == A[i - 1]) {
+				B[i] = D.back();
+				D.pop_back();
+				if (B[i] > A[i]) {
+					F = true;
+				}
+			} else {
+				B[i] = B[1];
+			}
+		}
+
+		if (F) {
+			cout << "NO\n";
+		} else {
+			cout << "YES\n";
+			RF(i, 1, N + 1) {
+				cout << B[i] << ' ';
+			}
+			cout << '\n';
+		}
 	}
 
 	return 0;
