@@ -1,4 +1,3 @@
-#include <locale>
 #if defined(__GNUC__) && !defined(__clang__) && \
 	!defined(__MINGW32__)
 #pragma GCC target( \
@@ -39,6 +38,7 @@ int main() {
 				C++;
 			}
 		}
+
 		if (C != 0) {
 			Y.push_back(C - (S.back() == '0'));
 		}
