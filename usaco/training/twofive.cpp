@@ -4,7 +4,7 @@ PROG: twofive
 LANG: C++
 */
 
-// #define ONLINE_JUDGE
+#define ONLINE_JUDGE
 
 #if defined(__GNUC__) && !defined(__clang__) && \
 	!defined(__MINGW32__) && !defined(ONLINE_JUDGE)
@@ -24,32 +24,40 @@ using namespace std;
 			 x != _to;                                          \
 			 x += _delta)
 
-LL Z{0};
-
-void count(string &s, bitset<26> &c, LL i) {
-	if (i == 10) {
-		// cout << s << '\n';
-		Z++;
-		return;
+LL count(
+	array<array<array<array<array<LL, 6>, 6>, 6>, 6>, 6> &D,
+	array<pair<LL, LL>, 25> &F,
+	array<LL, 5> S) {
+	if (
+		S[0] < S[1] || S[1] < S[2] || S[2] < S[3] ||
+		S[3] < S[4]) {
+		return 0;
 	}
-
-	char req{'a' - 1};
-	if (i % 5 != 0) {
-		req = max(req, s[i - 1]);
+	if (S[0] > 5) {
+		return 0;
 	}
-	if (i >= 5) {
-		req = max(req, s[i - 5]);
+	if (S[4] == 5) {
+		return 1;
 	}
-
-	RF(j, req - 'a' + 1, 26) {
-		if (!c[j]) {
-			continue;
+	if (D[S[0]][S[1]][S[2]][S[3]][S[4]] == -1) {
+		LL i{accumulate(S.begin(), S.end(), 0LL)};
+		if (F[i].first != -1) {
+			if (S[F[i].first] != F[i].second) {
+				D[S[0]][S[1]][S[2]][S[3]][S[4]] = 0;
+			} else {
+				S[F[i].first]++;
+				D[S[0]][S[1]][S[2]][S[3]][S[4]] = count(D, F, S);
+			}
+		} else {
+			D[S[0]][S[1]][S[2]][S[3]][S[4]] =
+				count(D, F, {S[0] + 1, S[1], S[2], S[3], S[4]}) +
+				count(D, F, {S[0], S[1] + 1, S[2], S[3], S[4]}) +
+				count(D, F, {S[0], S[1], S[2] + 1, S[3], S[4]}) +
+				count(D, F, {S[0], S[1], S[2], S[3] + 1, S[4]}) +
+				count(D, F, {S[0], S[1], S[2], S[3], S[4] + 1});
 		}
-		s[i] = j + 'a';
-		c[j] = false;
-		count(s, c, i + 1);
-		c[j] = true;
 	}
+	return D[S[0]][S[1]][S[2]][S[3]][S[4]];
 }
 
 int main() {
@@ -60,21 +68,65 @@ int main() {
 	std::freopen("twofive.out", "w", stdout);
 #endif
 
-	string s(25, '_');
-	bitset<26> c;
-	c.set();
-	count(s, c, 0);
-	cout << Z << '\n';
-	return 0;
+	array<array<array<array<array<LL, 6>, 6>, 6>, 6>, 6> D,
+		DD;
+	RF(i, 0, 6) {
+		RF(j, 0, 6) {
+			RF(k, 0, 6) {
+				RF(l, 0, 6) {
+					D[i][j][k][l].fill(-1);
+				}
+			}
+		}
+	}
+	DD = D;
+	array<pair<LL, LL>, 25> F;
+	F.fill({-1, -1});
+	F[0] = {0, 0};
 
 	char C;
 	cin >> C;
 	if (C == 'N') {
 		LL N;
 		cin >> N;
+		string Z(25, ' ');
+		LL M{0};
+		RF(i, 0, 25) {
+			RF(j, 0, 25) {
+				if (F[j].first != -1) {
+					continue;
+				}
+				F[j] = {i / 5, i % 5};
+				LL m{count(D, F, {0, 0, 0, 0, 0})};
+				D = DD;
+				if (M + m >= N) {
+					break;
+				}
+				M += m;
+				F[j] = {-1, -1};
+			}
+		}
+		RF(i, 0, 25) {
+			Z[F[i].first * 5 + F[i].second] = 'A' + i;
+		}
+		cout << Z << '\n';
 	} else {
 		string W;
 		cin >> W;
+		LL Z{0};
+		RF(i, 0, 25) {
+			RF(j, 0, W[i] - 'A') {
+				if (F[j].first != -1) {
+					continue;
+				}
+				F[j] = {i / 5, i % 5};
+				Z += count(D, F, {0, 0, 0, 0, 0});
+				D = DD;
+				F[j] = {-1, -1};
+			}
+			F[W[i] - 'A'] = {i / 5, i % 5};
+		}
+		cout << Z + 1 << '\n';
 	}
 
 	return 0;
