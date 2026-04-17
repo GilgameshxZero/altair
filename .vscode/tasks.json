@@ -21,7 +21,7 @@
 				"template.cpp",
 				"${fileDirname}/${input:new-name}.cpp",
 				"&&",
-				"xdg-open",
+				"code",
 				"${fileDirname}/${input:new-name}.cpp"
 			]
 		},
