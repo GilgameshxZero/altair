@@ -2,8 +2,9 @@
 import setuptools
 
 setuptools.setup(
-    name="altair",
-    packages=["altair"],
-    # Ideally, this should be filled out, but I can't be bothered.
-    install_requires=[],
+	name="altair",
+	packages=["altair"],
+	# Ideally, this should be filled out, but I can't be
+	# bothered.
+	install_requires=[],
 )
