@@ -257,6 +257,8 @@ LINKER_FLAGS_PCH=\
 	$(PROJ_OBJ_DIR)$(BUILD_NAME)\x$(ARCH)\pch.obj
 !ENDIF
 
+NMAKE_TMP = .nmake.$(BUILD_NAME).tmp.txt
+
 # Real targets.
 # Default/build target only compiles and links, but does
 # not run.
@@ -341,9 +343,9 @@ version.build.txt:\
 	@FOR %%I IN ($?) DO @ECHO Outdated: %%I.
 !ENDIF
 	@version.bat $(uppercase $(REPO_NAME))
-	@$(MAKE) /C /T $@
 !ENDIF
-$(PROJ_OBJ_DIR)$(BUILD_NAME)\x$(ARCH)\pch.pch: pch.cpp
+$(PROJ_OBJ_DIR)$(BUILD_NAME)\x$(ARCH)\pch.pch:\
+	$(NMAKE_INCL_PCH) pch.cpp
 	@ECHO Building\
 		$(PROJ_OBJ_DIR)$(BUILD_NAME)\x$(ARCH)\pch.pch...
 	@IF NOT EXIST $(PROJ_OBJ_DIR) MD $(PROJ_OBJ_DIR)
@@ -354,15 +356,12 @@ $(PROJ_OBJ_DIR)$(BUILD_NAME)\x$(ARCH)\pch.pch: pch.cpp
 	@$(COMPILER) $(COMPILER_FLAGS) /Yc\
 		/Fd$(PROJ_OBJ_DIR)$(BUILD_NAME)\x$(ARCH)\pch.pdb\
 		/Fo$(PROJ_OBJ_DIR)$(BUILD_NAME)\x$(ARCH)\pch.obj pch.cpp
-# Within `nmake`, tracking timestamps of source files is
-# required (why?).
-pch.cpp: $(NMAKE_INCL_PCH)
 
 # Binary build target.
 # First compile all outdated files (with /MP), then link
 # everything together.
 # Need additional variable to parse dependencies correctly.
-$(PROJ_BIN): $(PROJ_SRC)
+$(PROJ_BIN): $(PROJ_SRC) $(NMAKE_INCL_PCH) $(NMAKE_INCL)
 !IF $(PCH)==1
 	@$(MAKE) /C\
 		"$(PROJ_OBJ_DIR)$(BUILD_NAME)\x$(ARCH)\pch.pch"\
@@ -396,18 +395,20 @@ $(PROJ_BIN): $(PROJ_SRC)
 !ENDIF
 	@REM We use an `nmake` inline file here to track all
 	@REM arguments as it is easy to exceed the 8192 limit.
-	@<<.nmake.tmp.txt
-NMAKE_INCL_PCH="$(NMAKE_INCL_PCH)"
-NMAKE_INCL="$(NMAKE_INCL)"
-NMAKE_PROJ_SRC="$(NMAKE_PROJ_SRC)"
-NMAKE_PCH_YU="$(NMAKE_PCH_YU)"
-PROJ="$(PROJ)"
-INCL_PCH="$(INCL_PCH)" INCL="$(INCL)"
-BIN="$(BIN)" SRC="$(SRC)"
-BUILD=$(BUILD) ARCH=$(ARCH) PCH=$(PCH) ARGS="$(ARGS)"
-VERSIONING=$(VERSIONING)
-SHOW_OUTDATED=$(SHOW_OUTDATED)
-<<NOKEEP
+	@REM We use manual @ECHOs because the `nmake` syntax
+	@REM is slow (?).
+	@ECHO NMAKE_INCL_PCH="$(NMAKE_INCL_PCH)" >> $(NMAKE_TMP)
+	@ECHO NMAKE_INCL="$(NMAKE_INCL)" >> $(NMAKE_TMP)
+	@ECHO NMAKE_PROJ_SRC="$(NMAKE_PROJ_SRC)" >> $(NMAKE_TMP)
+	@ECHO NMAKE_PCH_YU="$(NMAKE_PCH_YU)" >> $(NMAKE_TMP)
+	@ECHO PROJ="$(PROJ)" >> $(NMAKE_TMP)
+	@ECHO INCL_PCH="$(INCL_PCH)" >> $(NMAKE_TMP)
+	@ECHO INCL="$(INCL)" >> $(NMAKE_TMP)
+	@ECHO BIN="$(BIN)" SRC="$(SRC)" >> $(NMAKE_TMP)
+	@ECHO BUILD=$(BUILD) ARCH=$(ARCH) >> $(NMAKE_TMP)
+	@ECHO PCH=$(PCH) ARGS="$(ARGS)" >> $(NMAKE_TMP)
+	@ECHO VERSIONING=$(VERSIONING) >> $(NMAKE_TMP)
+	@ECHO SHOW_OUTDATED=$(SHOW_OUTDATED) >> $(NMAKE_TMP)
 	@REM Compile all subdirectories (and files) separately so
 	@REM as to place object files in the correct relative
 	@REM subdirectory.
@@ -419,18 +420,19 @@ SHOW_OUTDATED=$(SHOW_OUTDATED)
 		@IF "%%~xI" NEQ ".obj" (\
 			$(MAKE) /C $(PROJ_OBJ_DIR)$(BUILD_NAME)\x$(ARCH)\%%~I.sentinel.tmp\
 				NMAKE_COMPILE_TARGET="%%~I"\
-				@.nmake.tmp.txt\
+				@$(NMAKE_TMP)\
 		) ELSE (\
 			$(MAKE) /C $(PROJ_OBJ_DIR)$(BUILD_NAME)\x$(ARCH)\%%~I\
 				NMAKE_COMPILE_TARGET="%%~I"\
-				@.nmake.tmp.txt\
+				@$(NMAKE_TMP)\
 		)
+	@DEL $(NMAKE_TMP)
 	@ECHO Linking $(PROJ_BIN)...
 	@$(LINKER) $(LINKER_FLAGS) $(LINKER_FLAGS_PCH)\
 		$(patsubst %.cpp,%.obj,\
 		$(patsubst $(PROJ_SRC_DIR)\%,\
 			$(PROJ_OBJ_DIR)$(BUILD_NAME)\x$(ARCH)\\%,\
-			$**))
+			$(PROJ_SRC)))
 
 # Secondary build target for subdirectories. We are able to
 # use nmake macros again via the recursive call, and also
@@ -439,32 +441,59 @@ SHOW_OUTDATED=$(SHOW_OUTDATED)
 # as up-to-date. Without the sentinel and using a fake
 # target instead, all dependents are considered out of date.
 $(PROJ_OBJ_DIR)$(BUILD_NAME)\x$(ARCH)\$(NMAKE_COMPILE_TARGET).sentinel.tmp:\
-	$(PROJ_SRC_DIR)$(NMAKE_COMPILE_TARGET)*.cpp
-	@IF NOT EXIST "$@\..\" MD "$@\..\"
+	$(PROJ_SRC_DIR)$(NMAKE_COMPILE_TARGET)*.cpp\
+	$(NMAKE_INCL_PCH) $(NMAKE_INCL)
 	@ECHO Building directory $(PROJ_OBJ_DIR)$(BUILD_NAME)\x$(ARCH)\$(NMAKE_COMPILE_TARGET)*.obj...
+	@IF NOT EXIST "$@\..\" MD "$@\..\"
+	@$(MAKE) /C\
+		_tertiary_build_target_directory\
+		NMAKE_COMPILE_TARGET="$(NMAKE_COMPILE_TARGET)"\
+		NMAKE_INCL_PCH="$(NMAKE_INCL_PCH)"\
+		NMAKE_INCL="$(NMAKE_INCL)"\
+		NMAKE_PROJ_SRC="$(NMAKE_PROJ_SRC)"\
+		NMAKE_PCH_YU="$(NMAKE_PCH_YU)"\
+		PROJ="$(PROJ)" INCL_PCH="$(INCL_PCH)" INCL="$(INCL)"\
+		BIN="$(BIN)" SRC="$(SRC)"\
+		BUILD=$(BUILD) ARCH=$(ARCH) PCH=$(PCH) ARGS="$(ARGS)"\
+		VERSIONING=$(VERSIONING)\
+		SHOW_OUTDATED=$(SHOW_OUTDATED)
+	@TYPE NUL>$@
+# Named tertiary targets allow for isolating outdated source
+# files.
+_tertiary_build_target_directory:\
+	$(PROJ_SRC_DIR)$(NMAKE_COMPILE_TARGET)*.cpp
 	@$(COMPILER) $(COMPILER_FLAGS) $(COMPILER_FLAGS_PCH)\
 		/Fd$(PROJ_OBJ_DIR)$(BUILD_NAME)\x$(ARCH)\$(BIN_NAME).pdb\
 		/Fo$(PROJ_OBJ_DIR)$(BUILD_NAME)\x$(ARCH)\$(NMAKE_COMPILE_TARGET)\
 		$?
-	@TYPE NUL>$@
-# Secondary build target for files. Need ths proxy variable\
+# Secondary build target for files. Need this proxy variable
 # or the dependency line results in a syntax error.
 WINDOWS_INNER_BUILD_FILE_DEP=$(PROJ_SRC_DIR)$(patsubst \
 	%.obj,%.cpp,$(NMAKE_COMPILE_TARGET))
 $(PROJ_OBJ_DIR)$(BUILD_NAME)\x$(ARCH)\$(NMAKE_COMPILE_TARGET):\
-	$(WINDOWS_INNER_BUILD_FILE_DEP)
-	@IF NOT EXIST "$@\..\" MD "$@\..\"
+	$(WINDOWS_INNER_BUILD_FILE_DEP)\
+	$(NMAKE_INCL_PCH) $(NMAKE_INCL)
 	@ECHO Building file $@...
+	@IF NOT EXIST "$@\..\" MD "$@\..\"
+	@$(MAKE) /C\
+		_tertiary_build_target_file\
+		NMAKE_COMPILE_TARGET="$(NMAKE_COMPILE_TARGET)"\
+		NMAKE_INCL_PCH="$(NMAKE_INCL_PCH)"\
+		NMAKE_INCL="$(NMAKE_INCL)"\
+		NMAKE_PROJ_SRC="$(NMAKE_PROJ_SRC)"\
+		NMAKE_PCH_YU="$(NMAKE_PCH_YU)"\
+		PROJ="$(PROJ)" INCL_PCH="$(INCL_PCH)" INCL="$(INCL)"\
+		BIN="$(BIN)" SRC="$(SRC)"\
+		BUILD=$(BUILD) ARCH=$(ARCH) PCH=$(PCH) ARGS="$(ARGS)"\
+		VERSIONING=$(VERSIONING)\
+		SHOW_OUTDATED=$(SHOW_OUTDATED)
+# Named tertiary targets allow for isolating outdated source
+# files.
+_tertiary_build_target_file: $(WINDOWS_INNER_BUILD_FILE_DEP)
 	@$(COMPILER) $(COMPILER_FLAGS) $(COMPILER_FLAGS_PCH)\
 		/Fd$(PROJ_OBJ_DIR)$(BUILD_NAME)\x$(ARCH)\$(BIN_NAME).pdb\
 		/Fo$(PROJ_OBJ_DIR)$(BUILD_NAME)\x$(ARCH)\$(NMAKE_COMPILE_TARGET)\..\ \
 		$?
-
-# Mark source files as out of date if any headers have
-# changed.
-# An empty target here will correctly set the modified date.
-$(PROJ_SRC): $(NMAKE_INCL_PCH) $(NMAKE_INCL) pch.cpp
-	@EXIT
 
 # ----------------------------------------------------------
 !else

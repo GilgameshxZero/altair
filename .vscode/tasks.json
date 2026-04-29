@@ -4,8 +4,14 @@
 		{
 			"type": "shell",
 			"label": "clean",
-			"options": { "cwd": "${workspaceFolder}/build" },
-			"presentation": { "clear": true, "reveal": "silent", "close": true },
+			"options": {
+				"cwd": "${workspaceFolder}/build"
+			},
+			"presentation": {
+				"clear": true,
+				"reveal": "never",
+				"close": true
+			},
 
 			"command": "make",
 			"args": ["clean"]
@@ -13,8 +19,14 @@
 		{
 			"type": "shell",
 			"label": "new",
-			"options": { "cwd": "${workspaceFolder}/build" },
-			"presentation": { "clear": true, "reveal": "silent", "close": true },
+			"options": {
+				"cwd": "${workspaceFolder}/build"
+			},
+			"presentation": {
+				"clear": true,
+				"reveal": "always",
+				"close": true
+			},
 
 			"command": "cp",
 			"args": [
@@ -28,19 +40,26 @@
 		{
 			"type": "shell",
 			"label": "build.debug.x64",
-			"options": { "cwd": "${workspaceFolder}/build" },
+			"options": {
+				"cwd": "${workspaceFolder}/build"
+			},
 			"presentation": { "clear": true, "reveal": "never" },
 			"group": { "kind": "build", "isDefault": true },
 
 			"command": "make",
-			"args": ["PROJ=${relativeFileDirname}", "BIN=${fileBasenameNoExtension}"],
-			"problemMatcher": ["$gcc"],
+			"args": [
+				"PROJ=${relativeFileDirname}",
+				"BIN=${fileBasenameNoExtension}"
+			],
+			"problemMatcher": ["$codelldb-rustc"],
 			"windows": { "problemMatcher": ["$msCompile"] }
 		},
 		{
 			"label": "build.release.x64",
 			"type": "shell",
-			"options": { "cwd": "${workspaceFolder}/build" },
+			"options": {
+				"cwd": "${workspaceFolder}/build"
+			},
 			"presentation": { "clear": true, "reveal": "never" },
 			"group": "build",
 
@@ -50,7 +69,7 @@
 				"BIN=${fileBasenameNoExtension}",
 				"BUILD=1"
 			],
-			"problemMatcher": ["$gcc"],
+			"problemMatcher": ["$codelldb-rustc"],
 			"windows": { "problemMatcher": ["$msCompile"] }
 		}
 	],

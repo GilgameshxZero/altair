@@ -1,7 +1,7 @@
 {
 	"debug.console.closeOnEnd": false,
 
-	"editor.rulers": [60, 80, 120],
+	"editor.rulers": [60, 80],
 	"editor.insertSpaces": false,
 	"editor.tabSize": 2,
 
@@ -13,7 +13,11 @@
 	"zenMode.hideLineNumbers": true,
 
 	// Cannot be placed in `.clangd` since we need to reference absolute path ${workspaceFolder}.
-	"clangd.fallbackFlags": ["-I${workspaceFolder}/include/", "-std=c++20"],
+	"clangd.fallbackFlags": [
+		"-I${workspaceFolder}/rain/include/",
+		"-I${workspaceFolder}/include/",
+		"-std=c++20"
+	],
 
 	"[cpp]": {
 		"editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd",

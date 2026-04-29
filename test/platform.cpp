@@ -15,6 +15,9 @@
 
 #include <bits/stdc++.h>
 
+#include <../build/version.hpp>
+#include <rain.hpp>
+
 using LL = long long;
 using LD = long double;
 using namespace std;
@@ -29,10 +32,10 @@ int main() {
 	ios_base::sync_with_stdio(false);
 	cin.tie(nullptr);
 
-	LL _T;
-	cin >> _T;
-	while (_T--) {
-	}
+	cout << "Hello world!" << endl;
+	cout << RAIN_VERSION_MAJOR << '.' << RAIN_VERSION_MINOR
+			 << '.' << RAIN_VERSION_REVISION << '.'
+			 << RAIN_VERSION_BUILD << endl;
 
 	return 0;
 }
