@@ -1,4 +1,6 @@
--r pre.txt
 -r ../utulek/requirements/common.txt
+-r pre.txt
 
+# Unclear why this is needed if it is already in common.txt, unless paths are not recursively relative.
+-e utulek
 -e .

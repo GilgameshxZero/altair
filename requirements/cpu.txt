@@ -1,2 +1,2 @@
+-r ../utulek/requirements/cpu.txt
 -r common.txt
--r ../utulek/requirements/common.txt
