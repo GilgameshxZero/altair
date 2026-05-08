@@ -4,9 +4,6 @@
 [submodule "rain"]
 	path = rain
 	url = ../rain.git
-[submodule "kattis/kattis-cli"]
-	path = kattis/kattis-cli
-	url = ../kattis-cli.git
 [submodule "utulek"]
 	path = utulek
-	url = git@github.com:GilgameshxZero/utulek.git
+	url = ../utulek.git
