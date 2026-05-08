@@ -10,11 +10,14 @@ using LL = long long;
 using LD = long double;
 using namespace std;
 
-#define RF(x, from, to)                                   \
-	for (LL x(from), _to(to), _delta{x < _to ? 1LL : -1LL}; \
-			 x != _to;                                          \
-			 x += _delta)
+#define RF(x, from, to)                                    \
+	for (                                                    \
+		LL x(from), _to(to), _delta{x < _to ? 1LL : -1LL};     \
+		x != _to;                                              \
+		x += _delta)
 
+// Should be up to 2^21, but that MLE's. We can dynamically
+// allocate for better testcases anyway.
 array<pair<int, int>, 900000> T;
 int TS{1};
 
