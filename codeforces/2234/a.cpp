@@ -22,9 +22,27 @@ int main() {
 	ios_base::sync_with_stdio(false);
 	cin.tie(nullptr);
 
-	LL W;
-	cin >> W;
-	cout << (W >= 4 && W % 2 == 0 ? "YES" : "NO") << '\n';
+	LL _T;
+	cin >> _T;
+	while (_T--) {
+		LL N;
+		cin >> N;
+		vector<LL> A(N);
+		RF(i, 0, N) { cin >> A[i]; }
+		sort(A.begin(), A.end());
+		bool fail{false};
+		RF(i, 0, N - 2) {
+			if (A[i + 2] % A[i + 1] != A[i]) {
+				fail = true;
+				break;
+			}
+		}
+		if (fail) {
+			cout << "-1\n";
+		} else {
+			cout << A[N - 1] << ' ' << A[N - 2] << '\n';
+		}
+	}
 
 	return 0;
 }

@@ -22,9 +22,21 @@ int main() {
 	ios_base::sync_with_stdio(false);
 	cin.tie(nullptr);
 
-	LL W;
-	cin >> W;
-	cout << (W >= 4 && W % 2 == 0 ? "YES" : "NO") << '\n';
+	LL _T;
+	cin >> _T;
+	while (_T--) {
+		LL N;
+		cin >> N;
+		if (N == 10) {
+			cout << "-1\n";
+			continue;
+		}
+		LL m{N % 12};
+		if (m == 10) {
+			m = 22;
+		}
+		cout << m << ' ' << N - m << '\n';
+	}
 
 	return 0;
 }
